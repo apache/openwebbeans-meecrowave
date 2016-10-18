@@ -83,8 +83,8 @@ public class Microwave implements AutoCloseable {
     @Getter
     private final Builder configuration;
 
-    private InternalTomcat tomcat;
-    private File base;
+    protected InternalTomcat tomcat;
+    protected File base;
 
     // we can undeploy webapps with that later
     private final Map<String, Context> contexts = new HashMap<>();
@@ -336,6 +336,8 @@ public class Microwave implements AutoCloseable {
             }
         }
 
+        beforeStart();
+
         try {
             if (!initialized) {
                 tomcat.init();
@@ -347,11 +349,20 @@ public class Microwave implements AutoCloseable {
         return this;
     }
 
+    protected void beforeStart() {
+        // no-op
+    }
+
+    protected void beforeStop() {
+        // no-op
+    }
+
     @Override
     public void close() {
         if (tomcat == null) {
             return;
         }
+        beforeStop();
         try {
             tomcat.stop();
             tomcat.destroy();
