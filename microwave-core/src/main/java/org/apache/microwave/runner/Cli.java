@@ -205,7 +205,6 @@ public class Cli {
             default:
                 throw new IllegalArgumentException("Unsupported " + name);
         }
-        return null;
     }
 
     private static void help(final Options options) {
