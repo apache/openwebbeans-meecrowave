@@ -44,6 +44,7 @@ import org.apache.coyote.http2.Http2Protocol;
 import org.apache.cxf.helpers.FileUtils;
 import org.apache.microwave.cxf.CxfCdiAutoSetup;
 import org.apache.microwave.openwebbeans.OWBAutoSetup;
+import org.apache.microwave.runner.cli.CliOption;
 import org.apache.microwave.tomcat.ProvidedLoader;
 import org.apache.tomcat.util.descriptor.web.LoginConfig;
 import org.apache.tomcat.util.descriptor.web.SecurityCollection;
@@ -492,36 +493,97 @@ public class Microwave implements AutoCloseable {
     @Data
     @Accessors(fluent = true)
     public static class Builder {
+        @CliOption(name = "http", description = "HTTP port")
         private int httpPort = 8080;
+
+        @CliOption(name = "https", description = "HTTPS port")
         private int httpsPort = 8443;
-        private int stopPort = 8005;
+
+        @CliOption(name = "stop", description = "Shutdown port if used or -1")
+        private int stopPort = -1;
+
+        @CliOption(name = "host", description = "Default host")
         private String host = "localhost";
+
+        @CliOption(name = "dir", description = "Root folder if provided otherwise a fake one is created in tmp-dir")
         protected String dir;
+
+        @CliOption(name = "server-xml", description = "Provided server.xml")
         private File serverXml;
+
+        @CliOption(name = "keep-server-xml-as-this", description = "Don't replace ports in server.xml")
         private boolean keepServerXmlAsThis;
+
+        @CliOption(name = "properties", description = "Passthrough properties")
         private Properties properties = new Properties();
+
+        @CliOption(name = "quick-session", description = "Should an unsecured but fast session id generator be used")
         private boolean quickSession = true;
+
+        @CliOption(name = "skip-http", description = "Skip HTTP connector")
         private boolean skipHttp;
+
+        @CliOption(name = "ssl", description = "Use HTTPS")
         private boolean ssl;
+
+        @CliOption(name = "keystore-file", description = "HTTPS keystore location")
         private String keystoreFile;
+
+        @CliOption(name = "keystore-password", description = "HTTPS keystore password")
         private String keystorePass;
+
+        @CliOption(name = "keystore-type", description = "HTTPS keystore type")
         private String keystoreType = "JKS";
+
+        @CliOption(name = "client-auth", description = "HTTPS keystore client authentication")
         private String clientAuth;
+
+        @CliOption(name = "keystore-alias", description = "HTTPS keystore alias")
         private String keyAlias;
+
+        @CliOption(name = "ssl-protocol", description = "HTTPS protocol")
         private String sslProtocol;
+
+        @CliOption(name = "web-xml", description = "Global web.xml")
         private String webXml;
+
+        @CliOption(name = "login-config", description = "web.xml login config")
         private LoginConfigBuilder loginConfig;
+
+        @CliOption(name = "security-constraint", description = "web.xml security constraint")
         private Collection<SecurityConstaintBuilder> securityConstraints = new LinkedList<>();
+
+        @CliOption(name = "realm", description = "realm")
         private Realm realm;
+
+        @CliOption(name = "users", description = "In memory users")
         private Map<String, String> users;
+
+        @CliOption(name = "roles", description = "In memory roles")
         private Map<String, String> roles;
+
+        @CliOption(name = "http2", description = "Activate HTTP 2")
         private boolean http2;
+
+        @CliOption(name = "connector", description = "Custom connectors")
         private final Collection<Connector> connectors = new ArrayList<>();
+
+        @CliOption(name = "tmp-dir", description = "Temporary directory")
         private String tempDir = new File(System.getProperty("java.io.tmpdir"), "microwave_" + System.nanoTime()).getAbsolutePath();
+
+        @CliOption(name = "web-resource-cached", description = "Cache web resources")
         private boolean webResourceCached = true;
+
+        @CliOption(name = "conf", description = "Conf folder to synchronize")
         private String conf;
+
+        @CliOption(name = "delete-on-startup", description = "Should the directory be cleaned on startup if existing")
         private boolean deleteBaseOnStartup = true;
+
+        @CliOption(name = "jaxrs-mapping", description = "Default jaxrs mapping")
         private String jaxrsMapping = "/*";
+
+        @CliOption(name = "cdi-conversation", description = "Should CDI conversation be activated")
         private boolean cdiConversation;
 
         public Builder() { // load defaults
