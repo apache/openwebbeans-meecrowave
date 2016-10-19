@@ -37,7 +37,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.concurrent.CountDownLatch;
 import java.util.stream.Stream;
 
 import static java.util.Optional.ofNullable;
@@ -74,33 +73,16 @@ public class Cli {
             return;
         }
 
-        final CountDownLatch latch = new CountDownLatch(1);
-        final Thread hook = new Thread() {
-            @Override
-            public void run() {
-                latch.countDown();
-            }
-        };
-        Runtime.getRuntime().addShutdownHook(hook);
         try (final Microwave microwave = new Microwave(buildConfig(line, fields))) {
             final String ctx = line.getOptionValue("context", "");
+            final String fixedCtx = !ctx.isEmpty() && !ctx.startsWith("/") ? '/' + ctx : ctx;
             final String war = line.getOptionValue("webapp");
             if (war == null) {
-                microwave.bake(ctx);
+                microwave.bake(fixedCtx);
             } else {
-                microwave.deployWebapp(ctx, new File(war));
+                microwave.deployWebapp(fixedCtx, new File(war));
             }
-            try {
-                latch.await();
-            } catch (final InterruptedException e) {
-                Thread.interrupted();
-            }
-        } finally {
-            try {
-                Runtime.getRuntime().removeShutdownHook(hook);
-            } catch (final IllegalStateException ise) {
-                // no-op
-            }
+            microwave.getTomcat().getServer().await();
         }
     }
 
@@ -114,6 +96,9 @@ public class Cli {
                         ofNullable(line.getOptionValue(name)).map(Boolean::parseBoolean).orElse(true) :
                         toValue(name, line.getOptionValues(name), f.getType()))
                         .ifPresent(v -> {
+                            if (!f.isAccessible()) {
+                                f.setAccessible(true);
+                            }
                             try {
                                 f.set(config, v);
                             } catch (final IllegalAccessException e) {
