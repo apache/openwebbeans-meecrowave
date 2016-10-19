@@ -145,6 +145,9 @@ public class MicrowaveRunMojo extends AbstractMojo {
     @Parameter(property = "microwave.jaxrs-provider-setup", defaultValue = "true")
     private boolean jaxrsProviderSetup;
 
+    @Parameter(property = "microwave.logging-global-setup", defaultValue = "true")
+    private boolean loggingGlobalSetup;
+
     @Parameter
     private List<String> jsCustomizers;
 

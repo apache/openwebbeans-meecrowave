@@ -59,6 +59,7 @@ public class MicrowaveExtension {
     private boolean cdiConversation;
     private boolean skip;
     private boolean jaxrsProviderSetup = true;
+    private boolean loggingGlobalSetup = true;
 
     public boolean isJaxrsProviderSetup() {
         return jaxrsProviderSetup;

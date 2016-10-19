@@ -41,6 +41,9 @@ import org.apache.commons.lang3.text.StrSubstitutor;
 import org.apache.coyote.http2.Http2Protocol;
 import org.apache.cxf.helpers.FileUtils;
 import org.apache.microwave.cxf.CxfCdiAutoSetup;
+import org.apache.microwave.logging.jul.Log4j2Logger;
+import org.apache.microwave.logging.openwebbeans.Log4j2LoggerFactory;
+import org.apache.microwave.logging.tomcat.Log4j2Log;
 import org.apache.microwave.openwebbeans.OWBAutoSetup;
 import org.apache.microwave.runner.cli.CliOption;
 import org.apache.microwave.tomcat.ProvidedLoader;
@@ -86,6 +89,7 @@ public class Microwave implements AutoCloseable {
 
     // we can undeploy webapps with that later
     private final Map<String, Context> contexts = new HashMap<>();
+    private Runnable postTask;
 
     public Microwave(final Builder builder) {
         this.configuration = builder;
@@ -183,6 +187,33 @@ public class Microwave implements AutoCloseable {
     }
 
     public Microwave start() {
+        if (configuration.loggingGlobalSetup) {
+            final String[] toRestore = new String[]{
+                    System.getProperty("openwebbeans.logging.factory"),
+                    System.getProperty("org.apache.cxf.Logger"),
+                    System.getProperty("org.apache.tomcat.Logger")
+            };
+            System.setProperty("openwebbeans.logging.factory", Log4j2LoggerFactory.class.getName());
+            System.setProperty("org.apache.cxf.Logger", Log4j2Logger.class.getName());
+            System.setProperty("org.apache.tomcat.Logger", Log4j2Log.class.getName());
+            postTask = () -> {
+                if (toRestore[0] == null) {
+                    System.clearProperty("openwebbeans.logging.factory");
+                } else {
+                    System.setProperty("openwebbeans.logging.factory", toRestore[0]);
+                }
+                if (toRestore[1] == null) {
+                    System.clearProperty("org.apache.cxf.Logger");
+                } else {
+                    System.setProperty("org.apache.cxf.Logger", toRestore[1]);
+                }
+                if (toRestore[2] == null) {
+                    System.clearProperty("org.apache.tomcat.Logger");
+                } else {
+                    System.setProperty("org.apache.tomcat.Logger", toRestore[2]);
+                }
+            };
+        }
         if (configuration.quickSession) {
             tomcat = new TomcatWithFastSessionIDs();
         } else {
@@ -287,7 +318,7 @@ public class Microwave implements AutoCloseable {
                 host.setWorkDir(new File(base, "work").getAbsolutePath());
             }
             tomcat.setHost(host);
-            tomcat.getEngine().addChild( host );
+            tomcat.getEngine().addChild(host);
         }
 
         if (configuration.realm != null) {
@@ -394,6 +425,8 @@ public class Microwave implements AutoCloseable {
         } catch (final LifecycleException e) {
             throw new IllegalStateException(e);
         } finally {
+            ofNullable(postTask).ifPresent(Runnable::run);
+            postTask = null;
             FileUtils.delete(base);
         }
     }
@@ -611,8 +644,19 @@ public class Microwave implements AutoCloseable {
         @CliOption(name = "jaxrs-provider-setup", description = "Should default JAX-RS provider be configured")
         private boolean jaxrsProviderSetup = true;
 
+        @CliOption(name = "logging-global-setup", description = "Should logging be configured to use log4j2 (it is global)")
+        private boolean loggingGlobalSetup = true;
+
         public Builder() { // load defaults
             loadFrom("microwave.properties");
+        }
+
+        public boolean isLoggingGlobalSetup() {
+            return loggingGlobalSetup;
+        }
+
+        public void setLoggingGlobalSetup(final boolean loggingGlobalSetup) {
+            this.loggingGlobalSetup = loggingGlobalSetup;
         }
 
         public boolean isJaxrsProviderSetup() {

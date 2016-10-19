@@ -169,6 +169,10 @@ public class MicrowaveTask extends DefaultTask {
 
     @Input
     @Optional
+    private boolean loggingGlobalSetup = true;
+
+    @Input
+    @Optional
     private boolean cdiConversation;
 
     @Input
