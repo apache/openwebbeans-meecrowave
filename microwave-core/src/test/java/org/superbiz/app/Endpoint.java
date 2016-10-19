@@ -18,10 +18,6 @@
  */
 package org.superbiz.app;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.ws.rs.GET;
@@ -48,10 +44,23 @@ public class Endpoint {
         return new Simple("test");
     }
 
-    @Data
-    @AllArgsConstructor
-    @NoArgsConstructor
     public static class Simple {
         private String name;
+
+        public Simple() {
+            // no-op
+        }
+
+        public Simple(final String name) {
+            this.name = name;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(final String name) {
+            this.name = name;
+        }
     }
 }

@@ -20,9 +20,9 @@ package org.apache.microwave;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.cxf.helpers.FileUtils;
+import org.junit.Test;
 import org.superbiz.app.Endpoint;
 import org.superbiz.app.RsApp;
-import org.junit.Test;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -53,7 +53,7 @@ public class MicrowaveTest {
         });
         try (final Microwave microwave = new Microwave(new Microwave.Builder().randomHttpPort()).start()) {
             microwave.deployWebapp("", root);
-            assertEquals("simple", IOUtils.toString(new URL("http://localhost:" + microwave.getConfiguration().httpPort() + "/api/test")));
+            assertEquals("simple", IOUtils.toString(new URL("http://localhost:" + microwave.getConfiguration().getHttpPort() + "/api/test")));
         } catch (final IOException e) {
             fail(e.getMessage());
         }
@@ -62,7 +62,7 @@ public class MicrowaveTest {
     @Test
     public void classpath() {
         try (final Microwave microwave = new Microwave(new Microwave.Builder().randomHttpPort()).bake()) {
-            assertEquals("simple", IOUtils.toString(new URL("http://localhost:" + microwave.getConfiguration().httpPort() + "/api/test")));
+            assertEquals("simple", IOUtils.toString(new URL("http://localhost:" + microwave.getConfiguration().getHttpPort() + "/api/test")));
         } catch (final IOException e) {
             fail(e.getMessage());
         }
@@ -71,7 +71,7 @@ public class MicrowaveTest {
     @Test
     public void json() {
         try (final Microwave microwave = new Microwave(new Microwave.Builder().randomHttpPort()).bake()) {
-            assertEquals("{\"name\":\"test\"}", IOUtils.toString(new URL("http://localhost:" + microwave.getConfiguration().httpPort() + "/api/test/json")));
+            assertEquals("{\"name\":\"test\"}", IOUtils.toString(new URL("http://localhost:" + microwave.getConfiguration().getHttpPort() + "/api/test/json")));
         } catch (final IOException e) {
             fail(e.getMessage());
         }

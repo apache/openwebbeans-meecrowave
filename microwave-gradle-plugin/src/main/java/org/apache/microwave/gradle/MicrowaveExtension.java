@@ -25,13 +25,13 @@ import java.util.Map;
 
 public class MicrowaveExtension {
     private boolean skipMavenCentral;
-    private String context;
+    private String context = "";
     private File webapp;
 
-    private int httpPort;
-    private int httpsPort;
-    private int stopPort;
-    private String host;
+    private int httpPort = 8080;
+    private int httpsPort = 8443;
+    private int stopPort = -1;
+    private String host = "localhost";
     protected String dir;
     private File serverXml;
     private boolean keepServerXmlAsThis;
@@ -52,13 +52,14 @@ public class MicrowaveExtension {
     private Map<String, String> roles;
     private boolean http2;
     private String tempDir;
-    private boolean webResourceCached;
+    private boolean webResourceCached = true;
     private String conf;
-    private boolean deleteBaseOnStartup;
+    private boolean deleteBaseOnStartup = true;
     private String jaxrsMapping;
     private boolean cdiConversation;
     private boolean skip;
     private boolean skipJaspicProperty;
+    private boolean jaxrsProviderSetup = true;
 
     public String getContext() {
         return context;

@@ -18,7 +18,6 @@
  */
 package org.apache.microwave.runner;
 
-import lombok.NoArgsConstructor;
 import org.apache.catalina.connector.Connector;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -41,11 +40,13 @@ import java.util.stream.Stream;
 
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toList;
-import static lombok.AccessLevel.PRIVATE;
 
 @Vetoed
-@NoArgsConstructor(access = PRIVATE)
 public class Cli {
+    private Cli() {
+        // no-op
+    }
+
     public static void main(final String[] args) {
         final Options options = new Options();
         options.addOption("help", false, "Show help");

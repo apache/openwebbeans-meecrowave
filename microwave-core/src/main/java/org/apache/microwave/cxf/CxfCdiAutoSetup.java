@@ -44,7 +44,7 @@ public class CxfCdiAutoSetup implements ServletContainerInitializer {
             @Override
             protected void loadBus(final ServletConfig servletConfig) {
                 super.loadBus(servletConfig);
-                if (!"true".equalsIgnoreCase(builder.properties().getProperty("microwave.jaxrs.providers.setup", "true"))) {
+                if (builder.isJaxrsProviderSetup()) {
                     return;
                 }
 
@@ -67,6 +67,6 @@ public class CxfCdiAutoSetup implements ServletContainerInitializer {
         });
         jaxrs.setLoadOnStartup(1);
         jaxrs.setAsyncSupported(true);
-        jaxrs.addMapping(builder.jaxrsMapping());
+        jaxrs.addMapping(builder.getJaxrsMapping());
     }
 }

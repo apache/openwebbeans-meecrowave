@@ -29,6 +29,7 @@ import org.gradle.api.tasks.TaskAction;
 
 import java.io.File;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -41,28 +42,30 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Stream;
 
 import static java.util.Arrays.asList;
 import static java.util.Optional.ofNullable;
+import static java.util.stream.Collectors.toList;
 
 public class MicrowaveTask extends DefaultTask {
     private Configuration classpath;
 
     @Input
     @Optional
-    private int httpPort;
+    private int httpPort = 8080;
 
     @Input
     @Optional
-    private int httpsPort;
+    private int httpsPort = 8443;
 
     @Input
     @Optional
-    private int stopPort;
+    private int stopPort = -1;
 
     @Input
     @Optional
-    private String host;
+    private String host = "localhost";
 
     @Input
     @Optional
@@ -82,7 +85,7 @@ public class MicrowaveTask extends DefaultTask {
 
     @Input
     @Optional
-    private boolean quickSession;
+    private boolean quickSession = true;
 
     @Input
     @Optional
@@ -154,11 +157,15 @@ public class MicrowaveTask extends DefaultTask {
 
     @Input
     @Optional
-    private boolean deleteBaseOnStartup;
+    private boolean deleteBaseOnStartup = true;
 
     @Input
     @Optional
-    private String jaxrsMapping;
+    private String jaxrsMapping = "/*";
+
+    @Input
+    @Optional
+    private boolean jaxrsProviderSetup = true;
 
     @Input
     @Optional
@@ -186,7 +193,7 @@ public class MicrowaveTask extends DefaultTask {
 
     @Input
     @Optional
-    private String context;
+    private String context = "";
 
     @Input
     @Optional
@@ -254,7 +261,7 @@ public class MicrowaveTask extends DefaultTask {
                 configClass.getMethod("deployWebapp", String.class, File.class).invoke(container, fixedContext, webapp);
             }
 
-            getLogger().info("Microwave started on " + configClass.getMethod("host").invoke(config) + ":" + configClass.getMethod("httpPort").invoke(config));
+            getLogger().info("Microwave started on " + configClass.getMethod("getHost").invoke(config) + ":" + configClass.getMethod("getHttpPort").invoke(config));
         } catch (final Exception e) {
             ofNullable(hook).ifPresent(h -> {
                 try {
@@ -319,7 +326,54 @@ public class MicrowaveTask extends DefaultTask {
                 getLogger().warn("can't initialize attribute " + field.getName());
             }
         }
-        // TODO: securityConstraints, loginConfig
+
+        if (securityConstraints != null) {
+            configClass.getMethod("setSecurityConstraints", Collection.class).invoke(config, securityConstraints.stream()
+                    .map(item -> {
+                        try {
+                            final Class<?> recipeType = configClass.getClassLoader().loadClass("org.apache.xbean.recipe.ObjectRecipe");
+                            final Class<?> builderType = configClass.getClassLoader().loadClass("org.apache.microwave.Microwave$SecurityConstaintBuilder");
+                            final Object recipe = recipeType.getConstructor(Class.class).newInstance(builderType);
+                            Stream.of(item.split(";"))
+                                    .map(v -> v.split("="))
+                                    .forEach(v -> {
+                                        try {
+                                            recipe.getClass().getMethod("setProperty", String.class, String.class).invoke(recipe, v[0], v[1]);
+                                        } catch (final NoSuchMethodException | IllegalAccessException e) {
+                                            throw new IllegalStateException(e);
+                                        } catch (final InvocationTargetException e) {
+                                            throw new IllegalStateException(e.getCause());
+                                        }
+                                    });
+                            return recipe.getClass().getMethod("create", ClassLoader.class).invoke(recipe, configClass.getClassLoader());
+                        } catch (final Exception cnfe) {
+                            throw new IllegalArgumentException(item);
+                        }
+                    }).collect(toList()));
+        }
+        ofNullable(loginConfig).ifPresent(lc -> {
+            try {
+                final Class<?> recipeType = configClass.getClassLoader().loadClass("org.apache.xbean.recipe.ObjectRecipe");
+                final Class<?> builderType = configClass.getClassLoader().loadClass("org.apache.microwave.Microwave$LoginConfigBuilder");
+                final Object recipe = recipeType.getConstructor(Class.class).newInstance(builderType);
+                Stream.of(loginConfig.split(";"))
+                        .map(v -> v.split("="))
+                        .forEach(v -> {
+                            try {
+                                recipe.getClass().getMethod("setProperty", String.class, String.class).invoke(recipe, v[0], v[1]);
+                            } catch (final NoSuchMethodException | IllegalAccessException e) {
+                                throw new IllegalStateException(e);
+                            } catch (final InvocationTargetException e) {
+                                throw new IllegalStateException(e.getCause());
+                            }
+                        });
+                configClass.getMethod("setLoginConfig", Collection.class)
+                        .invoke(config, recipe.getClass().getMethod("create", ClassLoader.class).invoke(recipe, configClass.getClassLoader()));
+            } catch (final Exception cnfe) {
+                throw new IllegalArgumentException(loginConfig);
+            }
+        });
+
         return config;
     }
 
