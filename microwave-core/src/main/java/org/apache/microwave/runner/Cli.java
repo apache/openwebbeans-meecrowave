@@ -50,6 +50,8 @@ public class Cli {
     public static void main(final String[] args) {
         final Options options = new Options();
         options.addOption("help", false, "Show help");
+        options.addOption("context", true, "The context to use to deploy the webapp");
+        options.addOption("webapp", true, "Location of the webapp, if not set the classpath will be deployed");
         final List<Field> fields = Stream.of(Microwave.Builder.class.getDeclaredFields())
                 .filter(f -> f.isAnnotationPresent(CliOption.class))
                 .collect(toList());
@@ -80,7 +82,14 @@ public class Cli {
             }
         };
         Runtime.getRuntime().addShutdownHook(hook);
-        try (final Microwave microwave = new Microwave(buildConfig(line, fields)).bake()) {
+        try (final Microwave microwave = new Microwave(buildConfig(line, fields))) {
+            final String ctx = line.getOptionValue("context", "");
+            final String war = line.getOptionValue("webapp");
+            if (war == null) {
+                microwave.bake(ctx);
+            } else {
+                microwave.deployWebapp(ctx, new File(war));
+            }
             try {
                 latch.await();
             } catch (final InterruptedException e) {
@@ -116,12 +125,6 @@ public class Cli {
         return config;
     }
 
-    /*
-    Collection<SecurityConstaintBuilder>
-    Collection<Connector>
-    LoginConfigBuilder
-    Realm
-     */
     private static Object toValue(final String name, final String[] optionValues, final Class<?> type) {
         if (optionValues == null || optionValues.length == 0) {
             return null;

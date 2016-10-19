@@ -165,8 +165,12 @@ public class Microwave implements AutoCloseable {
     }
 
     public Microwave bake() {
+        return bake("");
+    }
+
+    public Microwave bake(final String ctx) {
         start();
-        return deployClasspath();
+        return deployClasspath(ctx);
     }
 
     public Microwave start() {
