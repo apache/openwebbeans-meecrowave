@@ -35,7 +35,7 @@
   <properties>
     <openwebbeans.version>1.7.0</openwebbeans.version>
     <tomcat.version>8.5.6</tomcat.version>
-    <cxf.version>3.1.8</cxf.version>
+    <cxf.version>3.1.9-SNAPSHOT</cxf.version>
     <johnzon.version>0.9.5</johnzon.version>
   </properties>
 

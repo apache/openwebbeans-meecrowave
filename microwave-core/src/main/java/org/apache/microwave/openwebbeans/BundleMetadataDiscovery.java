@@ -249,8 +249,6 @@ public class BundleMetadataDiscovery extends WebScannerService {
             included.add("org.apache.myfaces.cdi");
             // included.add("org.apache.myfaces.application.cdi");
             included.add("org.apache.myfaces.flow.cdi");
-            // the only actual bean we have, should be removed with cxf 3.1.9 upgrade
-            included.add("org.apache.microwave.cxf.BusInstance");
 
             delegateSkip = new OptimizedExclusionFilter(excluded);
             delegateAccept = new OptimizedExclusionFilter(included);
