@@ -24,54 +24,16 @@
             http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <parent>
-    <groupId>org.apache</groupId>
-    <artifactId>apache</artifactId>
-    <version>18</version>
-  </parent>
-
-  <groupId>org.apache.microwave</groupId>
-  <artifactId>microwave</artifactId>
-  <packaging>pom</packaging>
-  <version>0.0.1-SNAPSHOT</version>
-  <name>Microwave</name>
-  <description>A Microprofile server @ ASF</description>
-
-  <properties>
-    <junit.version>4.12</junit.version>
-  </properties>
-
-  <modules>
-    <module>microwave-core</module>
-    <module>microwave-maven-plugin</module>
-    <module>microwave-gradle-plugin</module>
-    <module>microwave-junit</module>
-  </modules>
+  <groupId>org.apache.microwave.test</groupId>
+  <artifactId>test</artifactId>
+  <version>0.1-SNAPSHOT</version>
 
   <build>
     <plugins>
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.5.1</version>
-        <configuration>
-          <source>1.8</source>
-          <target>1.8</target>
-        </configuration>
+        <groupId>org.apache.microwave</groupId>
+        <artifactId>microwave-maven-plugin</artifactId>
       </plugin>
     </plugins>
   </build>
-
-  <repositories>
-    <repository>
-      <id>asf-snapshot</id>
-      <url>https://repository.apache.org/content/repositories/snapshots/</url>
-      <releases>
-        <enabled>false</enabled>
-      </releases>
-      <snapshots>
-        <enabled>true</enabled>
-      </snapshots>
-    </repository>
-  </repositories>
 </project>

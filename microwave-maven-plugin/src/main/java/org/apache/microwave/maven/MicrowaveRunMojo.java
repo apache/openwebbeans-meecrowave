@@ -51,58 +51,58 @@ import static org.apache.maven.plugins.annotations.ResolutionScope.RUNTIME_PLUS_
 
 @Mojo(name = "run", requiresDependencyResolution = RUNTIME_PLUS_SYSTEM)
 public class MicrowaveRunMojo extends AbstractMojo {
-    @Parameter(name = "microwave.http", defaultValue = "8080")
+    @Parameter(property = "microwave.http", defaultValue = "8080")
     private int httpPort;
 
-    @Parameter(name = "microwave.https", defaultValue = "8443")
+    @Parameter(property = "microwave.https", defaultValue = "8443")
     private int httpsPort;
 
-    @Parameter(name = "microwave.stop", defaultValue = "8005")
+    @Parameter(property = "microwave.stop", defaultValue = "8005")
     private int stopPort;
 
-    @Parameter(name = "microwave.host", defaultValue = "localhost")
+    @Parameter(property = "microwave.host", defaultValue = "localhost")
     private String host;
 
-    @Parameter(name = "microwave.dir")
+    @Parameter(property = "microwave.dir")
     protected String dir;
 
-    @Parameter(name = "microwave.serverXml")
+    @Parameter(property = "microwave.serverXml")
     private File serverXml;
 
-    @Parameter(name = "microwave.keepServerXmlAsThis")
+    @Parameter(property = "microwave.keepServerXmlAsThis")
     private boolean keepServerXmlAsThis;
 
     @Parameter
     private Map<String, String> properties;
 
-    @Parameter(name = "microwave.quickSession", defaultValue = "true")
+    @Parameter(property = "microwave.quickSession", defaultValue = "true")
     private boolean quickSession;
 
-    @Parameter(name = "microwave.skipHttp")
+    @Parameter(property = "microwave.skipHttp")
     private boolean skipHttp;
 
-    @Parameter(name = "microwave.ssl")
+    @Parameter(property = "microwave.ssl")
     private boolean ssl;
 
-    @Parameter(name = "microwave.keystoreFile")
+    @Parameter(property = "microwave.keystoreFile")
     private String keystoreFile;
 
-    @Parameter(name = "microwave.keystorePass")
+    @Parameter(property = "microwave.keystorePass")
     private String keystorePass;
 
-    @Parameter(name = "microwave.keystoreType", defaultValue = "JKS")
+    @Parameter(property = "microwave.keystoreType", defaultValue = "JKS")
     private String keystoreType;
 
-    @Parameter(name = "microwave.clientAuth")
+    @Parameter(property = "microwave.clientAuth")
     private String clientAuth;
 
-    @Parameter(name = "microwave.keyAlias")
+    @Parameter(property = "microwave.keyAlias")
     private String keyAlias;
 
-    @Parameter(name = "microwave.sslProtocol")
+    @Parameter(property = "microwave.sslProtocol")
     private String sslProtocol;
 
-    @Parameter(name = "microwave.webXml")
+    @Parameter(property = "microwave.webXml")
     private String webXml;
 
     @Parameter
@@ -117,31 +117,31 @@ public class MicrowaveRunMojo extends AbstractMojo {
     @Parameter
     private Map<String, String> roles;
 
-    @Parameter(name = "microwave.http2")
+    @Parameter(property = "microwave.http2")
     private boolean http2;
 
-    @Parameter(name = "microwave.tempDir")
+    @Parameter(property = "microwave.tempDir")
     private String tempDir;
 
-    @Parameter(name = "microwave.webResourceCached", defaultValue = "true")
+    @Parameter(property = "microwave.webResourceCached", defaultValue = "true")
     private boolean webResourceCached;
 
-    @Parameter(name = "microwave.conf")
+    @Parameter(property = "microwave.conf")
     private String conf;
 
-    @Parameter(name = "microwave.deleteBaseOnStartup", defaultValue = "true")
+    @Parameter(property = "microwave.deleteBaseOnStartup", defaultValue = "true")
     private boolean deleteBaseOnStartup;
 
-    @Parameter(name = "microwave.jaxrsMapping", defaultValue = "/*")
+    @Parameter(property = "microwave.jaxrsMapping", defaultValue = "/*")
     private String jaxrsMapping;
 
-    @Parameter(name = "microwave.cdiConversation", defaultValue = "true")
+    @Parameter(property = "microwave.cdiConversation", defaultValue = "true")
     private boolean cdiConversation;
 
-    @Parameter(name = "microwave.skip")
+    @Parameter(property = "microwave.skip")
     private boolean skip;
 
-    @Parameter(name = "microwave.jaxrs-provider-setup", defaultValue = "true")
+    @Parameter(property = "microwave.jaxrs-provider-setup", defaultValue = "true")
     private boolean jaxrsProviderSetup;
 
     @Parameter
@@ -156,10 +156,10 @@ public class MicrowaveRunMojo extends AbstractMojo {
     @Parameter(defaultValue = "${project}", readonly = true, required = true)
     private MavenProject project;
 
-    @Parameter(name = "microwave.context", defaultValue = "")
+    @Parameter(property = "microwave.context", defaultValue = "")
     private String context;
 
-    @Parameter(name = "microwave.webapp")
+    @Parameter(property = "microwave.webapp")
     private File webapp;
 
     @Override
