@@ -54,7 +54,8 @@ public class CliTest {
                 Cli.main(new String[]{
                         "--context=app",
                         "--stop=" + stop,
-                        "--http=" + http
+                        "--http=" + http,
+                        "--tmp-dir=target/CliTest/simple"
                 });
             }
         };

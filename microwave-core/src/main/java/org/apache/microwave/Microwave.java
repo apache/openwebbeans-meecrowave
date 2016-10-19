@@ -33,6 +33,7 @@ import org.apache.catalina.Server;
 import org.apache.catalina.Service;
 import org.apache.catalina.connector.Connector;
 import org.apache.catalina.core.StandardContext;
+import org.apache.catalina.core.StandardHost;
 import org.apache.catalina.session.ManagerBase;
 import org.apache.catalina.session.StandardManager;
 import org.apache.catalina.startup.Catalina;
@@ -123,7 +124,7 @@ public class Microwave implements AutoCloseable {
             throw new IllegalArgumentException("Already deployed: '" + context + "'");
         }
 
-        final Context ctx = new StandardContext();
+        final StandardContext ctx = new StandardContext();
         ctx.setPath(context);
         ctx.setName(context);
         try {
@@ -185,7 +186,6 @@ public class Microwave implements AutoCloseable {
         } else {
             tomcat = new InternalTomcat();
         }
-        tomcat.getServer().setPort(configuration.stopPort);
 
         { // setup
             base = new File(getBaseDir());
@@ -223,6 +223,9 @@ public class Microwave implements AutoCloseable {
 
         final File conf = new File(base, "conf");
         final File webapps = new File(base, "webapps");
+
+        tomcat.setBaseDir(base.getAbsolutePath());
+        tomcat.setHostname(configuration.host);
 
         final boolean initialized;
         if (configuration.serverXml != null) {
@@ -266,15 +269,23 @@ public class Microwave implements AutoCloseable {
             tomcat.server(createServer(file.getAbsolutePath()));
             initialized = true;
         } else {
+            tomcat.getServer().setPort(configuration.stopPort);
             initialized = false;
         }
 
-        tomcat.setBaseDir(base.getAbsolutePath());
-        tomcat.setHostname(configuration.host);
         if (!initialized) {
-            tomcat.getHost().setAppBase(webapps.getAbsolutePath());
-            tomcat.getEngine().setDefaultHost(configuration.host);
             tomcat.setHostname(configuration.host);
+            tomcat.getEngine().setDefaultHost(configuration.host);
+            final StandardHost host = new StandardHost();
+            host.setName(configuration.host);
+            host.setAppBase(webapps.getAbsolutePath());
+            try {
+                host.setWorkDir(new File(base, "work").getCanonicalPath());
+            } catch (final IOException e) {
+                host.setWorkDir(new File(base, "work").getAbsolutePath());
+            }
+            tomcat.setHost(host);
+            tomcat.getEngine().addChild( host );
         }
 
         if (configuration.realm != null) {
