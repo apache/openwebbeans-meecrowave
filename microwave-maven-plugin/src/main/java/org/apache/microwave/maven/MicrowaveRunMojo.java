@@ -138,6 +138,9 @@ public class MicrowaveRunMojo extends AbstractMojo {
     @Parameter(name = "microwave.skip")
     private boolean skip;
 
+    @Parameter(name = "microwave.skip-jaspic-setup", defaultValue = "false")
+    public boolean skipJaspicProperty;
+
     @Parameter
     protected List<String> jsCustomizers;
 
