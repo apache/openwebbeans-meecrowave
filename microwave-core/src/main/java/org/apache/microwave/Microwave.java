@@ -66,7 +66,6 @@ import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.security.Security;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -184,9 +183,6 @@ public class Microwave implements AutoCloseable {
     }
 
     public Microwave start() {
-        if (!configuration.skipJaspicProperty) {
-            Security.setProperty("authconfigprovider.factory", "org.apache.catalina.authenticator.jaspic.AuthConfigFactoryImpl");
-        }
         if (configuration.quickSession) {
             tomcat = new TomcatWithFastSessionIDs();
         } else {
@@ -615,9 +611,6 @@ public class Microwave implements AutoCloseable {
         @CliOption(name = "jaxrs-provider-setup", description = "Should default JAX-RS provider be configured")
         private boolean jaxrsProviderSetup;
 
-        @CliOption(name = "jaspic-skip-override", description = "Should Tomcat jaspic AuthConfigFactory implementation not be forced (global for the JVM)")
-        public boolean skipJaspicProperty;
-
         public Builder() { // load defaults
             loadFrom("microwave.properties");
         }
@@ -872,14 +865,6 @@ public class Microwave implements AutoCloseable {
 
         public void setCdiConversation(final boolean cdiConversation) {
             this.cdiConversation = cdiConversation;
-        }
-
-        public boolean isSkipJaspicProperty() {
-            return skipJaspicProperty;
-        }
-
-        public void setSkipJaspicProperty(final boolean skipJaspicProperty) {
-            this.skipJaspicProperty = skipJaspicProperty;
         }
 
         public Builder randomHttpPort() {

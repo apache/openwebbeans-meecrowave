@@ -177,10 +177,6 @@ public class MicrowaveTask extends DefaultTask {
 
     @Input
     @Optional
-    private boolean skipJaspicProperty;
-
-    @Input
-    @Optional
     private List<File> modules;
 
     @Input

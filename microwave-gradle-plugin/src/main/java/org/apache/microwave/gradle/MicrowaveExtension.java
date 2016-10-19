@@ -58,8 +58,15 @@ public class MicrowaveExtension {
     private String jaxrsMapping;
     private boolean cdiConversation;
     private boolean skip;
-    private boolean skipJaspicProperty;
     private boolean jaxrsProviderSetup = true;
+
+    public boolean isJaxrsProviderSetup() {
+        return jaxrsProviderSetup;
+    }
+
+    public void setJaxrsProviderSetup(final boolean jaxrsProviderSetup) {
+        this.jaxrsProviderSetup = jaxrsProviderSetup;
+    }
 
     public String getContext() {
         return context;
@@ -323,13 +330,5 @@ public class MicrowaveExtension {
 
     public void setSkip(final boolean skip) {
         this.skip = skip;
-    }
-
-    public boolean isSkipJaspicProperty() {
-        return skipJaspicProperty;
-    }
-
-    public void setSkipJaspicProperty(final boolean skipJaspicProperty) {
-        this.skipJaspicProperty = skipJaspicProperty;
     }
 }
