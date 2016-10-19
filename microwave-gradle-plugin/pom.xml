@@ -22,38 +22,37 @@
          xsi:schemaLocation="
             http://maven.apache.org/POM/4.0.0
             http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <parent>
+    <artifactId>microwave</artifactId>
+    <groupId>org.apache.microwave</groupId>
+    <version>0.0.1-SNAPSHOT</version>
+  </parent>
   <modelVersion>4.0.0</modelVersion>
 
-  <parent>
-    <groupId>org.apache</groupId>
-    <artifactId>apache</artifactId>
-    <version>18</version>
-  </parent>
+  <artifactId>microwave-gradle-plugin</artifactId>
+  <name>Microwave :: Gradle</name>
 
-  <groupId>org.apache.microwave</groupId>
-  <artifactId>microwave</artifactId>
-  <packaging>pom</packaging>
-  <version>0.0.1-SNAPSHOT</version>
-  <name>Microwave</name>
-  <description>A Microprofile server @ ASF</description>
+  <dependencies>
+    <dependency>
+      <groupId>org.gradle</groupId>
+      <artifactId>gradle-core</artifactId>
+      <version>3.0</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.codehaus.groovy</groupId>
+      <artifactId>groovy-all</artifactId>
+      <version>2.4.3</version>
+      <scope>provided</scope>
+    </dependency>
 
-  <modules>
-    <module>microwave-core</module>
-    <module>microwave-maven-plugin</module>
-    <module>microwave-gradle-plugin</module>
-  </modules>
+    <!-- you surely don't want to do that, check the code ;) -->
+  </dependencies>
 
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.5.1</version>
-        <configuration>
-          <source>1.8</source>
-          <target>1.8</target>
-        </configuration>
-      </plugin>
-    </plugins>
-  </build>
+  <repositories>
+    <repository>
+      <id>gradle-libs-releases-local</id>
+      <url>http://repo.gradle.org/gradle/libs-releases-local/</url>
+    </repository>
+  </repositories>
 </project>

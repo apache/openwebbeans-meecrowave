@@ -39,11 +39,14 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 
+import static java.util.Optional.ofNullable;
+import static java.util.stream.Collectors.toList;
 import static org.apache.maven.plugins.annotations.ResolutionScope.RUNTIME_PLUS_SYSTEM;
 
 @Mojo(name = "run", requiresDependencyResolution = RUNTIME_PLUS_SYSTEM)
@@ -139,16 +142,25 @@ public class MicrowaveRunMojo extends AbstractMojo {
     private boolean skip;
 
     @Parameter(name = "microwave.skip-jaspic-setup", defaultValue = "false")
-    public boolean skipJaspicProperty;
+    private boolean skipJaspicProperty;
 
     @Parameter
-    protected List<String> jsCustomizers;
+    private List<String> jsCustomizers;
 
     @Parameter
     private List<String> applicationScopes;
 
+    @Parameter
+    private List<File> modules;
+
     @Parameter(defaultValue = "${project}", readonly = true, required = true)
     private MavenProject project;
+
+    @Parameter(name = "microwave.context", defaultValue = "")
+    private String context;
+
+    @Parameter(name = "microwave.webapp")
+    private File webapp;
 
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
@@ -167,7 +179,14 @@ public class MicrowaveRunMojo extends AbstractMojo {
                 protected void beforeStart() {
                     scriptCustomization(jsCustomizers, "js", base.getAbsolutePath());
                 }
-            }.bake()) {
+            }) {
+                microwave.start();
+                final String fixedContext = ofNullable(context).orElse("");
+                if (webapp == null) {
+                    microwave.deployClasspath(fixedContext);
+                } else {
+                    microwave.deployWebapp(fixedContext, webapp);
+                }
                 new Scanner(System.in).next();
             }
         } finally {
@@ -196,18 +215,24 @@ public class MicrowaveRunMojo extends AbstractMojo {
 
     private ClassLoader createClassLoader(final ClassLoader parent) {
         final List<URL> urls = new ArrayList<>();
-        for (final Artifact artifact : project.getArtifacts()) {
-            final String scope = artifact.getScope();
-            if ((applicationScopes == null && !(Artifact.SCOPE_COMPILE.equals(scope) || Artifact.SCOPE_RUNTIME.equals(scope)))
-                    || (applicationScopes != null && !applicationScopes.contains(scope))) {
-                continue;
-            }
+        urls.addAll(project.getArtifacts().stream()
+                .filter(a -> !((applicationScopes == null && !(Artifact.SCOPE_COMPILE.equals(a.getScope()) || Artifact.SCOPE_RUNTIME.equals(a.getScope())))
+                        || (applicationScopes != null && !applicationScopes.contains(a.getScope()))))
+                .map(f -> {
+                    try {
+                        return f.getFile().toURI().toURL();
+                    } catch (final MalformedURLException e) {
+                        throw new IllegalArgumentException(e);
+                    }
+                })
+                .collect(toList()));
+        urls.addAll(ofNullable(modules).orElse(Collections.emptyList()).stream().map(f -> {
             try {
-                urls.add(artifact.getFile().toURI().toURL());
+                return f.toURI().toURL();
             } catch (final MalformedURLException e) {
-                getLog().warn("can't use artifact " + artifact.toString());
+                throw new IllegalArgumentException(e);
             }
-        }
+        }).collect(toList()));
         return urls.isEmpty() ? parent : new URLClassLoader(urls.toArray(new URL[urls.size()]), parent) {
             @Override
             public boolean equals(final Object obj) {
