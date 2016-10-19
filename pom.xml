@@ -46,6 +46,7 @@
     <module>microwave-maven-plugin</module>
     <module>microwave-gradle-plugin</module>
     <module>microwave-junit</module>
+    <module>microwave-arquillian</module>
   </modules>
 
   <build>

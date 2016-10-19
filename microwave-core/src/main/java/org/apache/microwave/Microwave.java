@@ -34,6 +34,7 @@ import org.apache.catalina.core.StandardHost;
 import org.apache.catalina.session.ManagerBase;
 import org.apache.catalina.session.StandardManager;
 import org.apache.catalina.startup.Catalina;
+import org.apache.catalina.startup.ContextConfig;
 import org.apache.catalina.startup.Tomcat;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.text.StrLookup;
@@ -84,7 +85,6 @@ import static java.util.Optional.ofNullable;
 public class Microwave implements AutoCloseable {
     private final Builder configuration;
     protected File base;
-
     protected InternalTomcat tomcat;
 
     // we can undeploy webapps with that later
@@ -105,6 +105,11 @@ public class Microwave implements AutoCloseable {
 
     public Tomcat getTomcat() {
         return tomcat;
+    }
+
+    public void undeploy(final String root) {
+        final Context context = this.contexts.remove(root);
+        tomcat.getHost().removeChild(context);
     }
 
     public Microwave deployClasspath() {
@@ -139,6 +144,7 @@ public class Microwave implements AutoCloseable {
             ctx.setDocBase(warOrDir.getAbsolutePath());
         }
         ctx.addLifecycleListener(new Tomcat.FixContextListener());
+        ctx.addLifecycleListener(new ContextConfig());
         ctx.addLifecycleListener(event -> {
             switch (event.getType()) {
                 case Lifecycle.AFTER_START_EVENT:
@@ -312,6 +318,7 @@ public class Microwave implements AutoCloseable {
             final StandardHost host = new StandardHost();
             host.setName(configuration.host);
             host.setAppBase(webapps.getAbsolutePath());
+            host.setUnpackWARs(true); // forced for now cause OWB doesn't support war:file:// urls
             try {
                 host.setWorkDir(new File(base, "work").getCanonicalPath());
             } catch (final IOException e) {
