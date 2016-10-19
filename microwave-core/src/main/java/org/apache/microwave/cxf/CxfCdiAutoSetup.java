@@ -44,7 +44,7 @@ public class CxfCdiAutoSetup implements ServletContainerInitializer {
             @Override
             protected void loadBus(final ServletConfig servletConfig) {
                 super.loadBus(servletConfig);
-                if (builder.isJaxrsProviderSetup()) {
+                if (!builder.isJaxrsProviderSetup()) {
                     return;
                 }
 

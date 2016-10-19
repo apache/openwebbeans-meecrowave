@@ -609,7 +609,7 @@ public class Microwave implements AutoCloseable {
         private boolean cdiConversation;
 
         @CliOption(name = "jaxrs-provider-setup", description = "Should default JAX-RS provider be configured")
-        private boolean jaxrsProviderSetup;
+        private boolean jaxrsProviderSetup = true;
 
         public Builder() { // load defaults
             loadFrom("microwave.properties");

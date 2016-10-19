@@ -32,6 +32,7 @@ import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 import javax.script.SimpleBindings;
 import java.io.File;
+import java.io.IOException;
 import java.io.StringReader;
 import java.lang.reflect.Field;
 import java.net.MalformedURLException;
@@ -150,7 +151,7 @@ public class MicrowaveRunMojo extends AbstractMojo {
     @Parameter
     private List<String> applicationScopes;
 
-    @Parameter
+    @Parameter(defaultValue = "${project.build.outputDirectory}")
     private List<File> modules;
 
     @Parameter(defaultValue = "${project}", readonly = true, required = true)
@@ -171,7 +172,8 @@ public class MicrowaveRunMojo extends AbstractMojo {
 
         final Thread thread = Thread.currentThread();
         final ClassLoader loader = thread.getContextClassLoader();
-        thread.setContextClassLoader(createClassLoader(loader));
+        final ClassLoader appLoader = createClassLoader(loader);
+        thread.setContextClassLoader(appLoader);
         try {
             final Microwave.Builder builder = getConfig();
             try (final Microwave microwave = new Microwave(builder) {
@@ -190,6 +192,13 @@ public class MicrowaveRunMojo extends AbstractMojo {
                 new Scanner(System.in).next();
             }
         } finally {
+            if (appLoader != loader) {
+                try {
+                    URLClassLoader.class.cast(appLoader).close();
+                } catch (final IOException e) {
+                    getLog().warn(e.getMessage(), e);
+                }
+            }
             thread.setContextClassLoader(loader);
         }
     }
