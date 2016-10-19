@@ -20,8 +20,8 @@ package org.apache.microwave;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.cxf.helpers.FileUtils;
-import org.apache.microwave.app.Endpoint;
-import org.apache.microwave.app.RsApp;
+import org.superbiz.app.Endpoint;
+import org.superbiz.app.RsApp;
 import org.junit.Test;
 
 import java.io.File;

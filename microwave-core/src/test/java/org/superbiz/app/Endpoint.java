@@ -16,13 +16,38 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.microwave.app;
+package org.superbiz.app;
 
-import javax.enterprise.context.Dependent;
-import javax.ws.rs.ApplicationPath;
-import javax.ws.rs.core.Application;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-@Dependent
-@ApplicationPath("api")
-public class RsApp extends Application {
+import javax.enterprise.context.ApplicationScoped;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
+
+@Path("test")
+@ApplicationScoped
+public class Endpoint {
+    @GET
+    @Produces(MediaType.TEXT_PLAIN)
+    public String simple() {
+        return "simple";
+    }
+
+    @GET
+    @Path("json")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Simple json() {
+        return new Simple("test");
+    }
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class Simple {
+        private String name;
+    }
 }
