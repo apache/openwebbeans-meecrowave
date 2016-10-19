@@ -44,11 +44,12 @@ public class MicrowavePlugin implements Plugin<Project> {
             actionProject.getRepositories().mavenCentral();
         });
 
-        final Configuration configuration = project.getConfigurations().getByName(NAME);
+        final Configuration configuration = project.getConfigurations().maybeCreate(NAME);
         configuration.getIncoming().beforeResolve(resolvableDependencies -> {
             String version;
             try {
-                try (final InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream("META-INF/maven/org.apache.microwave/microwave-core/pom.properties")) {
+                final String resource = "META-INF/maven/org.apache.microwave/microwave-gradle-plugin/pom.properties";
+                try (final InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream(resource)) {
                     final Properties p = new Properties();
                     p.load(is);
                     version = p.getProperty("version");
@@ -59,7 +60,7 @@ public class MicrowavePlugin implements Plugin<Project> {
 
             final DependencyHandler dependencyHandler = project.getDependencies();
             final DependencySet dependencies = configuration.getDependencies();
-            dependencies.add(dependencyHandler.create("org.apache.microwave:microwave:" + version));
+            dependencies.add(dependencyHandler.create("org.apache.microwave:microwave-core:" + version));
         });
 
         project.task(new HashMap<String, Object>() {{

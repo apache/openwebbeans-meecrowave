@@ -32,11 +32,15 @@
   <artifactId>microwave-gradle-plugin</artifactId>
   <name>Microwave :: Gradle</name>
 
+  <properties>
+    <gradle.version>3.1</gradle.version>
+  </properties>
+
   <dependencies>
     <dependency>
       <groupId>org.gradle</groupId>
       <artifactId>gradle-core</artifactId>
-      <version>3.0</version>
+      <version>${gradle.version}</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
@@ -45,7 +49,6 @@
       <version>2.4.3</version>
       <scope>provided</scope>
     </dependency>
-
     <!-- you surely don't want to do that, check the code ;) -->
   </dependencies>
 

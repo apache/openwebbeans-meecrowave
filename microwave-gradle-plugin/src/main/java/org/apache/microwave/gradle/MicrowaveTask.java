@@ -252,9 +252,9 @@ public class MicrowaveTask extends DefaultTask {
             containerClass.getMethod("start").invoke(container);
             final String fixedContext = ofNullable(context).orElse("");
             if (webapp == null) {
-                configClass.getMethod("deployClasspath", String.class).invoke(container, fixedContext);
+                containerClass.getMethod("deployClasspath", String.class).invoke(container, fixedContext);
             } else {
-                configClass.getMethod("deployWebapp", String.class, File.class).invoke(container, fixedContext, webapp);
+                containerClass.getMethod("deployWebapp", String.class, File.class).invoke(container, fixedContext, webapp);
             }
 
             getLogger().info("Microwave started on " + configClass.getMethod("getHost").invoke(config) + ":" + configClass.getMethod("getHttpPort").invoke(config));
@@ -297,7 +297,7 @@ public class MicrowaveTask extends DefaultTask {
 
     private Object getConfig(final Class<?> configClass) throws Exception {
         final Object config = configClass.newInstance();
-        for (final Field field : MicrowaveExtension.class.getDeclaredFields()) {
+        for (final Field field : MicrowaveTask.class.getDeclaredFields()) {
             try {
                 final Field configField = configClass.getDeclaredField(field.getName());
                 if (!configField.getType().equals(field.getType())) {
@@ -319,7 +319,7 @@ public class MicrowaveTask extends DefaultTask {
             } catch (final NoSuchFieldException nsfe) {
                 // ignored
             } catch (final Exception e) {
-                getLogger().warn("can't initialize attribute " + field.getName());
+                getLogger().warn("can't initialize attribute " + field.getName(), e);
             }
         }
 
@@ -412,7 +412,7 @@ public class MicrowaveTask extends DefaultTask {
 
         // defaults
         if (classpath == null) {
-            classpath.add(project.getConfigurations().getByName(MicrowavePlugin.NAME).fileCollection());
+            classpath = project.getConfigurations().getByName(MicrowavePlugin.NAME);
         }
 
         if (dir == null) {
@@ -437,7 +437,7 @@ public class MicrowaveTask extends DefaultTask {
                             f.set(this, val);
                         }
                     } catch (final IllegalAccessException | NoSuchFieldException e) {
-                        getLogger().warn("No field " + f.getName() + " in " + extension, e);
+                        getLogger().debug("No field " + f.getName() + " in " + extension, e);
                     }
                 }
             }
