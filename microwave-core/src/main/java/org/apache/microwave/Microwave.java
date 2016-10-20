@@ -113,36 +113,48 @@ public class Microwave implements AutoCloseable {
         tomcat.getHost().removeChild(context);
     }
 
+    public Microwave deployClasspath(final DeploymentMeta meta) {
+        final File dir = new File(configuration.tempDir, "classpath/fake-" + meta.context.replace("/", ""));
+        FileUtils.mkDir(dir);
+        final Consumer<Context> builtInCustomizer = c -> c.setLoader(new ProvidedLoader(Thread.currentThread().getContextClassLoader()));
+        return deployWebapp(new DeploymentMeta(meta.context, ofNullable(meta.consumer).map(c -> (Consumer<Context>) ctx -> {
+            builtInCustomizer.accept(ctx);
+            c.accept(ctx);
+        }).orElse(builtInCustomizer)), dir);
+    }
+
+    // shortcut
     public Microwave deployClasspath() {
         return deployClasspath("");
     }
 
+    // shortcut (used by plugins)
     public Microwave deployClasspath(final String context) {
-        final File dir = new File(configuration.tempDir, "classpath/fake-" + context.replace("/", ""));
-        FileUtils.mkDir(dir);
-        return deployWebapp(context, dir, c -> c.setLoader(new ProvidedLoader(Thread.currentThread().getContextClassLoader())));
+        return deployClasspath(new DeploymentMeta(context, null));
     }
 
+    // shortcut
     public Microwave deployWebapp(final File warOrDir) {
-        return deployWebapp("", warOrDir, null);
+        return deployWebapp("", warOrDir);
     }
 
+    // shortcut (used by plugins)
     public Microwave deployWebapp(final String context, final File warOrDir) {
-        return deployWebapp(context, warOrDir, null);
+        return deployWebapp(new DeploymentMeta(context, null), warOrDir);
     }
 
-    public Microwave deployWebapp(final String context, final File warOrDir, final Consumer<Context> customizer) {
-        if (contexts.containsKey(context)) {
-            throw new IllegalArgumentException("Already deployed: '" + context + "'");
+    public Microwave deployWebapp(final DeploymentMeta meta, final File warOrDir) {
+        if (contexts.containsKey(meta.context)) {
+            throw new IllegalArgumentException("Already deployed: '" + meta.context + "'");
         }
         // always nice to see the deployment with something else than internals
         new LogFacade(Microwave.class.getName())
                 .info("--------------- " + configuration.getActiveProtocol() + "://"
-                        + tomcat.getHost().getName() + ':' + configuration.getActivePort() + context);
+                        + tomcat.getHost().getName() + ':' + configuration.getActivePort() + meta.context);
 
         final StandardContext ctx = new StandardContext();
-        ctx.setPath(context);
-        ctx.setName(context);
+        ctx.setPath(meta.context);
+        ctx.setName(meta.context);
         try {
             ctx.setDocBase(warOrDir.getCanonicalPath());
         } catch (final IOException e) {
@@ -181,10 +193,10 @@ public class Microwave implements AutoCloseable {
             }
         }, emptySet());
 
-        ofNullable(customizer).ifPresent(c -> c.accept(ctx));
+        ofNullable(meta.consumer).ifPresent(c -> c.accept(ctx));
 
         tomcat.getHost().addChild(ctx);
-        contexts.put(context, ctx);
+        contexts.put(meta.context, ctx);
         return this;
     }
 
@@ -1548,4 +1560,14 @@ public class Microwave implements AutoCloseable {
         }
     }
 
+    // there to be able to stack config later on without breaking all methods
+    public static class DeploymentMeta {
+        private final String context;
+        private final Consumer<Context> consumer;
+
+        public DeploymentMeta(final String context, final Consumer<Context> consumer) {
+            this.context = context;
+            this.consumer = consumer;
+        }
+    }
 }
