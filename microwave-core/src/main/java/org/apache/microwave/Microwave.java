@@ -93,7 +93,7 @@ public class Microwave implements AutoCloseable {
     protected InternalTomcat tomcat;
 
     // we can undeploy webapps with that later
-    private final Map<String, Context> contexts = new HashMap<>();
+    private final Map<String, Runnable> contexts = new HashMap<>();
     private Runnable postTask;
 
     public Microwave(final Builder builder) {
@@ -113,22 +113,15 @@ public class Microwave implements AutoCloseable {
     }
 
     public void undeploy(final String root) {
-        final Context context = this.contexts.remove(root);
-        tomcat.getHost().removeChild(context);
+        ofNullable(this.contexts.remove(root)).ifPresent(Runnable::run);
     }
 
     public Microwave deployClasspath(final DeploymentMeta meta) {
-        final File dir = new File(configuration.tempDir, "classpath/fake-" + meta.context.replace("/", ""));
-        try {
-            FileUtils.forceMkdir(dir);
-        } catch (final IOException e) {
-            throw new IllegalArgumentException(e);
-        }
         final Consumer<Context> builtInCustomizer = c -> c.setLoader(new ProvidedLoader(Thread.currentThread().getContextClassLoader()));
-        return deployWebapp(new DeploymentMeta(meta.context, ofNullable(meta.consumer).map(c -> (Consumer<Context>) ctx -> {
+        return deployWebapp(new DeploymentMeta(meta.context, meta.docBase, ofNullable(meta.consumer).map(c -> (Consumer<Context>) ctx -> {
             builtInCustomizer.accept(ctx);
             c.accept(ctx);
-        }).orElse(builtInCustomizer)), dir);
+        }).orElse(builtInCustomizer)));
     }
 
     // shortcut
@@ -138,7 +131,7 @@ public class Microwave implements AutoCloseable {
 
     // shortcut (used by plugins)
     public Microwave deployClasspath(final String context) {
-        return deployClasspath(new DeploymentMeta(context, null));
+        return deployClasspath(new DeploymentMeta(context, null, null));
     }
 
     // shortcut
@@ -148,10 +141,10 @@ public class Microwave implements AutoCloseable {
 
     // shortcut (used by plugins)
     public Microwave deployWebapp(final String context, final File warOrDir) {
-        return deployWebapp(new DeploymentMeta(context, null), warOrDir);
+        return deployWebapp(new DeploymentMeta(context, warOrDir, null));
     }
 
-    public Microwave deployWebapp(final DeploymentMeta meta, final File warOrDir) {
+    public Microwave deployWebapp(final DeploymentMeta meta) {
         if (contexts.containsKey(meta.context)) {
             throw new IllegalArgumentException("Already deployed: '" + meta.context + "'");
         }
@@ -160,15 +153,26 @@ public class Microwave implements AutoCloseable {
                 .info("--------------- " + configuration.getActiveProtocol() + "://"
                         + tomcat.getHost().getName() + ':' + configuration.getActivePort() + meta.context);
 
+
+        final File dir = ofNullable(meta.docBase).orElseGet(() -> {
+            final File d = new File(configuration.tempDir, "classpath/fake-" + meta.context.replace("/", ""));
+            try {
+                FileUtils.forceMkdir(d);
+            } catch (final IOException e) {
+                throw new IllegalArgumentException(e);
+            }
+            return d;
+        });
+
         final StandardContext ctx = new StandardContext();
         ctx.setPath(meta.context);
         ctx.setName(meta.context);
         ctx.setJarScanner(new OWBJarScanner());
         ctx.setInstanceManager(new CDIInstanceManager());
         try {
-            ctx.setDocBase(warOrDir.getCanonicalPath());
+            ctx.setDocBase(dir.getCanonicalPath());
         } catch (final IOException e) {
-            ctx.setDocBase(warOrDir.getAbsolutePath());
+            ctx.setDocBase(dir.getAbsolutePath());
         }
         ctx.addLifecycleListener(new Tomcat.FixContextListener());
         ctx.addLifecycleListener(new MicrowaveContextConfig(configuration));
@@ -207,7 +211,20 @@ public class Microwave implements AutoCloseable {
         ofNullable(meta.consumer).ifPresent(c -> c.accept(ctx));
 
         tomcat.getHost().addChild(ctx);
-        contexts.put(meta.context, ctx);
+        contexts.put(meta.context, () -> {
+            try {
+                tomcat.getHost().removeChild(ctx);
+            } finally {
+                if (dir != meta.docBase) {
+                    try {
+                        FileUtils.deleteDirectory(dir);
+                    } catch (final IOException e) {
+                        // no-op
+                    }
+                }
+            }
+
+        });
         return this;
     }
 
@@ -450,17 +467,21 @@ public class Microwave implements AutoCloseable {
         }
         beforeStop();
         try {
-            tomcat.stop();
-            tomcat.destroy();
-        } catch (final LifecycleException e) {
-            throw new IllegalStateException(e);
+            contexts.values().forEach(Runnable::run);
         } finally {
-            ofNullable(postTask).ifPresent(Runnable::run);
-            postTask = null;
             try {
-                FileUtils.deleteDirectory(base);
-            } catch (final IOException e) {
-                // no-op
+                tomcat.stop();
+                tomcat.destroy();
+            } catch (final LifecycleException e) {
+                throw new IllegalStateException(e);
+            } finally {
+                ofNullable(postTask).ifPresent(Runnable::run);
+                postTask = null;
+                try {
+                    FileUtils.deleteDirectory(base);
+                } catch (final IOException e) {
+                    // no-op
+                }
             }
         }
     }
@@ -1178,6 +1199,10 @@ public class Microwave implements AutoCloseable {
             if (tomcatScanning != null) {
                 this.tomcatScanning = Boolean.parseBoolean(tomcatScanning);
             }
+            final String tomcatAutoSetup = config.getProperty("tomcatAutoSetup");
+            if (tomcatAutoSetup != null) {
+                this.tomcatAutoSetup = Boolean.parseBoolean(tomcatAutoSetup);
+            }
             for (final String prop : config.stringPropertyNames()) {
                 if (prop.startsWith("properties.")) {
                     property(prop.substring("properties.".length()), config.getProperty(prop));
@@ -1585,10 +1610,12 @@ public class Microwave implements AutoCloseable {
     // there to be able to stack config later on without breaking all methods
     public static class DeploymentMeta {
         private final String context;
+        private final File docBase;
         private final Consumer<Context> consumer;
 
-        public DeploymentMeta(final String context, final Consumer<Context> consumer) {
+        public DeploymentMeta(final String context, final File docBase, final Consumer<Context> consumer) {
             this.context = context;
+            this.docBase = docBase;
             this.consumer = consumer;
         }
     }
