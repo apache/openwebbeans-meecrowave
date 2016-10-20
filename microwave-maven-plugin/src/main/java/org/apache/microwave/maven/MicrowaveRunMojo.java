@@ -76,8 +76,14 @@ public class MicrowaveRunMojo extends AbstractMojo {
     @Parameter
     private Map<String, String> properties;
 
+    @Parameter
+    private Map<String, String> cxfServletParams;
+
     @Parameter(property = "microwave.quickSession", defaultValue = "true")
     private boolean quickSession;
+
+    @Parameter(property = "microwave.tomcatScanning", defaultValue = "true")
+    private boolean tomcatScanning;
 
     @Parameter(property = "microwave.skipHttp")
     private boolean skipHttp;

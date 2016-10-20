@@ -69,7 +69,7 @@ public class MicrowaveTask extends DefaultTask {
 
     @Input
     @Optional
-    protected String dir;
+    private String dir;
 
     @Input
     @Optional
@@ -141,6 +141,10 @@ public class MicrowaveTask extends DefaultTask {
 
     @Input
     @Optional
+    private Map<String, String> cxfServletParams;
+
+    @Input
+    @Optional
     private boolean http2;
 
     @Input
@@ -178,6 +182,10 @@ public class MicrowaveTask extends DefaultTask {
     @Input
     @Optional
     private boolean skip;
+
+    @Input
+    @Optional
+    private boolean tomcatScanning = true;
 
     @Input
     @Optional
@@ -448,4 +456,323 @@ public class MicrowaveTask extends DefaultTask {
         }
     }
 
+    public Configuration getClasspath() {
+        return classpath;
+    }
+
+    public void setClasspath(final Configuration classpath) {
+        this.classpath = classpath;
+    }
+
+    public int getHttpPort() {
+        return httpPort;
+    }
+
+    public void setHttpPort(final int httpPort) {
+        this.httpPort = httpPort;
+    }
+
+    public int getHttpsPort() {
+        return httpsPort;
+    }
+
+    public void setHttpsPort(final int httpsPort) {
+        this.httpsPort = httpsPort;
+    }
+
+    public int getStopPort() {
+        return stopPort;
+    }
+
+    public void setStopPort(final int stopPort) {
+        this.stopPort = stopPort;
+    }
+
+    public String getHost() {
+        return host;
+    }
+
+    public void setHost(final String host) {
+        this.host = host;
+    }
+
+    public String getDir() {
+        return dir;
+    }
+
+    public void setDir(final String dir) {
+        this.dir = dir;
+    }
+
+    public File getServerXml() {
+        return serverXml;
+    }
+
+    public void setServerXml(final File serverXml) {
+        this.serverXml = serverXml;
+    }
+
+    public boolean isKeepServerXmlAsThis() {
+        return keepServerXmlAsThis;
+    }
+
+    public void setKeepServerXmlAsThis(final boolean keepServerXmlAsThis) {
+        this.keepServerXmlAsThis = keepServerXmlAsThis;
+    }
+
+    public Map<String, String> getProperties() {
+        return properties;
+    }
+
+    public void setProperties(final Map<String, String> properties) {
+        this.properties = properties;
+    }
+
+    public boolean isQuickSession() {
+        return quickSession;
+    }
+
+    public void setQuickSession(final boolean quickSession) {
+        this.quickSession = quickSession;
+    }
+
+    public boolean isSkipHttp() {
+        return skipHttp;
+    }
+
+    public void setSkipHttp(final boolean skipHttp) {
+        this.skipHttp = skipHttp;
+    }
+
+    public boolean isSsl() {
+        return ssl;
+    }
+
+    public void setSsl(final boolean ssl) {
+        this.ssl = ssl;
+    }
+
+    public String getKeystoreFile() {
+        return keystoreFile;
+    }
+
+    public void setKeystoreFile(final String keystoreFile) {
+        this.keystoreFile = keystoreFile;
+    }
+
+    public String getKeystorePass() {
+        return keystorePass;
+    }
+
+    public void setKeystorePass(final String keystorePass) {
+        this.keystorePass = keystorePass;
+    }
+
+    public String getKeystoreType() {
+        return keystoreType;
+    }
+
+    public void setKeystoreType(final String keystoreType) {
+        this.keystoreType = keystoreType;
+    }
+
+    public String getClientAuth() {
+        return clientAuth;
+    }
+
+    public void setClientAuth(final String clientAuth) {
+        this.clientAuth = clientAuth;
+    }
+
+    public String getKeyAlias() {
+        return keyAlias;
+    }
+
+    public void setKeyAlias(final String keyAlias) {
+        this.keyAlias = keyAlias;
+    }
+
+    public String getSslProtocol() {
+        return sslProtocol;
+    }
+
+    public void setSslProtocol(final String sslProtocol) {
+        this.sslProtocol = sslProtocol;
+    }
+
+    public String getWebXml() {
+        return webXml;
+    }
+
+    public void setWebXml(final String webXml) {
+        this.webXml = webXml;
+    }
+
+    public String getLoginConfig() {
+        return loginConfig;
+    }
+
+    public void setLoginConfig(final String loginConfig) {
+        this.loginConfig = loginConfig;
+    }
+
+    public Collection<String> getSecurityConstraints() {
+        return securityConstraints;
+    }
+
+    public void setSecurityConstraints(final Collection<String> securityConstraints) {
+        this.securityConstraints = securityConstraints;
+    }
+
+    public Map<String, String> getUsers() {
+        return users;
+    }
+
+    public void setUsers(final Map<String, String> users) {
+        this.users = users;
+    }
+
+    public Map<String, String> getRoles() {
+        return roles;
+    }
+
+    public void setRoles(final Map<String, String> roles) {
+        this.roles = roles;
+    }
+
+    public Map<String, String> getCxfServletParams() {
+        return cxfServletParams;
+    }
+
+    public void setCxfServletParams(final Map<String, String> cxfServletParams) {
+        this.cxfServletParams = cxfServletParams;
+    }
+
+    public boolean isHttp2() {
+        return http2;
+    }
+
+    public void setHttp2(final boolean http2) {
+        this.http2 = http2;
+    }
+
+    public String getTempDir() {
+        return tempDir;
+    }
+
+    public void setTempDir(final String tempDir) {
+        this.tempDir = tempDir;
+    }
+
+    public boolean isWebResourceCached() {
+        return webResourceCached;
+    }
+
+    public void setWebResourceCached(final boolean webResourceCached) {
+        this.webResourceCached = webResourceCached;
+    }
+
+    public String getConf() {
+        return conf;
+    }
+
+    public void setConf(final String conf) {
+        this.conf = conf;
+    }
+
+    public boolean isDeleteBaseOnStartup() {
+        return deleteBaseOnStartup;
+    }
+
+    public void setDeleteBaseOnStartup(final boolean deleteBaseOnStartup) {
+        this.deleteBaseOnStartup = deleteBaseOnStartup;
+    }
+
+    public String getJaxrsMapping() {
+        return jaxrsMapping;
+    }
+
+    public void setJaxrsMapping(final String jaxrsMapping) {
+        this.jaxrsMapping = jaxrsMapping;
+    }
+
+    public boolean isJaxrsProviderSetup() {
+        return jaxrsProviderSetup;
+    }
+
+    public void setJaxrsProviderSetup(final boolean jaxrsProviderSetup) {
+        this.jaxrsProviderSetup = jaxrsProviderSetup;
+    }
+
+    public boolean isLoggingGlobalSetup() {
+        return loggingGlobalSetup;
+    }
+
+    public void setLoggingGlobalSetup(final boolean loggingGlobalSetup) {
+        this.loggingGlobalSetup = loggingGlobalSetup;
+    }
+
+    public boolean isCdiConversation() {
+        return cdiConversation;
+    }
+
+    public void setCdiConversation(final boolean cdiConversation) {
+        this.cdiConversation = cdiConversation;
+    }
+
+    public boolean isSkip() {
+        return skip;
+    }
+
+    public void setSkip(final boolean skip) {
+        this.skip = skip;
+    }
+
+    public boolean isTomcatScanning() {
+        return tomcatScanning;
+    }
+
+    public void setTomcatScanning(final boolean tomcatScanning) {
+        this.tomcatScanning = tomcatScanning;
+    }
+
+    public List<File> getModules() {
+        return modules;
+    }
+
+    public void setModules(final List<File> modules) {
+        this.modules = modules;
+    }
+
+    public Collection<String> getApplicationScopes() {
+        return applicationScopes;
+    }
+
+    public void setApplicationScopes(final Collection<String> applicationScopes) {
+        this.applicationScopes = applicationScopes;
+    }
+
+    public Collection<String> getClassloaderFilteredPackages() {
+        return classloaderFilteredPackages;
+    }
+
+    public void setClassloaderFilteredPackages(final Collection<String> classloaderFilteredPackages) {
+        this.classloaderFilteredPackages = classloaderFilteredPackages;
+    }
+
+    public String getContext() {
+        return context;
+    }
+
+    public void setContext(final String context) {
+        this.context = context;
+    }
+
+    public File getWebapp() {
+        return webapp;
+    }
+
+    public void setWebapp(final File webapp) {
+        this.webapp = webapp;
+    }
 }

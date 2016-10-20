@@ -32,6 +32,10 @@ import java.util.List;
 import java.util.Set;
 
 public class BundleMetadataDiscovery extends WebScannerService {
+    public OwbAnnotationFinder getFinder() {
+        return OwbAnnotationFinder.class.cast(initFinder());
+    }
+
     @Override
     protected AnnotationFinder initFinder() {
         if (finder != null) {

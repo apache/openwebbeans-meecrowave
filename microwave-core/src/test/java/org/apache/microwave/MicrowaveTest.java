@@ -51,9 +51,23 @@ public class MicrowaveTest {
                 fail();
             }
         });
+        Stream.of("OtherEndpoint", "OtherFilter").forEach(name -> { // from classpath but not classloader to test in webapp deployment
+            final String target = "org/superbiz/app/" + name + ".class";
+            File targetFile = new File(root, "WEB-INF/classes/" + target);
+            FileUtils.mkDir(targetFile.getParentFile());
+            try (final InputStream from = Thread.currentThread().getContextClassLoader().getResourceAsStream("org/superbiz/app-res/" + name + ".class");
+                 final OutputStream to = new FileOutputStream(targetFile)) {
+                IOUtils.copy(from, to);
+            } catch (final IOException e) {
+                fail();
+            }
+        });
         try (final Microwave microwave = new Microwave(new Microwave.Builder().randomHttpPort()).start()) {
             microwave.deployWebapp("", root);
             assertEquals("simple", IOUtils.toString(new URL("http://localhost:" + microwave.getConfiguration().getHttpPort() + "/api/test")));
+            assertEquals("simple", IOUtils.toString(new URL("http://localhost:" + microwave.getConfiguration().getHttpPort() + "/api/other")));
+            assertEquals("simplefiltertrue", IOUtils.toString(new URL("http://localhost:" + microwave.getConfiguration().getHttpPort() + "/filter")));
+            assertEquals("filtertrue", IOUtils.toString(new URL("http://localhost:" + microwave.getConfiguration().getHttpPort() + "/other")));
         } catch (final IOException e) {
             fail(e.getMessage());
         }
@@ -63,6 +77,7 @@ public class MicrowaveTest {
     public void classpath() {
         try (final Microwave microwave = new Microwave(new Microwave.Builder().randomHttpPort()).bake()) {
             assertEquals("simple", IOUtils.toString(new URL("http://localhost:" + microwave.getConfiguration().getHttpPort() + "/api/test")));
+            assertEquals("simplefiltertrue", IOUtils.toString(new URL("http://localhost:" + microwave.getConfiguration().getHttpPort() + "/filter")));
         } catch (final IOException e) {
             fail(e.getMessage());
         }

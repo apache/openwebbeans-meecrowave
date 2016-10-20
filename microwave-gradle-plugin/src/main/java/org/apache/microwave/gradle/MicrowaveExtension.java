@@ -50,7 +50,9 @@ public class MicrowaveExtension {
     private Collection<String> securityConstraints = new LinkedList<>();
     private Map<String, String> users;
     private Map<String, String> roles;
+    private Map<String, String> cxfServletParams;
     private boolean http2;
+    private boolean tomcatScanning = true;
     private String tempDir;
     private boolean webResourceCached = true;
     private String conf;
@@ -60,6 +62,30 @@ public class MicrowaveExtension {
     private boolean skip;
     private boolean jaxrsProviderSetup = true;
     private boolean loggingGlobalSetup = true;
+
+    public Map<String, String> getCxfServletParams() {
+        return cxfServletParams;
+    }
+
+    public void setCxfServletParams(final Map<String, String> cxfServletParams) {
+        this.cxfServletParams = cxfServletParams;
+    }
+
+    public boolean isTomcatScanning() {
+        return tomcatScanning;
+    }
+
+    public void setTomcatScanning(final boolean tomcatScanning) {
+        this.tomcatScanning = tomcatScanning;
+    }
+
+    public boolean isLoggingGlobalSetup() {
+        return loggingGlobalSetup;
+    }
+
+    public void setLoggingGlobalSetup(final boolean loggingGlobalSetup) {
+        this.loggingGlobalSetup = loggingGlobalSetup;
+    }
 
     public boolean isJaxrsProviderSetup() {
         return jaxrsProviderSetup;

@@ -67,6 +67,7 @@ public class MicrowaveConfiguration implements ContainerConfiguration {
     private boolean loggingGlobalSetup = true;
     private String users;
     private String roles;
+    private String cxfServletParams;
     private String loginConfig;
     private String securityConstraints;
     private String realm;
@@ -80,7 +81,7 @@ public class MicrowaveConfiguration implements ContainerConfiguration {
         final Microwave.Builder builder = new Microwave.Builder();
         for (final Field field : MicrowaveConfiguration.class.getDeclaredFields()) {
             final String name = field.getName();
-            if ("users".equals(name) || "roles".equals(name)
+            if ("users".equals(name) || "roles".equals(name) || "cxfServletParams".equals(name)
                     || "loginConfig".equals(name) || "securityConstraints".equals(name)
                     || "realm".equals(name)) {
                 continue; // specific syntax
@@ -133,6 +134,16 @@ public class MicrowaveConfiguration implements ContainerConfiguration {
                 }
             }};
             builder.setRoles(properties.stringPropertyNames().stream().collect(toMap(identity(), properties::getProperty)));
+        }
+        if (cxfServletParams != null) {
+            final Properties properties = new Properties() {{
+                try {
+                    load(new ByteArrayInputStream(cxfServletParams.getBytes(StandardCharsets.UTF_8)));
+                } catch (final IOException e) {
+                    throw new IllegalStateException(e);
+                }
+            }};
+            builder.setCxfServletParams(properties.stringPropertyNames().stream().collect(toMap(identity(), properties::getProperty)));
         }
 
         // for other not simple type use the Cli syntax

@@ -36,11 +36,11 @@ import org.apache.catalina.session.StandardManager;
 import org.apache.catalina.startup.Catalina;
 import org.apache.catalina.startup.MicrowaveContextConfig;
 import org.apache.catalina.startup.Tomcat;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.text.StrLookup;
 import org.apache.commons.lang3.text.StrSubstitutor;
 import org.apache.coyote.http2.Http2Protocol;
-import org.apache.cxf.helpers.FileUtils;
 import org.apache.microwave.cxf.CxfCdiAutoSetup;
 import org.apache.microwave.logging.jul.Log4j2Logger;
 import org.apache.microwave.logging.openwebbeans.Log4j2LoggerFactory;
@@ -48,6 +48,8 @@ import org.apache.microwave.logging.tomcat.Log4j2Log;
 import org.apache.microwave.logging.tomcat.LogFacade;
 import org.apache.microwave.openwebbeans.OWBAutoSetup;
 import org.apache.microwave.runner.cli.CliOption;
+import org.apache.microwave.tomcat.CDIInstanceManager;
+import org.apache.microwave.tomcat.OWBJarScanner;
 import org.apache.microwave.tomcat.ProvidedLoader;
 import org.apache.tomcat.util.descriptor.web.LoginConfig;
 import org.apache.tomcat.util.descriptor.web.SecurityCollection;
@@ -79,6 +81,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.TreeMap;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 import static java.util.Collections.emptySet;
 import static java.util.Optional.ofNullable;
@@ -115,7 +118,11 @@ public class Microwave implements AutoCloseable {
 
     public Microwave deployClasspath(final DeploymentMeta meta) {
         final File dir = new File(configuration.tempDir, "classpath/fake-" + meta.context.replace("/", ""));
-        FileUtils.mkDir(dir);
+        try {
+            FileUtils.forceMkdir(dir);
+        } catch (final IOException e) {
+            throw new IllegalArgumentException(e);
+        }
         final Consumer<Context> builtInCustomizer = c -> c.setLoader(new ProvidedLoader(Thread.currentThread().getContextClassLoader()));
         return deployWebapp(new DeploymentMeta(meta.context, ofNullable(meta.consumer).map(c -> (Consumer<Context>) ctx -> {
             builtInCustomizer.accept(ctx);
@@ -155,6 +162,8 @@ public class Microwave implements AutoCloseable {
         final StandardContext ctx = new StandardContext();
         ctx.setPath(meta.context);
         ctx.setName(meta.context);
+        ctx.setJarScanner(new OWBJarScanner());
+        ctx.setInstanceManager(new CDIInstanceManager());
         try {
             ctx.setDocBase(warOrDir.getCanonicalPath());
         } catch (final IOException e) {
@@ -244,12 +253,7 @@ public class Microwave implements AutoCloseable {
         }
 
         { // setup
-            base = new File(getBaseDir());
-            if (base.exists() && configuration.deleteBaseOnStartup) {
-                FileUtils.delete(base);
-            } else if (!base.exists()) {
-                FileUtils.mkDir(base);
-            }
+            base = new File(newBaseDir());
 
             final File conf = createDirectory(base, "conf");
             createDirectory(base, "lib");
@@ -451,7 +455,11 @@ public class Microwave implements AutoCloseable {
         } finally {
             ofNullable(postTask).ifPresent(Runnable::run);
             postTask = null;
-            FileUtils.delete(base);
+            try {
+                FileUtils.deleteDirectory(base);
+            } catch (final IOException e) {
+                // no-op
+            }
         }
     }
 
@@ -510,7 +518,6 @@ public class Microwave implements AutoCloseable {
         if (!dir.exists() && !dir.mkdirs()) {
             throw new IllegalStateException("Unable to make dir " + dir.getAbsolutePath());
         }
-
         return dir;
     }
 
@@ -537,38 +544,40 @@ public class Microwave implements AutoCloseable {
         }
     }
 
-    private String getBaseDir() {
+    private String newBaseDir() {
         File file;
-        try {
 
-            final String dir = configuration.dir;
-            if (dir != null) {
-                final File dirFile = new File(dir);
-                if (dirFile.exists()) {
-                    return dir;
+        final String dir = configuration.dir;
+        if (dir != null) {
+            final File dirFile = new File(dir);
+            if (dirFile.exists()) {
+                if (base.exists() && configuration.deleteBaseOnStartup) {
+                    try {
+                        FileUtils.deleteDirectory(base);
+                    } catch (final IOException e) {
+                        throw new IllegalArgumentException(e);
+                    }
                 }
-                FileUtils.mkDir(dirFile);
-                return dirFile.getAbsolutePath();
+                return dir;
             }
-
             try {
-                final File target = new File("target");
-                file = File.createTempFile("microwave", "-home", target.exists() ? target : null);
-            } catch (final Exception e) {
-
-                final File tmp = new File(configuration.tempDir);
-                if (!tmp.exists() && !tmp.mkdirs()) {
-                    throw new IOException("Failed to create local tmp directory: " + tmp.getAbsolutePath());
-                }
-
-                file = File.createTempFile("microwave", "-home", tmp);
+                FileUtils.forceMkdir(dirFile);
+            } catch (final IOException e) {
+                throw new IllegalArgumentException(e);
             }
-
-            return file.getAbsolutePath();
-
-        } catch (final IOException e) {
-            throw new MicrowaveExplosion("Failed to get or create base dir: " + configuration.dir, e);
+            return dirFile.getAbsolutePath();
         }
+
+        file = new File(Stream.of("target", "build", ".")
+                .map(File::new)
+                .filter(File::isDirectory)
+                .findFirst().get(), "microwave-" + System.nanoTime());
+        try {
+            FileUtils.forceMkdir(file);
+        } catch (final IOException e) {
+            throw new IllegalArgumentException(e);
+        }
+        return file.getAbsolutePath();
     }
 
     public static class Builder {
@@ -675,7 +684,7 @@ public class Microwave implements AutoCloseable {
         private Map<String, String> cxfServletParams;
 
         @CliOption(name = "tomcat-scanning", description = "Should Tomcat scanning be used (@HandleTypes, @WebXXX)")
-        private boolean tomcatScanning = false;
+        private boolean tomcatScanning = true;
 
         public Builder() { // load defaults
             loadFrom("microwave.properties");
