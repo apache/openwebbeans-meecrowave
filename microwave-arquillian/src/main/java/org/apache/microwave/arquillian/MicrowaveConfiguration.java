@@ -71,6 +71,8 @@ public class MicrowaveConfiguration implements ContainerConfiguration {
     private String loginConfig;
     private String securityConstraints;
     private String realm;
+    private boolean tomcatScanning = true;
+    private boolean tomcatAutoSetup = true;
 
     @Override
     public void validate() throws ConfigurationException {
@@ -191,6 +193,30 @@ public class MicrowaveConfiguration implements ContainerConfiguration {
         }
 
         return builder;
+    }
+
+    public String getCxfServletParams() {
+        return cxfServletParams;
+    }
+
+    public void setCxfServletParams(final String cxfServletParams) {
+        this.cxfServletParams = cxfServletParams;
+    }
+
+    public boolean isTomcatScanning() {
+        return tomcatScanning;
+    }
+
+    public void setTomcatScanning(final boolean tomcatScanning) {
+        this.tomcatScanning = tomcatScanning;
+    }
+
+    public boolean isTomcatAutoSetup() {
+        return tomcatAutoSetup;
+    }
+
+    public void setTomcatAutoSetup(final boolean tomcatAutoSetup) {
+        this.tomcatAutoSetup = tomcatAutoSetup;
     }
 
     public int getHttpPort() {

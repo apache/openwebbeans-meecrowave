@@ -189,6 +189,10 @@ public class MicrowaveTask extends DefaultTask {
 
     @Input
     @Optional
+    private boolean tomcatAutoSetup = true;
+
+    @Input
+    @Optional
     private List<File> modules;
 
     @Input
@@ -774,5 +778,13 @@ public class MicrowaveTask extends DefaultTask {
 
     public void setWebapp(final File webapp) {
         this.webapp = webapp;
+    }
+
+    public boolean isTomcatAutoSetup() {
+        return tomcatAutoSetup;
+    }
+
+    public void setTomcatAutoSetup(final boolean tomcatAutoSetup) {
+        this.tomcatAutoSetup = tomcatAutoSetup;
     }
 }

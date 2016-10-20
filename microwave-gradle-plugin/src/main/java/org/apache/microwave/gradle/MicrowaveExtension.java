@@ -53,6 +53,7 @@ public class MicrowaveExtension {
     private Map<String, String> cxfServletParams;
     private boolean http2;
     private boolean tomcatScanning = true;
+    private boolean tomcatAutoSetup = true;
     private String tempDir;
     private boolean webResourceCached = true;
     private String conf;
@@ -357,5 +358,13 @@ public class MicrowaveExtension {
 
     public void setSkip(final boolean skip) {
         this.skip = skip;
+    }
+
+    public boolean isTomcatAutoSetup() {
+        return tomcatAutoSetup;
+    }
+
+    public void setTomcatAutoSetup(final boolean tomcatAutoSetup) {
+        this.tomcatAutoSetup = tomcatAutoSetup;
     }
 }

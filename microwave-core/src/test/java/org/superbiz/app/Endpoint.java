@@ -23,7 +23,10 @@ import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
+
+import static java.util.Optional.ofNullable;
 
 @Path("test")
 @ApplicationScoped
@@ -33,8 +36,8 @@ public class Endpoint {
 
     @GET
     @Produces(MediaType.TEXT_PLAIN)
-    public String simple() {
-        return Boolean.parseBoolean(injectable.injected()) ? "simple" : "fail";
+    public String simple(@QueryParam("checkcustom") final String query) {
+        return Boolean.parseBoolean(injectable.injected()) ? "simple" + ofNullable(query).orElse("") : "fail";
     }
 
     @GET

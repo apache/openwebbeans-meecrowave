@@ -51,6 +51,7 @@ import org.apache.microwave.runner.cli.CliOption;
 import org.apache.microwave.tomcat.CDIInstanceManager;
 import org.apache.microwave.tomcat.OWBJarScanner;
 import org.apache.microwave.tomcat.ProvidedLoader;
+import org.apache.microwave.tomcat.TomcatAutoInitializer;
 import org.apache.tomcat.util.descriptor.web.LoginConfig;
 import org.apache.tomcat.util.descriptor.web.SecurityCollection;
 import org.apache.tomcat.util.descriptor.web.SecurityConstraint;
@@ -197,6 +198,7 @@ public class Microwave implements AutoCloseable {
             try {
                 new OWBAutoSetup().onStartup(c, ctx1);
                 new CxfCdiAutoSetup().onStartup(c, ctx1);
+                new TomcatAutoInitializer().onStartup(c, ctx1);
             } finally {
                 ctx.getServletContext().removeAttribute("microwave.configuration");
             }
@@ -685,6 +687,9 @@ public class Microwave implements AutoCloseable {
 
         @CliOption(name = "tomcat-scanning", description = "Should Tomcat scanning be used (@HandleTypes, @WebXXX)")
         private boolean tomcatScanning = true;
+
+        @CliOption(name = "tomcat-default-setup", description = "Add default servlet")
+        private boolean tomcatAutoSetup = true;
 
         public Builder() { // load defaults
             loadFrom("microwave.properties");
@@ -1230,6 +1235,14 @@ public class Microwave implements AutoCloseable {
 
         public int getActivePort() {
             return isSkipHttp() ? getHttpsPort() : getHttpPort();
+        }
+
+        public boolean isTomcatAutoSetup() {
+            return tomcatAutoSetup;
+        }
+
+        public void setTomcatAutoSetup(final boolean tomcatAutoSetup) {
+            this.tomcatAutoSetup = tomcatAutoSetup;
         }
     }
 

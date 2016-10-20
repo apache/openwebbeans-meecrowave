@@ -26,9 +26,11 @@ import org.superbiz.app.RsApp;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.Writer;
 import java.net.URL;
 import java.util.stream.Stream;
 
@@ -62,9 +64,17 @@ public class MicrowaveTest {
                 fail();
             }
         });
+        try (final Writer indexHtml = new FileWriter(new File(root, "index.html"))) {
+            indexHtml.write("hello");
+        } catch (final IOException e) {
+            fail(e.getMessage());
+        }
         try (final Microwave microwave = new Microwave(new Microwave.Builder().randomHttpPort()).start()) {
             microwave.deployWebapp("", root);
+            assertEquals("hello", IOUtils.toString(new URL("http://localhost:" + microwave.getConfiguration().getHttpPort() + "/index.html")));
             assertEquals("simple", IOUtils.toString(new URL("http://localhost:" + microwave.getConfiguration().getHttpPort() + "/api/test")));
+            assertEquals("simplepathinfo", IOUtils.toString(new URL("http://localhost:" + microwave.getConfiguration().getHttpPort()
+                    + "/api/test?checkcustom=pathinfo#is=fine")));
             assertEquals("simple", IOUtils.toString(new URL("http://localhost:" + microwave.getConfiguration().getHttpPort() + "/api/other")));
             assertEquals("simplefiltertrue", IOUtils.toString(new URL("http://localhost:" + microwave.getConfiguration().getHttpPort() + "/filter")));
             assertEquals("filtertrue", IOUtils.toString(new URL("http://localhost:" + microwave.getConfiguration().getHttpPort() + "/other")));

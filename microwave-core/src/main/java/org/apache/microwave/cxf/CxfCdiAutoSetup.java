@@ -35,135 +35,108 @@ import org.apache.johnzon.jaxrs.JsrProvider;
 import org.apache.microwave.Microwave;
 import org.apache.microwave.logging.tomcat.LogFacade;
 
+import javax.servlet.DispatcherType;
+import javax.servlet.Filter;
+import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
+import javax.servlet.FilterRegistration;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletContainerInitializer;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
-import javax.servlet.ServletRegistration;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletRequestWrapper;
 import javax.ws.rs.core.Application;
+import java.io.IOException;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.EnumSet;
+import java.util.Enumeration;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import static java.util.Arrays.asList;
 import static java.util.Optional.ofNullable;
 
+// this look a bit complicated but it just:
+// - wraps cxf in a filter to support plain resources when not conflicting with application path
+// - logs resources
 public class CxfCdiAutoSetup implements ServletContainerInitializer {
+    private static final String NAME = "cxf-cdi";
+
     @Override
     public void onStartup(final Set<Class<?>> c, final ServletContext ctx) throws ServletException {
         final Microwave.Builder builder = Microwave.Builder.class.cast(ctx.getAttribute("microwave.configuration"));
-        final ServletRegistration.Dynamic jaxrs = ctx.addServlet("cxf-cdi", new CXFCdiServlet() {
+        final MicrowaveCXFCdiServlet delegate = new MicrowaveCXFCdiServlet(!builder.isJaxrsProviderSetup());
+        final FilterRegistration.Dynamic jaxrs = ctx.addFilter(NAME, new Filter() {
+            private final String servletPath = builder.getJaxrsMapping().endsWith("/*") ?
+                    builder.getJaxrsMapping().substring(0, builder.getJaxrsMapping().length() - 2) : builder.getJaxrsMapping();
+
             @Override
-            protected void loadBus(final ServletConfig servletConfig) {
-                super.loadBus(servletConfig);
-                if (!builder.isJaxrsProviderSetup()) {
+            public void init(final FilterConfig filterConfig) throws ServletException {
+                delegate.init(new ServletConfig() {
+                    @Override
+                    public String getServletName() {
+                        return NAME;
+                    }
+
+                    @Override
+                    public ServletContext getServletContext() {
+                        return filterConfig.getServletContext();
+                    }
+
+                    @Override
+                    public String getInitParameter(final String name) {
+                        return filterConfig.getInitParameter(name);
+                    }
+
+                    @Override
+                    public Enumeration<String> getInitParameterNames() {
+                        return filterConfig.getInitParameterNames();
+                    }
+                });
+            }
+
+            @Override
+            public void doFilter(final ServletRequest request, final ServletResponse response, final FilterChain chain) throws IOException, ServletException {
+                if (!HttpServletRequest.class.isInstance(request)) {
+                    chain.doFilter(request, response);
                     return;
                 }
+                final HttpServletRequest http = HttpServletRequest.class.cast(request);
+                final String path = http.getRequestURI().substring(http.getContextPath().length());
+                final Optional<String> app = Stream.of(delegate.prefixes).filter(path::startsWith).findAny();
+                if (app.isPresent()) {
+                    delegate.service(new HttpServletRequestWrapper(http) { // fake servlet pathInfo and path
+                        @Override
+                        public String getPathInfo() {
+                            return path;
+                        }
 
-                final List<DelegateProvider<?>> providers = asList(new JohnzonProvider<>(), new JsrProvider());
-
-                // client
-                if (bus.getProperty("org.apache.cxf.jaxrs.bus.providers") == null) {
-                    bus.setProperty("skip.default.json.provider.registration", "true");
-                    bus.setProperty("org.apache.cxf.jaxrs.bus.providers", providers);
+                        @Override
+                        public String getServletPath() {
+                            return servletPath;
+                        }
+                    }, response);
+                } else {
+                    chain.doFilter(request, response);
                 }
-
-                // server
-                getDestinationRegistryFromBus().getDestinations()
-                        .forEach(d -> {
-                            final ChainInitiationObserver observer = ChainInitiationObserver.class.cast(d.getMessageObserver());
-                            final ServerProviderFactory providerFactory = ServerProviderFactory.class.cast(observer.getEndpoint().get(ServerProviderFactory.class.getName()));
-                            providerFactory.setUserProviders(providers);
-                        });
             }
 
             @Override
-            public void init(final ServletConfig sc) throws ServletException {
-                super.init(sc);
-
-                // just logging the endpoints
-                final LogFacade log = new LogFacade(CxfCdiAutoSetup.class.getName());
-                final DestinationRegistry registry = getDestinationRegistryFromBus();
-                registry.getDestinations().stream()
-                        .filter(ServletDestination.class::isInstance)
-                        .map(ServletDestination.class::cast)
-                        .forEach(sd -> {
-                            final Endpoint endpoint = ChainInitiationObserver.class.cast(sd.getMessageObserver()).getEndpoint();
-                            final ApplicationInfo app = ApplicationInfo.class.cast(endpoint.get(Application.class.getName()));
-                            final JAXRSServiceFactoryBean sfb = JAXRSServiceFactoryBean.class.cast(endpoint.get(JAXRSServiceFactoryBean.class.getName()));
-
-                            final List<Logs.LogResourceEndpointInfo> resourcesToLog = new ArrayList<>();
-                            int classSize = 0;
-                            int addressSize = 0;
-
-                            final String base = sd.getEndpointInfo().getAddress();
-                            final List<ClassResourceInfo> resources = sfb.getClassResourceInfo();
-                            for (final ClassResourceInfo info : resources) {
-                                if (info.getResourceClass() == null) { // possible?
-                                    continue;
-                                }
-
-                                final String address = Logs.singleSlash(base, info.getURITemplate().getValue());
-
-                                final String clazz = info.getResourceClass().getName();
-                                classSize = Math.max(classSize, clazz.length());
-                                addressSize = Math.max(addressSize, address.length());
-
-                                int methodSize = 7;
-                                int methodStrSize = 0;
-
-                                final List<Logs.LogOperationEndpointInfo> toLog = new ArrayList<>();
-
-                                final MethodDispatcher md = info.getMethodDispatcher();
-                                for (final OperationResourceInfo ori : md.getOperationResourceInfos()) {
-                                    final String httpMethod = ori.getHttpMethod();
-                                    final String currentAddress = Logs.singleSlash(address, ori.getURITemplate().getValue());
-                                    final String methodToStr = Logs.toSimpleString(ori.getMethodToInvoke());
-                                    toLog.add(new Logs.LogOperationEndpointInfo(httpMethod, currentAddress, methodToStr));
-
-                                    if (httpMethod != null) {
-                                        methodSize = Math.max(methodSize, httpMethod.length());
-                                    }
-                                    addressSize = Math.max(addressSize, currentAddress.length());
-                                    methodStrSize = Math.max(methodStrSize, methodToStr.length());
-                                }
-
-                                Collections.sort(toLog);
-
-                                resourcesToLog.add(new Logs.LogResourceEndpointInfo(address, clazz, toLog, methodSize, methodStrSize));
-                            }
-
-                            // effective logging
-                            log.info("REST Application: " + endpoint.getEndpointInfo().getAddress() + " -> "
-                                    + ofNullable(app).map(ApplicationInfo::getResourceClass).map(Class::getName).orElse(""));
-
-                            Collections.sort(resourcesToLog);
-                            final int fClassSize = classSize;
-                            final int fAddressSize = addressSize;
-                            resourcesToLog.forEach(resource -> {
-                                log.info("     Service URI: "
-                                        + Logs.forceLength(resource.address, fAddressSize, true) + " -> "
-                                        + Logs.forceLength(resource.classname, fClassSize, true));
-
-                                resource.operations.forEach(info -> {
-                                    log.info("          "
-                                            + Logs.forceLength(info.http, resource.methodSize, false) + " "
-                                            + Logs.forceLength(info.address, fAddressSize, true) + " ->      "
-                                            + Logs.forceLength(info.method, resource.methodStrSize, true));
-                                });
-                                resource.operations.clear();
-                            });
-                            resourcesToLog.clear();
-                        });
+            public void destroy() {
+                delegate.destroy();
             }
         });
-        jaxrs.setLoadOnStartup(1);
         jaxrs.setAsyncSupported(true);
-        jaxrs.addMapping(builder.getJaxrsMapping());
+        jaxrs.addMappingForUrlPatterns(EnumSet.allOf(DispatcherType.class), true, builder.getJaxrsMapping());
         ofNullable(builder.getCxfServletParams()).ifPresent(m -> m.forEach(jaxrs::setInitParameter));
     }
 
@@ -332,4 +305,118 @@ public class CxfCdiAutoSetup implements ServletContainerInitializer {
         }
     }
 
+    private static class MicrowaveCXFCdiServlet extends CXFCdiServlet {
+        private final boolean noProviderSetup;
+        private String[] prefixes;
+
+        private MicrowaveCXFCdiServlet(final boolean noProviderSetup) {
+            this.noProviderSetup = noProviderSetup;
+        }
+
+        @Override
+        protected void loadBus(final ServletConfig servletConfig) {
+            super.loadBus(servletConfig);
+            if (noProviderSetup) {
+                return;
+            }
+
+            final List<DelegateProvider<?>> providers = asList(new JohnzonProvider<>(), new JsrProvider());
+
+            // client
+            if (bus.getProperty("org.apache.cxf.jaxrs.bus.providers") == null) {
+                bus.setProperty("skip.default.json.provider.registration", "true");
+                bus.setProperty("org.apache.cxf.jaxrs.bus.providers", providers);
+            }
+
+            // server
+            getDestinationRegistryFromBus().getDestinations()
+                    .forEach(d -> {
+                        final ChainInitiationObserver observer = ChainInitiationObserver.class.cast(d.getMessageObserver());
+                        final ServerProviderFactory providerFactory = ServerProviderFactory.class.cast(observer.getEndpoint().get(ServerProviderFactory.class.getName()));
+                        providerFactory.setUserProviders(providers);
+                    });
+        }
+
+        @Override
+        public void init(final ServletConfig sc) throws ServletException {
+            super.init(sc);
+
+            // just logging the endpoints
+            final LogFacade log = new LogFacade(CxfCdiAutoSetup.class.getName());
+            final DestinationRegistry registry = getDestinationRegistryFromBus();
+            prefixes = registry.getDestinations().stream()
+                    .filter(ServletDestination.class::isInstance)
+                    .map(ServletDestination.class::cast)
+                    .map(sd -> {
+                        final Endpoint endpoint = ChainInitiationObserver.class.cast(sd.getMessageObserver()).getEndpoint();
+                        final ApplicationInfo app = ApplicationInfo.class.cast(endpoint.get(Application.class.getName()));
+                        final JAXRSServiceFactoryBean sfb = JAXRSServiceFactoryBean.class.cast(endpoint.get(JAXRSServiceFactoryBean.class.getName()));
+
+                        final List<Logs.LogResourceEndpointInfo> resourcesToLog = new ArrayList<>();
+                        int classSize = 0;
+                        int addressSize = 0;
+
+                        final String base = sd.getEndpointInfo().getAddress();
+                        final List<ClassResourceInfo> resources = sfb.getClassResourceInfo();
+                        for (final ClassResourceInfo info : resources) {
+                            if (info.getResourceClass() == null) { // possible?
+                                continue;
+                            }
+
+                            final String address = Logs.singleSlash(base, info.getURITemplate().getValue());
+
+                            final String clazz = info.getResourceClass().getName();
+                            classSize = Math.max(classSize, clazz.length());
+                            addressSize = Math.max(addressSize, address.length());
+
+                            int methodSize = 7;
+                            int methodStrSize = 0;
+
+                            final List<Logs.LogOperationEndpointInfo> toLog = new ArrayList<>();
+
+                            final MethodDispatcher md = info.getMethodDispatcher();
+                            for (final OperationResourceInfo ori : md.getOperationResourceInfos()) {
+                                final String httpMethod = ori.getHttpMethod();
+                                final String currentAddress = Logs.singleSlash(address, ori.getURITemplate().getValue());
+                                final String methodToStr = Logs.toSimpleString(ori.getMethodToInvoke());
+                                toLog.add(new Logs.LogOperationEndpointInfo(httpMethod, currentAddress, methodToStr));
+
+                                if (httpMethod != null) {
+                                    methodSize = Math.max(methodSize, httpMethod.length());
+                                }
+                                addressSize = Math.max(addressSize, currentAddress.length());
+                                methodStrSize = Math.max(methodStrSize, methodToStr.length());
+                            }
+
+                            Collections.sort(toLog);
+
+                            resourcesToLog.add(new Logs.LogResourceEndpointInfo(address, clazz, toLog, methodSize, methodStrSize));
+                        }
+
+                        // effective logging
+                        log.info("REST Application: " + endpoint.getEndpointInfo().getAddress() + " -> "
+                                + ofNullable(app).map(ApplicationInfo::getResourceClass).map(Class::getName).orElse(""));
+
+                        Collections.sort(resourcesToLog);
+                        final int fClassSize = classSize;
+                        final int fAddressSize = addressSize;
+                        resourcesToLog.forEach(resource -> {
+                            log.info("     Service URI: "
+                                    + Logs.forceLength(resource.address, fAddressSize, true) + " -> "
+                                    + Logs.forceLength(resource.classname, fClassSize, true));
+
+                            resource.operations.forEach(info -> {
+                                log.info("          "
+                                        + Logs.forceLength(info.http, resource.methodSize, false) + " "
+                                        + Logs.forceLength(info.address, fAddressSize, true) + " ->      "
+                                        + Logs.forceLength(info.method, resource.methodStrSize, true));
+                            });
+                            resource.operations.clear();
+                        });
+                        resourcesToLog.clear();
+
+                        return base;
+                    }).toArray(String[]::new);
+        }
+    }
 }

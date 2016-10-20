@@ -37,6 +37,14 @@ public class BundleMetadataDiscovery extends WebScannerService {
     }
 
     @Override
+    public void scan() {
+        if (finder != null) {
+            return;
+        }
+        super.scan();
+    }
+
+    @Override
     protected AnnotationFinder initFinder() {
         if (finder != null) {
             return finder;

@@ -85,6 +85,9 @@ public class MicrowaveRunMojo extends AbstractMojo {
     @Parameter(property = "microwave.tomcatScanning", defaultValue = "true")
     private boolean tomcatScanning;
 
+    @Parameter(property = "microwave.tomcatAutoSetup", defaultValue = "true")
+    private boolean tomcatAutoSetup;
+
     @Parameter(property = "microwave.skipHttp")
     private boolean skipHttp;
 

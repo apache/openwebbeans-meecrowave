@@ -58,7 +58,7 @@ public class CDIInstanceManager implements InstanceManager {
 
     @Override
     public void newInstance(final Object o) throws IllegalAccessException, InvocationTargetException, NamingException {
-        if (WebBeansConfigurationListener.class.isInstance(o)) {
+        if (WebBeansConfigurationListener.class.isInstance(o) || o.getClass().getName().startsWith("org.apache.catalina.servlets.")) {
             return;
         }
 
