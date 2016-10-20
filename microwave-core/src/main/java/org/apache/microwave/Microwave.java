@@ -34,7 +34,7 @@ import org.apache.catalina.core.StandardHost;
 import org.apache.catalina.session.ManagerBase;
 import org.apache.catalina.session.StandardManager;
 import org.apache.catalina.startup.Catalina;
-import org.apache.catalina.startup.ContextConfig;
+import org.apache.catalina.startup.MicrowaveContextConfig;
 import org.apache.catalina.startup.Tomcat;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.text.StrLookup;
@@ -45,6 +45,7 @@ import org.apache.microwave.cxf.CxfCdiAutoSetup;
 import org.apache.microwave.logging.jul.Log4j2Logger;
 import org.apache.microwave.logging.openwebbeans.Log4j2LoggerFactory;
 import org.apache.microwave.logging.tomcat.Log4j2Log;
+import org.apache.microwave.logging.tomcat.LogFacade;
 import org.apache.microwave.openwebbeans.OWBAutoSetup;
 import org.apache.microwave.runner.cli.CliOption;
 import org.apache.microwave.tomcat.ProvidedLoader;
@@ -134,6 +135,10 @@ public class Microwave implements AutoCloseable {
         if (contexts.containsKey(context)) {
             throw new IllegalArgumentException("Already deployed: '" + context + "'");
         }
+        // always nice to see the deployment with something else than internals
+        new LogFacade(Microwave.class.getName())
+                .info("--------------- " + configuration.getActiveProtocol() + "://"
+                        + tomcat.getHost().getName() + ':' + configuration.getActivePort() + context);
 
         final StandardContext ctx = new StandardContext();
         ctx.setPath(context);
@@ -144,7 +149,7 @@ public class Microwave implements AutoCloseable {
             ctx.setDocBase(warOrDir.getAbsolutePath());
         }
         ctx.addLifecycleListener(new Tomcat.FixContextListener());
-        ctx.addLifecycleListener(new ContextConfig());
+        ctx.addLifecycleListener(new MicrowaveContextConfig(configuration));
         ctx.addLifecycleListener(event -> {
             switch (event.getType()) {
                 case Lifecycle.AFTER_START_EVENT:
@@ -654,8 +659,30 @@ public class Microwave implements AutoCloseable {
         @CliOption(name = "logging-global-setup", description = "Should logging be configured to use log4j2 (it is global)")
         private boolean loggingGlobalSetup = true;
 
+        @CliOption(name = "cxf-servlet-params", description = "Init parameters passed to CXF servlet")
+        private Map<String, String> cxfServletParams;
+
+        @CliOption(name = "tomcat-scanning", description = "Should Tomcat scanning be used (@HandleTypes, @WebXXX)")
+        private boolean tomcatScanning = false;
+
         public Builder() { // load defaults
             loadFrom("microwave.properties");
+        }
+
+        public boolean isTomcatScanning() {
+            return tomcatScanning;
+        }
+
+        public void setTomcatScanning(final boolean tomcatScanning) {
+            this.tomcatScanning = tomcatScanning;
+        }
+
+        public Map<String, String> getCxfServletParams() {
+            return cxfServletParams;
+        }
+
+        public void setCxfServletParams(final Map<String, String> cxfServletParams) {
+            this.cxfServletParams = cxfServletParams;
         }
 
         public boolean isLoggingGlobalSetup() {
@@ -984,6 +1011,14 @@ public class Microwave implements AutoCloseable {
             return this;
         }
 
+        public Builder cxfServletParam(final String key, final String value) {
+            if (this.cxfServletParams == null) {
+                this.cxfServletParams = new HashMap<>();
+            }
+            this.cxfServletParams.put(key, value);
+            return this;
+        }
+
         public void addCustomizer(final ConfigurationCustomizer configurationCustomizer) {
             configurationCustomizer.customize(this);
         }
@@ -1097,6 +1132,26 @@ public class Microwave implements AutoCloseable {
             if (conf != null) {
                 this.conf = conf;
             }
+            final String jaxrsMapping = config.getProperty("jaxrsMapping");
+            if (jaxrsMapping != null) {
+                this.jaxrsMapping = jaxrsMapping;
+            }
+            final String cdiConversation = config.getProperty("cdiConversation");
+            if (cdiConversation != null) {
+                this.cdiConversation = Boolean.parseBoolean(cdiConversation);
+            }
+            final String jaxrsProviderSetup = config.getProperty("jaxrsProviderSetup");
+            if (jaxrsProviderSetup != null) {
+                this.jaxrsProviderSetup = Boolean.parseBoolean(jaxrsProviderSetup);
+            }
+            final String loggingGlobalSetup = config.getProperty("loggingGlobalSetup");
+            if (loggingGlobalSetup != null) {
+                this.loggingGlobalSetup = Boolean.parseBoolean(loggingGlobalSetup);
+            }
+            final String tomcatScanning = config.getProperty("tomcatScanning");
+            if (tomcatScanning != null) {
+                this.tomcatScanning = Boolean.parseBoolean(tomcatScanning);
+            }
             for (final String prop : config.stringPropertyNames()) {
                 if (prop.startsWith("properties.")) {
                     property(prop.substring("properties.".length()), config.getProperty(prop));
@@ -1104,6 +1159,8 @@ public class Microwave implements AutoCloseable {
                     user(prop.substring("users.".length()), config.getProperty(prop));
                 } else if (prop.startsWith("roles.")) {
                     role(prop.substring("roles.".length()), config.getProperty(prop));
+                } else if (prop.startsWith("cxf.servlet.params.")) {
+                    cxfServletParam(prop.substring("cxf.servlet.params.".length()), config.getProperty(prop));
                 } else if (prop.startsWith("connector.")) { // created in container
                     property(prop, config.getProperty(prop));
                 } else if (prop.equals("realm")) {
@@ -1144,6 +1201,14 @@ public class Microwave implements AutoCloseable {
                     addCustomizer(ConfigurationCustomizer.class.cast(recipe.create()));
                 }
             }
+        }
+
+        public String getActiveProtocol() {
+            return isSkipHttp() ? "https" : "http";
+        }
+
+        public int getActivePort() {
+            return isSkipHttp() ? getHttpsPort() : getHttpPort();
         }
     }
 
