@@ -1417,13 +1417,19 @@ public class Microwave implements AutoCloseable {
         private static final String HTTP_KEY = "HTTP";
         private static final String SECURED_SUFFIX = "S";
         private static final String HOST_KEY = "host";
+        private static final String DEFAULT_CONNECTOR_KEY = HTTP_KEY;
 
         private static final String DEFAULT_HTTP_PORT = "8080";
         private static final String DEFAULT_HTTPS_PORT = "8443";
         private static final String DEFAULT_STOP_PORT = "8005";
         private static final String DEFAULT_HOST = "localhost";
+        private static final String DEFAULT_APP_BASE = "webapps";
 
         private final Map<String, String> values = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
+
+        private QuickServerXmlParser() { // ensure defaults are present
+            this(true);
+        }
 
         private QuickServerXmlParser(final boolean useDefaults) {
             if (useDefaults) {
@@ -1442,6 +1448,21 @@ public class Microwave implements AutoCloseable {
                     values.put(STOP_KEY, port);
                 } else {
                     values.put(STOP_KEY, DEFAULT_STOP_PORT);
+                }
+            } else if ("Connector".equalsIgnoreCase(localName)) {
+                String protocol = attributes.getValue("protocol");
+                if (protocol == null) {
+                    protocol = DEFAULT_CONNECTOR_KEY;
+                } else if (protocol.contains("/")) {
+                    protocol = protocol.substring(0, protocol.indexOf("/"));
+                }
+                final String port = attributes.getValue("port");
+                final String ssl = attributes.getValue("secure");
+
+                if (ssl == null || "false".equalsIgnoreCase(ssl)) {
+                    values.put(protocol.toUpperCase(), port);
+                } else {
+                    values.put(protocol.toUpperCase() + SECURED_SUFFIX, port);
                 }
             } else if ("Host".equalsIgnoreCase(localName)) {
                 final String host = attributes.getValue("name");
