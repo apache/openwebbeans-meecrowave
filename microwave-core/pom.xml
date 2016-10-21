@@ -185,6 +185,26 @@
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.5.1</version>
+        <executions>
+          <execution>
+            <id>log4j-plugin-processor</id>
+            <goals>
+              <goal>compile</goal>
+            </goals>
+            <phase>process-classes</phase>
+            <configuration>
+              <proc>only</proc>
+              <annotationProcessors>
+                <annotationProcessor>org.apache.logging.log4j.core.config.plugins.processor.PluginProcessor</annotationProcessor>
+              </annotationProcessors>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-shade-plugin</artifactId>
         <version>2.3</version>
         <executions>
@@ -204,6 +224,7 @@
                 <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
                   <resource>META-INF/cxf/bus-extensions.txt</resource>
                 </transformer>
+                <transformer implementation="com.github.edwgiz.mavenShadePlugin.log4j2CacheTransformer.PluginsCacheFileTransformer" />
                 <transformer implementation="org.apache.openwebbeans.maven.shade.OpenWebBeansPropertiesTransformer" />
               </transformers>
               <filters>
@@ -224,6 +245,11 @@
             <groupId>org.apache.openwebbeans</groupId>
             <artifactId>openwebbeans-maven</artifactId>
             <version>1.7.0</version>
+          </dependency>
+          <dependency>
+            <groupId>com.github.edwgiz</groupId>
+            <artifactId>maven-shade-plugin.log4j2-cachefile-transformer</artifactId>
+            <version>2.1</version>
           </dependency>
         </dependencies>
       </plugin>

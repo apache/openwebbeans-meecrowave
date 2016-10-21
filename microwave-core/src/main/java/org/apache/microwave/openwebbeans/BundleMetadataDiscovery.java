@@ -210,6 +210,7 @@ public class BundleMetadataDiscovery extends WebScannerService {
             excluded.add("org.apache.johnzon");
             excluded.add("org.apache.juli");
             excluded.add("org.apache.logging.log4j.core");
+            excluded.add("org.apache.logging.log4j.util");
             excluded.add("org.apache.logging.slf4j");
             excluded.add("org.apache.microwave");
             excluded.add("org.apache.myfaces");
