@@ -21,10 +21,10 @@ package org.apache.catalina.startup;
 import org.apache.catalina.WebResource;
 import org.apache.microwave.Microwave;
 import org.apache.microwave.logging.tomcat.LogFacade;
-import org.apache.microwave.openwebbeans.BundleMetadataDiscovery;
 import org.apache.tomcat.util.descriptor.web.WebXml;
 import org.apache.webbeans.config.WebBeansContext;
 import org.apache.webbeans.corespi.scanner.xbean.CdiArchive;
+import org.apache.webbeans.web.scanner.WebScannerService;
 
 import javax.servlet.annotation.WebFilter;
 import javax.servlet.annotation.WebListener;
@@ -55,7 +55,7 @@ public class MicrowaveContextConfig extends ContextConfig {
         final ClassLoader old = thread.getContextClassLoader();
         thread.setContextClassLoader(loader);
         try {
-            final BundleMetadataDiscovery scannerService = BundleMetadataDiscovery.class.cast(WebBeansContext.getInstance().getScannerService());
+            final WebScannerService scannerService = WebScannerService.class.cast(WebBeansContext.getInstance().getScannerService());
             scannerService.scan();
             final CdiArchive archive = CdiArchive.class.cast(scannerService.getFinder().getArchive());
             Stream.of(WebServlet.class, WebFilter.class, WebListener.class)

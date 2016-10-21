@@ -33,7 +33,7 @@
   <name>Microwave :: Core</name>
 
   <properties>
-    <openwebbeans.version>1.7.0</openwebbeans.version>
+    <openwebbeans.version>1.7.1-SNAPSHOT</openwebbeans.version>
     <tomcat.version>8.5.6</tomcat.version>
     <cxf.version>3.1.9-SNAPSHOT</cxf.version>
     <johnzon.version>0.9.5</johnzon.version>
@@ -70,11 +70,6 @@
       <groupId>org.apache.geronimo.specs</groupId>
       <artifactId>geronimo-jaxrs_2.0_spec</artifactId>
       <version>1.0-alpha-1</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.tomcat</groupId>
-      <artifactId>tomcat-el-api</artifactId>
-      <version>${tomcat.version}</version>
     </dependency>
     <dependency>
       <groupId>org.apache.tomcat</groupId>
@@ -122,6 +117,14 @@
         <exclusion>
           <groupId>org.apache.tomcat</groupId>
           <artifactId>tomcat-annotations-api</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.apache.tomcat</groupId>
+          <artifactId>tomcat-jsp-api</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.apache.tomcat</groupId>
+          <artifactId>tomcat-el-api</artifactId>
         </exclusion>
       </exclusions>
     </dependency>

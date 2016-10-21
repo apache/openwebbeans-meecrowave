@@ -18,7 +18,6 @@
  */
 package org.apache.microwave.tomcat;
 
-import org.apache.microwave.openwebbeans.BundleMetadataDiscovery;
 import org.apache.tomcat.Jar;
 import org.apache.tomcat.JarScanFilter;
 import org.apache.tomcat.JarScanType;
@@ -29,6 +28,7 @@ import org.apache.tomcat.util.scan.Constants;
 import org.apache.tomcat.util.scan.JarFactory;
 import org.apache.webbeans.config.WebBeansContext;
 import org.apache.webbeans.corespi.scanner.xbean.CdiArchive;
+import org.apache.webbeans.web.scanner.WebScannerService;
 
 import javax.servlet.ServletContext;
 import java.io.File;
@@ -44,7 +44,7 @@ public class OWBJarScanner implements JarScanner {
     public void scan(final JarScanType jarScanType, final ServletContext servletContext, final JarScannerCallback callback) {
         switch (jarScanType) {
             case PLUGGABILITY:
-                CdiArchive.class.cast(BundleMetadataDiscovery.class.cast(WebBeansContext.getInstance().getScannerService()).getFinder().getArchive())
+                CdiArchive.class.cast(WebScannerService.class.cast(WebBeansContext.getInstance().getScannerService()).getFinder().getArchive())
                         .classesByUrl().keySet().forEach(u -> {
                     try {
                         final URL url = new URL(u);
