@@ -71,6 +71,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.Field;
 import java.net.ServerSocket;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -1081,11 +1082,40 @@ public class Microwave implements AutoCloseable {
             return this;
         }
 
+        public String getActiveProtocol() {
+            return isSkipHttp() ? "https" : "http";
+        }
+
+        public int getActivePort() {
+            return isSkipHttp() ? getHttpsPort() : getHttpPort();
+        }
+
+        public boolean isTomcatAutoSetup() {
+            return tomcatAutoSetup;
+        }
+
+        public void setTomcatAutoSetup(final boolean tomcatAutoSetup) {
+            this.tomcatAutoSetup = tomcatAutoSetup;
+        }
+
+        public boolean isUseShutdownHook() {
+            return useShutdownHook;
+        }
+
+        public void setUseShutdownHook(final boolean useShutdownHook) {
+            this.useShutdownHook = useShutdownHook;
+        }
+
+        public Builder noShutdownHook() {
+            setUseShutdownHook(false);
+            return this;
+        }
+
         public void addCustomizer(final ConfigurationCustomizer configurationCustomizer) {
             configurationCustomizer.customize(this);
         }
 
-        public void loadFromProperties(final Properties config) { // TODO: parse @OptionCli instead?
+        public void loadFromProperties(final Properties config) {
             // filtering properties with system properties or themself
             final StrSubstitutor strSubstitutor = new StrSubstitutor(new StrLookup<String>() {
                 @Override
@@ -1105,123 +1135,46 @@ public class Microwave implements AutoCloseable {
                 }
             }
 
+            for (final Field field : Builder.class.getDeclaredFields()) {
+                final CliOption annotation = field.getAnnotation(CliOption.class);
+                if (annotation == null) {
+                    return;
+                }
+                final String name = field.getName();
+                ofNullable(config.getProperty(annotation.name())).ifPresent(val -> {
+                    final Object toSet;
+                    if (field.getType() == String.class) {
+                        toSet = val;
+                    } else if (field.getType() == int.class) {
+                        if ("httpPort".equals(name) && "-1".equals(val)) { // special case in case of random port
+                            randomHttpPort();
+                            toSet = null;
+                        } else {
+                            toSet = Integer.parseInt(val);
+                        }
+                    } else if (field.getType() == boolean.class) {
+                        toSet = Boolean.parseBoolean(val);
+                    } else if (field.getType() == File.class) {
+                        toSet = new File(val);
+                    } else {
+                        toSet = null;
+                    }
+                    if (toSet == null) { // handled elsewhere
+                        return;
+                    }
 
-            final String http = config.getProperty("http");
-            if (http != null) {
-                httpPort = Integer.parseInt(http);
+                    if (!field.isAccessible()) {
+                        field.setAccessible(true);
+                    }
+                    try {
+                        field.set(this, toSet);
+                    } catch (final IllegalAccessException e) {
+                        throw new IllegalStateException(e);
+                    }
+                });
             }
-            final String https = config.getProperty("https");
-            if (https != null) {
-                httpsPort = Integer.parseInt(https);
-            }
-            final String stop = config.getProperty("stop");
-            if (stop != null) {
-                stopPort = Integer.parseInt(stop);
-            }
-            final String host = config.getProperty("host");
-            if (host != null) {
-                this.host = host;
-            }
-            final String dir = config.getProperty("dir");
-            if (dir != null) {
-                this.dir = dir;
-            }
-            final String serverXml = config.getProperty("serverXml");
-            if (serverXml != null) {
-                setServerXml(serverXml);
-            }
-            final String keepServerXmlAsThis = config.getProperty("keepServerXmlAsThis");
-            if (keepServerXmlAsThis != null) {
-                this.keepServerXmlAsThis = Boolean.parseBoolean(keepServerXmlAsThis);
-            }
-            final String quickSession = config.getProperty("quickSession");
-            if (quickSession != null) {
-                this.quickSession = Boolean.parseBoolean(quickSession);
-            }
-            final String skipHttp = config.getProperty("skipHttp");
-            if (skipHttp != null) {
-                this.skipHttp = Boolean.parseBoolean(skipHttp);
-            }
-            final String ssl = config.getProperty("ssl");
-            if (ssl != null) {
-                this.ssl = Boolean.parseBoolean(ssl);
-            }
-            final String http2 = config.getProperty("http2");
-            if (http2 != null) {
-                this.http2 = Boolean.parseBoolean(http2);
-            }
-            final String deleteBaseOnStartup = config.getProperty("deleteBaseOnStartup");
-            if (deleteBaseOnStartup != null) {
-                this.deleteBaseOnStartup = Boolean.parseBoolean(deleteBaseOnStartup);
-            }
-            final String webResourceCached = config.getProperty("webResourceCached");
-            if (webResourceCached != null) {
-                this.webResourceCached = Boolean.parseBoolean(webResourceCached);
-            }
-            final String keystoreFile = config.getProperty("keystoreFile");
-            if (keystoreFile != null) {
-                this.keystoreFile = keystoreFile;
-            }
-            final String keystorePass = config.getProperty("keystorePass");
-            if (keystorePass != null) {
-                this.keystorePass = keystorePass;
-            }
-            final String keystoreType = config.getProperty("keystoreType");
-            if (keystoreType != null) {
-                this.keystoreType = keystoreType;
-            }
-            final String clientAuth = config.getProperty("clientAuth");
-            if (clientAuth != null) {
-                this.clientAuth = clientAuth;
-            }
-            final String keyAlias = config.getProperty("keyAlias");
-            if (keyAlias != null) {
-                this.keyAlias = keyAlias;
-            }
-            final String sslProtocol = config.getProperty("sslProtocol");
-            if (sslProtocol != null) {
-                this.sslProtocol = sslProtocol;
-            }
-            final String webXml = config.getProperty("webXml");
-            if (webXml != null) {
-                this.webXml = webXml;
-            }
-            final String tempDir = config.getProperty("tempDir");
-            if (tempDir != null) {
-                this.tempDir = tempDir;
-            }
-            final String conf = config.getProperty("conf");
-            if (conf != null) {
-                this.conf = conf;
-            }
-            final String jaxrsMapping = config.getProperty("jaxrsMapping");
-            if (jaxrsMapping != null) {
-                this.jaxrsMapping = jaxrsMapping;
-            }
-            final String cdiConversation = config.getProperty("cdiConversation");
-            if (cdiConversation != null) {
-                this.cdiConversation = Boolean.parseBoolean(cdiConversation);
-            }
-            final String jaxrsProviderSetup = config.getProperty("jaxrsProviderSetup");
-            if (jaxrsProviderSetup != null) {
-                this.jaxrsProviderSetup = Boolean.parseBoolean(jaxrsProviderSetup);
-            }
-            final String loggingGlobalSetup = config.getProperty("loggingGlobalSetup");
-            if (loggingGlobalSetup != null) {
-                this.loggingGlobalSetup = Boolean.parseBoolean(loggingGlobalSetup);
-            }
-            final String tomcatScanning = config.getProperty("tomcatScanning");
-            if (tomcatScanning != null) {
-                this.tomcatScanning = Boolean.parseBoolean(tomcatScanning);
-            }
-            final String tomcatAutoSetup = config.getProperty("tomcatAutoSetup");
-            if (tomcatAutoSetup != null) {
-                this.tomcatAutoSetup = Boolean.parseBoolean(tomcatAutoSetup);
-            }
-            final String useShutdownHook = config.getProperty("useShutdownHook");
-            if (useShutdownHook != null) {
-                this.useShutdownHook = Boolean.parseBoolean(useShutdownHook);
-            }
+
+            // not trivial types
             for (final String prop : config.stringPropertyNames()) {
                 if (prop.startsWith("properties.")) {
                     property(prop.substring("properties.".length()), config.getProperty(prop));
@@ -1271,35 +1224,6 @@ public class Microwave implements AutoCloseable {
                     addCustomizer(ConfigurationCustomizer.class.cast(recipe.create()));
                 }
             }
-        }
-
-        public String getActiveProtocol() {
-            return isSkipHttp() ? "https" : "http";
-        }
-
-        public int getActivePort() {
-            return isSkipHttp() ? getHttpsPort() : getHttpPort();
-        }
-
-        public boolean isTomcatAutoSetup() {
-            return tomcatAutoSetup;
-        }
-
-        public void setTomcatAutoSetup(final boolean tomcatAutoSetup) {
-            this.tomcatAutoSetup = tomcatAutoSetup;
-        }
-
-        public boolean isUseShutdownHook() {
-            return useShutdownHook;
-        }
-
-        public void setUseShutdownHook(final boolean useShutdownHook) {
-            this.useShutdownHook = useShutdownHook;
-        }
-
-        public Builder noShutdownHook() {
-            setUseShutdownHook(false);
-            return this;
         }
     }
 
