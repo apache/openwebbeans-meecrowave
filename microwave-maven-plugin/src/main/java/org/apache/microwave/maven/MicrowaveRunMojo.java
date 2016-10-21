@@ -157,6 +157,9 @@ public class MicrowaveRunMojo extends AbstractMojo {
     @Parameter(property = "microwave.logging-global-setup", defaultValue = "true")
     private boolean loggingGlobalSetup;
 
+    @Parameter(property = "microwave.shutdown-hook", defaultValue = "true")
+    private boolean useShutdownHook;
+
     @Parameter
     private List<String> jsCustomizers;
 

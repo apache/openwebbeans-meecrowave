@@ -109,7 +109,7 @@ public class MonoMicrowave {
     }
 
     private static void doBoot() {
-        final Microwave.Builder configuration = new Microwave.Builder().randomHttpPort();
+        final Microwave.Builder configuration = new Microwave.Builder().randomHttpPort().noShutdownHook(/*the rule does*/);
         StreamSupport.stream(ServiceLoader.load(Microwave.ConfigurationCustomizer.class).spliterator(), false)
                 .forEach(c -> c.customize(configuration));
         CONFIGURATION.compareAndSet(null, configuration);

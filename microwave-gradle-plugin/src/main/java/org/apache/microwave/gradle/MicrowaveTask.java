@@ -193,6 +193,10 @@ public class MicrowaveTask extends DefaultTask {
 
     @Input
     @Optional
+    private boolean useShutdownHook = true;
+
+    @Input
+    @Optional
     private List<File> modules;
 
     @Input
@@ -786,5 +790,13 @@ public class MicrowaveTask extends DefaultTask {
 
     public void setTomcatAutoSetup(final boolean tomcatAutoSetup) {
         this.tomcatAutoSetup = tomcatAutoSetup;
+    }
+
+    public boolean isUseShutdownHook() {
+        return useShutdownHook;
+    }
+
+    public void setUseShutdownHook(final boolean useShutdownHook) {
+        this.useShutdownHook = useShutdownHook;
     }
 }

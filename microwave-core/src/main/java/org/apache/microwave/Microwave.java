@@ -450,11 +450,13 @@ public class Microwave implements AutoCloseable {
         } catch (final LifecycleException e) {
             throw new IllegalStateException(e);
         }
-        hook = new Thread(() -> {
-            hook = null; // prevent close to remove the hook which would throw an exception
-            close();
-        }, "microwave-stop-hook");
-        Runtime.getRuntime().addShutdownHook(hook);
+        if (configuration.isUseShutdownHook()) {
+            hook = new Thread(() -> {
+                hook = null; // prevent close to remove the hook which would throw an exception
+                close();
+            }, "microwave-stop-hook");
+            Runtime.getRuntime().addShutdownHook(hook);
+        }
         return this;
     }
 
@@ -721,6 +723,9 @@ public class Microwave implements AutoCloseable {
 
         @CliOption(name = "tomcat-default-setup", description = "Add default servlet")
         private boolean tomcatAutoSetup = true;
+
+        @CliOption(name = "use-shutdown-hook", description = "Use shutdown hook to automatically stop the container on Ctrl+C")
+        private boolean useShutdownHook = true;
 
         public Builder() { // load defaults
             loadFrom("microwave.properties");
@@ -1080,7 +1085,7 @@ public class Microwave implements AutoCloseable {
             configurationCustomizer.customize(this);
         }
 
-        public void loadFromProperties(final Properties config) {
+        public void loadFromProperties(final Properties config) { // TODO: parse @OptionCli instead?
             // filtering properties with system properties or themself
             final StrSubstitutor strSubstitutor = new StrSubstitutor(new StrLookup<String>() {
                 @Override
@@ -1213,6 +1218,10 @@ public class Microwave implements AutoCloseable {
             if (tomcatAutoSetup != null) {
                 this.tomcatAutoSetup = Boolean.parseBoolean(tomcatAutoSetup);
             }
+            final String useShutdownHook = config.getProperty("useShutdownHook");
+            if (useShutdownHook != null) {
+                this.useShutdownHook = Boolean.parseBoolean(useShutdownHook);
+            }
             for (final String prop : config.stringPropertyNames()) {
                 if (prop.startsWith("properties.")) {
                     property(prop.substring("properties.".length()), config.getProperty(prop));
@@ -1278,6 +1287,19 @@ public class Microwave implements AutoCloseable {
 
         public void setTomcatAutoSetup(final boolean tomcatAutoSetup) {
             this.tomcatAutoSetup = tomcatAutoSetup;
+        }
+
+        public boolean isUseShutdownHook() {
+            return useShutdownHook;
+        }
+
+        public void setUseShutdownHook(final boolean useShutdownHook) {
+            this.useShutdownHook = useShutdownHook;
+        }
+
+        public Builder noShutdownHook() {
+            setUseShutdownHook(false);
+            return this;
         }
     }
 

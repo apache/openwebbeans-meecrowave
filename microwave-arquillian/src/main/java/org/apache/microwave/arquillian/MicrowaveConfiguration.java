@@ -73,6 +73,7 @@ public class MicrowaveConfiguration implements ContainerConfiguration {
     private String realm;
     private boolean tomcatScanning = true;
     private boolean tomcatAutoSetup = true;
+    private boolean useShutdownHook = false /*arquillian*/;
 
     @Override
     public void validate() throws ConfigurationException {
@@ -475,5 +476,13 @@ public class MicrowaveConfiguration implements ContainerConfiguration {
 
     public void setRealm(final String realm) {
         this.realm = realm;
+    }
+
+    public boolean isUseShutdownHook() {
+        return useShutdownHook;
+    }
+
+    public void setUseShutdownHook(final boolean useShutdownHook) {
+        this.useShutdownHook = useShutdownHook;
     }
 }

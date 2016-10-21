@@ -32,7 +32,7 @@ public class MicrowaveExtension {
     private int httpsPort = 8443;
     private int stopPort = -1;
     private String host = "localhost";
-    protected String dir;
+    private String dir;
     private File serverXml;
     private boolean keepServerXmlAsThis;
     private Map<String, String> properties;
@@ -63,6 +63,15 @@ public class MicrowaveExtension {
     private boolean skip;
     private boolean jaxrsProviderSetup = true;
     private boolean loggingGlobalSetup = true;
+    private boolean useShutdownHook = true;
+
+    public boolean isUseShutdownHook() {
+        return useShutdownHook;
+    }
+
+    public void setUseShutdownHook(final boolean useShutdownHook) {
+        this.useShutdownHook = useShutdownHook;
+    }
 
     public Map<String, String> getCxfServletParams() {
         return cxfServletParams;
