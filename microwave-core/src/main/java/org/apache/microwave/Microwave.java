@@ -91,6 +91,7 @@ public class Microwave implements AutoCloseable {
     private final Builder configuration;
     protected File base;
     protected InternalTomcat tomcat;
+    protected volatile Thread hook;
 
     // we can undeploy webapps with that later
     private final Map<String, Runnable> contexts = new HashMap<>();
@@ -449,6 +450,11 @@ public class Microwave implements AutoCloseable {
         } catch (final LifecycleException e) {
             throw new IllegalStateException(e);
         }
+        hook = new Thread(() -> {
+            hook = null; // prevent close to remove the hook which would throw an exception
+            close();
+        }, "microwave-stop-hook");
+        Runtime.getRuntime().addShutdownHook(hook);
         return this;
     }
 
@@ -465,6 +471,10 @@ public class Microwave implements AutoCloseable {
         if (tomcat == null) {
             return;
         }
+        if (hook != null) {
+            Runtime.getRuntime().removeShutdownHook(hook);
+            this.hook = null;
+        }
         beforeStop();
         try {
             contexts.values().forEach(Runnable::run);
@@ -479,7 +489,7 @@ public class Microwave implements AutoCloseable {
                 postTask = null;
                 try {
                     FileUtils.deleteDirectory(base);
-                } catch (final IOException e) {
+                } catch (final IllegalArgumentException /*does not exist from the hook*/ | IOException e) {
                     // no-op
                 }
             }
