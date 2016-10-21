@@ -629,7 +629,7 @@ public class Microwave implements AutoCloseable {
         private String host = "localhost";
 
         @CliOption(name = "dir", description = "Root folder if provided otherwise a fake one is created in tmp-dir")
-        protected String dir;
+        private String dir;
 
         @CliOption(name = "server-xml", description = "Provided server.xml")
         private File serverXml;
