@@ -36,12 +36,11 @@ import org.apache.catalina.session.StandardManager;
 import org.apache.catalina.startup.Catalina;
 import org.apache.catalina.startup.MicrowaveContextConfig;
 import org.apache.catalina.startup.Tomcat;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.text.StrLookup;
 import org.apache.commons.lang3.text.StrSubstitutor;
 import org.apache.coyote.http2.Http2Protocol;
 import org.apache.microwave.cxf.CxfCdiAutoSetup;
+import org.apache.microwave.io.IO;
 import org.apache.microwave.logging.jul.Log4j2Logger;
 import org.apache.microwave.logging.openwebbeans.Log4j2LoggerFactory;
 import org.apache.microwave.logging.tomcat.Log4j2Log;
@@ -157,11 +156,7 @@ public class Microwave implements AutoCloseable {
 
         final File dir = ofNullable(meta.docBase).orElseGet(() -> {
             final File d = new File(configuration.tempDir, "classpath/fake-" + meta.context.replace("/", ""));
-            try {
-                FileUtils.forceMkdir(d);
-            } catch (final IOException e) {
-                throw new IllegalArgumentException(e);
-            }
+            IO.mkdirs(d);
             return d;
         });
 
@@ -217,11 +212,7 @@ public class Microwave implements AutoCloseable {
                 tomcat.getHost().removeChild(ctx);
             } finally {
                 if (dir != meta.docBase) {
-                    try {
-                        FileUtils.deleteDirectory(dir);
-                    } catch (final IOException e) {
-                        // no-op
-                    }
+                    IO.delete(dir);
                 }
             }
 
@@ -313,7 +304,7 @@ public class Microwave implements AutoCloseable {
             if (!file.equals(configuration.serverXml)) {
                 try (final InputStream is = new FileInputStream(configuration.serverXml);
                      final FileOutputStream fos = new FileOutputStream(file)) {
-                    IOUtils.copy(is, fos);
+                    IO.copy(is, fos);
                 } catch (final IOException e) {
                     throw new IllegalStateException(e);
                 }
@@ -332,7 +323,7 @@ public class Microwave implements AutoCloseable {
 
                 String serverXmlContent;
                 try (final InputStream stream = new FileInputStream(file)) {
-                    serverXmlContent = IOUtils.toString(stream, StandardCharsets.UTF_8);
+                    serverXmlContent = IO.toString(stream);
                     for (final Map.Entry<String, String> pair : replacements.entrySet()) {
                         serverXmlContent = serverXmlContent.replace(pair.getKey(), pair.getValue());
                     }
@@ -340,7 +331,7 @@ public class Microwave implements AutoCloseable {
                     throw new IllegalStateException(e);
                 }
                 try (final OutputStream os = new FileOutputStream(file)) {
-                    IOUtils.write(serverXmlContent, os);
+                    os.write(serverXmlContent.getBytes(StandardCharsets.UTF_8));
                 } catch (final IOException e) {
                     throw new IllegalStateException(e);
                 }
@@ -490,8 +481,8 @@ public class Microwave implements AutoCloseable {
                 ofNullable(postTask).ifPresent(Runnable::run);
                 postTask = null;
                 try {
-                    FileUtils.deleteDirectory(base);
-                } catch (final IllegalArgumentException /*does not exist from the hook*/ | IOException e) {
+                    IO.delete(base);
+                } catch (final IllegalArgumentException /*does not exist from the hook*/ e) {
                     // no-op
                 }
             }
@@ -567,7 +558,7 @@ public class Microwave implements AutoCloseable {
                 try (final InputStream is = u.getValue().openStream()) {
                     final File to = new File(base, u.getKey());
                     try (final OutputStream os = new FileOutputStream(to)) {
-                        IOUtils.copy(is, os);
+                        IO.copy(is, os);
                     }
                     if ("server.xml".equals(u.getKey())) {
                         configuration.setServerXml(to.getAbsolutePath());
@@ -587,19 +578,11 @@ public class Microwave implements AutoCloseable {
             final File dirFile = new File(dir);
             if (dirFile.exists()) {
                 if (base.exists() && configuration.deleteBaseOnStartup) {
-                    try {
-                        FileUtils.deleteDirectory(base);
-                    } catch (final IOException e) {
-                        throw new IllegalArgumentException(e);
-                    }
+                    IO.delete(base);
                 }
                 return dir;
             }
-            try {
-                FileUtils.forceMkdir(dirFile);
-            } catch (final IOException e) {
-                throw new IllegalArgumentException(e);
-            }
+            IO.mkdirs(dirFile);
             return dirFile.getAbsolutePath();
         }
 
@@ -607,11 +590,7 @@ public class Microwave implements AutoCloseable {
                 .map(File::new)
                 .filter(File::isDirectory)
                 .findFirst().get(), "microwave-" + System.nanoTime());
-        try {
-            FileUtils.forceMkdir(file);
-        } catch (final IOException e) {
-            throw new IllegalArgumentException(e);
-        }
+        IO.mkdirs(file);
         return file.getAbsolutePath();
     }
 

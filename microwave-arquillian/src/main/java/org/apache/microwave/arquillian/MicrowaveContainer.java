@@ -18,8 +18,8 @@
  */
 package org.apache.microwave.arquillian;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.microwave.Microwave;
+import org.apache.microwave.io.IO;
 import org.jboss.arquillian.container.spi.client.container.DeployableContainer;
 import org.jboss.arquillian.container.spi.client.container.DeploymentException;
 import org.jboss.arquillian.container.spi.client.container.LifecycleException;
@@ -32,7 +32,6 @@ import org.jboss.shrinkwrap.api.exporter.ZipExporter;
 import org.jboss.shrinkwrap.descriptor.api.Descriptor;
 
 import java.io.File;
-import java.io.IOException;
 
 import static java.util.Optional.ofNullable;
 
@@ -83,24 +82,11 @@ public class MicrowaveContainer implements DeployableContainer<MicrowaveConfigur
         this.container.undeploy(sanitizeName(archive));
         final File dump = toArchiveDump(archive);
         if (dump.isFile()) {
-            FileUtils.deleteQuietly(dump);
+            IO.delete(dump);
         }
         final File unpacked = new File(dump.getParentFile(), dump.getName().replace(".war", ""));
         if (unpacked.isDirectory()) {
-            try {
-                FileUtils.deleteDirectory(unpacked);
-            } catch (final IOException e) {
-                Runtime.getRuntime().addShutdownHook(new Thread() {
-                    @Override
-                    public void run() {
-                        try {
-                            FileUtils.deleteDirectory(unpacked);
-                        } catch (final IOException e1) {
-                            throw new IllegalStateException(e1);
-                        }
-                    }
-                });
-            }
+            IO.delete(unpacked);
         }
     }
 

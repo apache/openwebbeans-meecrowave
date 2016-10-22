@@ -18,7 +18,7 @@
  */
 package org.apache.microwave.arquillian;
 
-import org.apache.commons.io.IOUtils;
+import org.apache.microwave.io.IO;
 import org.app.Endpoint;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
@@ -30,9 +30,11 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 @RunWith(Arquillian.class)
 public class MicrowaveContainerTest {
@@ -47,6 +49,15 @@ public class MicrowaveContainerTest {
 
     @Test
     public void run() throws IOException {
-        assertEquals("simple", IOUtils.toString(new URL(base.toExternalForm() + "api/test")));
+        assertEquals("simple", slurp(new URL(base.toExternalForm() + "api/test")));
+    }
+
+    private String slurp(final URL url) {
+        try (final InputStream is = url.openStream()) {
+            return IO.toString(is);
+        } catch (final IOException e) {
+            fail(e.getMessage());
+        }
+        return null;
     }
 }

@@ -18,8 +18,8 @@
  */
 package org.apache.microwave;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.cxf.helpers.FileUtils;
+import org.apache.microwave.io.IO;
 import org.junit.Test;
 import org.superbiz.app.Endpoint;
 import org.superbiz.app.RsApp;
@@ -48,7 +48,7 @@ public class MicrowaveTest {
             FileUtils.mkDir(targetFile.getParentFile());
             try (final InputStream from = Thread.currentThread().getContextClassLoader().getResourceAsStream(target + ".class");
                  final OutputStream to = new FileOutputStream(targetFile)) {
-                IOUtils.copy(from, to);
+                IO.copy(from, to);
             } catch (final IOException e) {
                 fail();
             }
@@ -59,7 +59,7 @@ public class MicrowaveTest {
             FileUtils.mkDir(targetFile.getParentFile());
             try (final InputStream from = Thread.currentThread().getContextClassLoader().getResourceAsStream("org/superbiz/app-res/" + name + ".class");
                  final OutputStream to = new FileOutputStream(targetFile)) {
-                IOUtils.copy(from, to);
+                IO.copy(from, to);
             } catch (final IOException e) {
                 fail();
             }
@@ -71,13 +71,13 @@ public class MicrowaveTest {
         }
         try (final Microwave microwave = new Microwave(new Microwave.Builder().randomHttpPort()).start()) {
             microwave.deployWebapp("", root);
-            assertEquals("hello", IOUtils.toString(new URL("http://localhost:" + microwave.getConfiguration().getHttpPort() + "/index.html")));
-            assertEquals("simple", IOUtils.toString(new URL("http://localhost:" + microwave.getConfiguration().getHttpPort() + "/api/test")));
-            assertEquals("simplepathinfo", IOUtils.toString(new URL("http://localhost:" + microwave.getConfiguration().getHttpPort()
+            assertEquals("hello", slurp(new URL("http://localhost:" + microwave.getConfiguration().getHttpPort() + "/index.html")));
+            assertEquals("simple", slurp(new URL("http://localhost:" + microwave.getConfiguration().getHttpPort() + "/api/test")));
+            assertEquals("simplepathinfo", slurp(new URL("http://localhost:" + microwave.getConfiguration().getHttpPort()
                     + "/api/test?checkcustom=pathinfo#is=fine")));
-            assertEquals("simple", IOUtils.toString(new URL("http://localhost:" + microwave.getConfiguration().getHttpPort() + "/api/other")));
-            assertEquals("simplefiltertrue", IOUtils.toString(new URL("http://localhost:" + microwave.getConfiguration().getHttpPort() + "/filter")));
-            assertEquals("filtertrue", IOUtils.toString(new URL("http://localhost:" + microwave.getConfiguration().getHttpPort() + "/other")));
+            assertEquals("simple", slurp(new URL("http://localhost:" + microwave.getConfiguration().getHttpPort() + "/api/other")));
+            assertEquals("simplefiltertrue", slurp(new URL("http://localhost:" + microwave.getConfiguration().getHttpPort() + "/filter")));
+            assertEquals("filtertrue", slurp(new URL("http://localhost:" + microwave.getConfiguration().getHttpPort() + "/other")));
         } catch (final IOException e) {
             fail(e.getMessage());
         }
@@ -86,11 +86,11 @@ public class MicrowaveTest {
     @Test
     public void classpath() {
         try (final Microwave microwave = new Microwave(new Microwave.Builder().randomHttpPort()).bake()) {
-            assertEquals("simple", IOUtils.toString(new URL("http://localhost:" + microwave.getConfiguration().getHttpPort() + "/api/test")));
-            assertEquals("simplefiltertrue", IOUtils.toString(new URL("http://localhost:" + microwave.getConfiguration().getHttpPort() + "/filter")));
+            assertEquals("simple", slurp(new URL("http://localhost:" + microwave.getConfiguration().getHttpPort() + "/api/test")));
+            assertEquals("simplefiltertrue", slurp(new URL("http://localhost:" + microwave.getConfiguration().getHttpPort() + "/filter")));
             assertEquals(
                     "sci:" + Endpoint.class.getName() + RsApp.class.getName(),
-                    IOUtils.toString(new URL("http://localhost:" + microwave.getConfiguration().getHttpPort() + "/sci")));
+                    slurp(new URL("http://localhost:" + microwave.getConfiguration().getHttpPort() + "/sci")));
         } catch (final IOException e) {
             fail(e.getMessage());
         }
@@ -99,9 +99,18 @@ public class MicrowaveTest {
     @Test
     public void json() {
         try (final Microwave microwave = new Microwave(new Microwave.Builder().randomHttpPort()).bake()) {
-            assertEquals("{\"name\":\"test\"}", IOUtils.toString(new URL("http://localhost:" + microwave.getConfiguration().getHttpPort() + "/api/test/json")));
+            assertEquals("{\"name\":\"test\"}", slurp(new URL("http://localhost:" + microwave.getConfiguration().getHttpPort() + "/api/test/json")));
         } catch (final IOException e) {
             fail(e.getMessage());
         }
+    }
+
+    private String slurp(final URL url) {
+        try (final InputStream is = url.openStream()) {
+            return IO.toString(is);
+        } catch (final IOException e) {
+            fail(e.getMessage());
+        }
+        return null;
     }
 }

@@ -87,12 +87,7 @@
     <dependency>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-lang3</artifactId>
-      <version>3.4</version>
-    </dependency>
-    <dependency>
-      <groupId>commons-io</groupId>
-      <artifactId>commons-io</artifactId>
-      <version>2.4</version>
+      <version>3.5</version>
     </dependency>
     <dependency>
       <groupId>org.apache.xbean</groupId>
@@ -217,9 +212,10 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-shade-plugin</artifactId>
-        <version>2.3</version>
+        <version>2.4.3</version>
         <executions>
           <execution>
+            <id>bundle</id>
             <phase>package</phase>
             <goals>
               <goal>shade</goal>
@@ -227,7 +223,7 @@
             <configuration>
               <shadedClassifierName>runner</shadedClassifierName>
               <shadedArtifactAttached>true</shadedArtifactAttached>
-              <dependencyReducedPomLocation>${project.build.directory}/reduced-pom.xml</dependencyReducedPomLocation>
+              <dependencyReducedPomLocation>${project.build.directory}/reduced-pom-bundle.xml</dependencyReducedPomLocation>
               <transformers>
                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                   <mainClass>org.apache.microwave.runner.Cli</mainClass>
@@ -248,6 +244,12 @@
                   </excludes>
                 </filter>
               </filters>
+              <relocations>
+                <relocation>
+                  <pattern>org.apache.commons</pattern>
+                  <shadedPattern>org.apache.microwave.shaded.commons</shadedPattern>
+                </relocation>
+              </relocations>
             </configuration>
           </execution>
         </executions>

@@ -18,14 +18,16 @@
  */
 package org.apache.microwave.junit;
 
-import org.apache.commons.io.IOUtils;
+import org.apache.microwave.io.IO;
 import org.junit.ClassRule;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 public class MicrowaveRuleTest {
     @ClassRule
@@ -33,6 +35,15 @@ public class MicrowaveRuleTest {
 
     @Test
     public void test() throws IOException {
-        assertEquals("simple", IOUtils.toString(new URL("http://localhost:" + RULE.getConfiguration().getHttpPort() + "/api/test")));
+        assertEquals("simple", slurp(new URL("http://localhost:" + RULE.getConfiguration().getHttpPort() + "/api/test")));
+    }
+
+    private String slurp(final URL url) {
+        try (final InputStream is = url.openStream()) {
+            return IO.toString(is);
+        } catch (final IOException e) {
+            fail(e.getMessage());
+        }
+        return null;
     }
 }

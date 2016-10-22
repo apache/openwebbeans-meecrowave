@@ -18,12 +18,11 @@
  */
 package org.apache.microwave.runner;
 
-import org.apache.commons.io.IOUtils;
+import org.apache.microwave.io.IO;
 import org.junit.Test;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.net.ConnectException;
+import java.io.InputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.URL;
@@ -63,9 +62,9 @@ public class CliTest {
             runner.start();
             for (int i = 0; i < 60; i++) {
                 try {
-                    assertEquals("{\"name\":\"test\"}", IOUtils.toString(new URL("http://localhost:" + http + "/app/api/test/json")));
+                    assertEquals("{\"name\":\"test\"}", slurp(new URL("http://localhost:" + http + "/app/api/test/json")));
                     return;
-                } catch (final AssertionError | ConnectException | FileNotFoundException notYet) {
+                } catch (final AssertionError notYet) {
                     try {
                         Thread.sleep(1000);
                     } catch (final InterruptedException e) {
@@ -88,5 +87,14 @@ public class CliTest {
                 }
             }
         }
+    }
+
+    private String slurp(final URL url) {
+        try (final InputStream is = url.openStream()) {
+            return IO.toString(is);
+        } catch (final IOException e) {
+            fail(e.getMessage());
+        }
+        return null;
     }
 }
