@@ -34,6 +34,10 @@ public final class IO {
     }
 
     public static void delete(final File dir) {
+        if (!dir.exists()) {
+            return;
+        }
+
         if (dir.isFile()) {
             retryDelete(dir);
             return;
