@@ -88,6 +88,9 @@ public class MicrowaveTest {
         try (final Microwave microwave = new Microwave(new Microwave.Builder().randomHttpPort()).bake()) {
             assertEquals("simple", IOUtils.toString(new URL("http://localhost:" + microwave.getConfiguration().getHttpPort() + "/api/test")));
             assertEquals("simplefiltertrue", IOUtils.toString(new URL("http://localhost:" + microwave.getConfiguration().getHttpPort() + "/filter")));
+            assertEquals(
+                    "sci:" + Endpoint.class.getName() + RsApp.class.getName(),
+                    IOUtils.toString(new URL("http://localhost:" + microwave.getConfiguration().getHttpPort() + "/sci")));
         } catch (final IOException e) {
             fail(e.getMessage());
         }
