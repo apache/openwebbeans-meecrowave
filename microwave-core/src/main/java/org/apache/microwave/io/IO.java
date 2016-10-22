@@ -44,15 +44,15 @@ public final class IO {
                     if (f.isFile()) {
                         retryDelete(f);
                     } else {
-                        delete(f);
+                        retryDelete(f);
                     }
-                    retryDelete(f);
                 });
+        retryDelete(dir);
     }
 
     private static void retryDelete(final File f) {
         for (int i = 0; i < 3; i++) {
-            if (f.isFile() && !f.delete()) {
+            if (f.exists() && !f.delete()) {
                 System.gc(); // win
                 try {
                     Thread.sleep(50);

@@ -89,15 +89,18 @@ import static java.util.Optional.ofNullable;
 public class Microwave implements AutoCloseable {
     private final Builder configuration;
     protected File base;
+    protected final File ownedTempDir;
     protected InternalTomcat tomcat;
     protected volatile Thread hook;
 
     // we can undeploy webapps with that later
     private final Map<String, Runnable> contexts = new HashMap<>();
     private Runnable postTask;
+    private boolean clearCatalinaSystemProperties;
 
     public Microwave(final Builder builder) {
         this.configuration = builder;
+        this.ownedTempDir = new File(configuration.tempDir, "microwave_" + System.nanoTime());
     }
 
     public Builder getConfiguration() {
@@ -155,7 +158,7 @@ public class Microwave implements AutoCloseable {
 
 
         final File dir = ofNullable(meta.docBase).orElseGet(() -> {
-            final File d = new File(configuration.tempDir, "classpath/fake-" + meta.context.replace("/", ""));
+            final File d = new File(ownedTempDir, "classpath/fake-" + meta.context.replace("/", ""));
             IO.mkdirs(d);
             return d;
         });
@@ -230,6 +233,8 @@ public class Microwave implements AutoCloseable {
     }
 
     public Microwave start() {
+        clearCatalinaSystemProperties = System.getProperty("catalina.base") == null && System.getProperty("catalina.home") == null;
+
         if (configuration.loggingGlobalSetup) {
             final String[] toRestore = new String[]{
                     System.getProperty("openwebbeans.logging.factory"),
@@ -478,12 +483,18 @@ public class Microwave implements AutoCloseable {
             } catch (final LifecycleException e) {
                 throw new IllegalStateException(e);
             } finally {
+                if (clearCatalinaSystemProperties) {
+                    Stream.of("catalina.base", "catalina.home").forEach(System::clearProperty);
+                }
                 ofNullable(postTask).ifPresent(Runnable::run);
                 postTask = null;
                 try {
                     IO.delete(base);
+                    IO.delete(ownedTempDir);
                 } catch (final IllegalArgumentException /*does not exist from the hook*/ e) {
                     // no-op
+                } finally {
+                    base = null;
                 }
             }
         }
@@ -541,9 +552,7 @@ public class Microwave implements AutoCloseable {
 
     private File createDirectory(final File parent, final String directory) {
         final File dir = new File(parent, directory);
-        if (!dir.exists() && !dir.mkdirs()) {
-            throw new IllegalStateException("Unable to make dir " + dir.getAbsolutePath());
-        }
+        IO.mkdirs(dir);
         return dir;
     }
 
@@ -671,7 +680,7 @@ public class Microwave implements AutoCloseable {
         private final Collection<Connector> connectors = new ArrayList<>();
 
         @CliOption(name = "tmp-dir", description = "Temporary directory")
-        private String tempDir = new File(System.getProperty("java.io.tmpdir"), "microwave_" + System.nanoTime()).getAbsolutePath();
+        private String tempDir = System.getProperty("java.io.tmpdir");
 
         @CliOption(name = "web-resource-cached", description = "Cache web resources")
         private boolean webResourceCached = true;
@@ -1402,13 +1411,8 @@ public class Microwave implements AutoCloseable {
         private static final String DEFAULT_HTTPS_PORT = "8443";
         private static final String DEFAULT_STOP_PORT = "8005";
         private static final String DEFAULT_HOST = "localhost";
-        private static final String DEFAULT_APP_BASE = "webapps";
 
         private final Map<String, String> values = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
-
-        private QuickServerXmlParser() { // ensure defaults are present
-            this(true);
-        }
 
         private QuickServerXmlParser(final boolean useDefaults) {
             if (useDefaults) {
