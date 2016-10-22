@@ -94,8 +94,9 @@ public class MicrowaveContextConfig extends ContextConfig {
     protected void processAnnotationsWebResource(final WebResource webResource, final WebXml fragment,
                                                  final boolean handlesTypesOnly,
                                                  final Map<String, JavaClassCacheEntry> javaClassCache) {
-        if (configuration.isTomcatScanning()) { // TODO: use our finder
-            super.processAnnotationsWebResource(webResource, fragment, handlesTypesOnly, javaClassCache);
+        if (configuration.isTomcatScanning()) {
+            webClasses.keySet().stream().filter(k -> k.endsWith("/WEB-INF/classes"))
+                    .forEach(k -> processClasses(fragment, handlesTypesOnly, javaClassCache, k));
         }
     }
 
@@ -105,18 +106,7 @@ public class MicrowaveContextConfig extends ContextConfig {
         if (!configuration.isTomcatScanning()) {
             return;
         }
-
-        final Collection<Class<?>> classes = webClasses.remove(url.toExternalForm());
-        if (classes != null && !classes.isEmpty()) {
-            final ClassLoader loader = Thread.currentThread().getContextClassLoader();
-            classes.forEach(c -> {
-                try (final InputStream stream = loader.getResourceAsStream(c.getName().replace('.', '/') + ".class")) {
-                    super.processAnnotationsStream(stream, fragment, handlesTypesOnly, javaClassCache);
-                } catch (final IOException e) {
-                    new LogFacade(MicrowaveContextConfig.class.getName()).error("Can't parse " + c);
-                }
-            });
-        }
+        processClasses(fragment, handlesTypesOnly, javaClassCache, url.toExternalForm());
     }
 
     @Override
@@ -152,6 +142,21 @@ public class MicrowaveContextConfig extends ContextConfig {
             });
         } catch (final IOException e) {
             ok = false;
+        }
+    }
+
+    private void processClasses(final WebXml fragment, final boolean handlesTypesOnly,
+                                final Map<String, JavaClassCacheEntry> javaClassCache, final String key) {
+        final Collection<Class<?>> classes = webClasses.remove(key);
+        if (classes != null && !classes.isEmpty()) {
+            final ClassLoader loader = Thread.currentThread().getContextClassLoader();
+            classes.forEach(c -> {
+                try (final InputStream stream = loader.getResourceAsStream(c.getName().replace('.', '/') + ".class")) {
+                    super.processAnnotationsStream(stream, fragment, handlesTypesOnly, javaClassCache);
+                } catch (final IOException e) {
+                    new LogFacade(MicrowaveContextConfig.class.getName()).error("Can't parse " + c);
+                }
+            });
         }
     }
 }

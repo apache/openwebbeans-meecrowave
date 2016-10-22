@@ -48,7 +48,7 @@ public final class IO {
                     if (f.isFile()) {
                         retryDelete(f);
                     } else {
-                        retryDelete(f);
+                        delete(f);
                     }
                 });
         retryDelete(dir);
