@@ -24,6 +24,7 @@ import org.junit.runners.BlockJUnit4ClassRunner;
 import org.junit.runners.model.InitializationError;
 import org.junit.runners.model.Statement;
 
+import java.io.File;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 import java.util.List;
@@ -121,7 +122,12 @@ public class MonoMicrowave {
                     .orElseGet(() -> new Configuration() {
                     });
 
-            microwave.bake(runnerConfig.context());
+            final File war = runnerConfig.application();
+            if (war == null) {
+                microwave.bake(runnerConfig.context());
+            } else {
+                microwave.deployWebapp(runnerConfig.context(), runnerConfig.application());
+            }
             Runtime.getRuntime().addShutdownHook(new Thread() {
                 {
                     setName("Microwave-mono-rue-stopping");
@@ -138,6 +144,10 @@ public class MonoMicrowave {
     public interface Configuration {
         default String context() {
             return "";
+        }
+
+        default File application() {
+            return null;
         }
     }
 }
