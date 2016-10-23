@@ -71,6 +71,7 @@ public class MicrowaveConfiguration implements ContainerConfiguration {
     private String loginConfig;
     private String securityConstraints;
     private String realm;
+    private String tomcatFilter;
     private boolean tomcatScanning = true;
     private boolean tomcatAutoSetup = true;
     private boolean useShutdownHook = false /*arquillian*/;
@@ -484,5 +485,13 @@ public class MicrowaveConfiguration implements ContainerConfiguration {
 
     public void setUseShutdownHook(final boolean useShutdownHook) {
         this.useShutdownHook = useShutdownHook;
+    }
+
+    public String getTomcatFilter() {
+        return tomcatFilter;
+    }
+
+    public void setTomcatFilter(final String tomcatFilter) {
+        this.tomcatFilter = tomcatFilter;
     }
 }
