@@ -64,6 +64,15 @@ public class MicrowaveExtension {
     private boolean jaxrsProviderSetup = true;
     private boolean loggingGlobalSetup = true;
     private boolean useShutdownHook = true;
+    private String tomcatFilter;
+
+    public String getTomcatFilter() {
+        return tomcatFilter;
+    }
+
+    public void setTomcatFilter(final String tomcatFilter) {
+        this.tomcatFilter = tomcatFilter;
+    }
 
     public boolean isUseShutdownHook() {
         return useShutdownHook;

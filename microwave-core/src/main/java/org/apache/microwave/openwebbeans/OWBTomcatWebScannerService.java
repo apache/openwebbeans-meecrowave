@@ -38,6 +38,7 @@ public class OWBTomcatWebScannerService extends WebScannerService {
             return;
         }
         super.scan();
+        filter = null;
     }
 
     @Override
@@ -69,5 +70,9 @@ public class OWBTomcatWebScannerService extends WebScannerService {
         }
 
         return filter.check(PLUGGABILITY, path.substring(filenameIdx)) ? -1 : (path.indexOf(".jar") - 1);
+    }
+
+    public void setFilter(final JarScanFilter filter) {
+        this.filter = filter;
     }
 }

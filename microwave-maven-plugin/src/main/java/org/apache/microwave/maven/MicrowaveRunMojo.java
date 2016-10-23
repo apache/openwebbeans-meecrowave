@@ -172,6 +172,9 @@ public class MicrowaveRunMojo extends AbstractMojo {
     @Parameter(defaultValue = "${project}", readonly = true, required = true)
     private MavenProject project;
 
+    @Parameter(property = "microwave.tomcatFilter")
+    private String tomcatFilter;
+
     @Parameter(property = "microwave.context", defaultValue = "")
     private String context;
 

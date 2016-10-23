@@ -51,6 +51,7 @@ import org.apache.microwave.tomcat.CDIInstanceManager;
 import org.apache.microwave.tomcat.OWBJarScanner;
 import org.apache.microwave.tomcat.ProvidedLoader;
 import org.apache.microwave.tomcat.TomcatAutoInitializer;
+import org.apache.tomcat.JarScanFilter;
 import org.apache.tomcat.util.descriptor.web.LoginConfig;
 import org.apache.tomcat.util.descriptor.web.SecurityCollection;
 import org.apache.tomcat.util.descriptor.web.SecurityConstraint;
@@ -173,6 +174,15 @@ public class Microwave implements AutoCloseable {
         } catch (final IOException e) {
             ctx.setDocBase(dir.getAbsolutePath());
         }
+        ofNullable(configuration.tomcatFilter).ifPresent(filter -> {
+            final OWBJarScanner jarScanner = new OWBJarScanner();
+            try {
+                jarScanner.setJarScanFilter(JarScanFilter.class.cast(Thread.currentThread().getContextClassLoader().loadClass(filter).newInstance()));
+            } catch (final ClassNotFoundException | InstantiationException | IllegalAccessException e) {
+                throw new IllegalArgumentException(e);
+            }
+            ctx.setJarScanner(jarScanner);
+        });
         ctx.addLifecycleListener(new Tomcat.FixContextListener());
         ctx.addLifecycleListener(new MicrowaveContextConfig(configuration));
         ctx.addLifecycleListener(event -> {
@@ -715,8 +725,19 @@ public class Microwave implements AutoCloseable {
         @CliOption(name = "use-shutdown-hook", description = "Use shutdown hook to automatically stop the container on Ctrl+C")
         private boolean useShutdownHook = true;
 
+        @CliOption(name = "tomcat-filter", description = "A Tomcat JarScanFilter")
+        private String tomcatFilter;
+
         public Builder() { // load defaults
             loadFrom("microwave.properties");
+        }
+
+        public String getTomcatFilter() {
+            return tomcatFilter;
+        }
+
+        public void setTomcatFilter(final String tomcatFilter) {
+            this.tomcatFilter = tomcatFilter;
         }
 
         public boolean isTomcatScanning() {

@@ -21,11 +21,11 @@ package org.apache.catalina.startup;
 import org.apache.catalina.WebResource;
 import org.apache.microwave.Microwave;
 import org.apache.microwave.logging.tomcat.LogFacade;
+import org.apache.microwave.openwebbeans.OWBTomcatWebScannerService;
 import org.apache.tomcat.util.descriptor.web.WebXml;
 import org.apache.webbeans.config.WebBeansContext;
 import org.apache.webbeans.corespi.scanner.xbean.CdiArchive;
 import org.apache.webbeans.corespi.scanner.xbean.OwbAnnotationFinder;
-import org.apache.webbeans.web.scanner.WebScannerService;
 
 import javax.servlet.ServletContainerInitializer;
 import javax.servlet.annotation.HandlesTypes;
@@ -43,6 +43,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
+
+import static java.util.Optional.ofNullable;
 
 public class MicrowaveContextConfig extends ContextConfig {
     private final Microwave.Builder configuration;
@@ -66,7 +68,8 @@ public class MicrowaveContextConfig extends ContextConfig {
         final ClassLoader old = thread.getContextClassLoader();
         thread.setContextClassLoader(loader);
         try {
-            final WebScannerService scannerService = WebScannerService.class.cast(WebBeansContext.getInstance().getScannerService());
+            final OWBTomcatWebScannerService scannerService = OWBTomcatWebScannerService.class.cast(WebBeansContext.getInstance().getScannerService());
+            ofNullable(context.getJarScanner()).ifPresent(s -> scannerService.setFilter(s.getJarScanFilter()));
             scannerService.scan();
             finder = scannerService.getFinder();
             finder.link();

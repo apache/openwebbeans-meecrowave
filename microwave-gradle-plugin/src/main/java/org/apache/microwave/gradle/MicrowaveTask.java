@@ -125,6 +125,10 @@ public class MicrowaveTask extends DefaultTask {
 
     @Input
     @Optional
+    private String tomcatFilter;
+
+    @Input
+    @Optional
     private String loginConfig;
 
     @Input
@@ -798,5 +802,13 @@ public class MicrowaveTask extends DefaultTask {
 
     public void setUseShutdownHook(final boolean useShutdownHook) {
         this.useShutdownHook = useShutdownHook;
+    }
+
+    public String getTomcatFilter() {
+        return tomcatFilter;
+    }
+
+    public void setTomcatFilter(final String tomcatFilter) {
+        this.tomcatFilter = tomcatFilter;
     }
 }
