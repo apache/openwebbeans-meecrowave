@@ -152,7 +152,7 @@ public class MicrowaveContextConfig extends ContextConfig {
                                 final Map<String, JavaClassCacheEntry> javaClassCache, final String key) {
         final Collection<Class<?>> classes = webClasses.remove(key);
         if (classes != null && !classes.isEmpty()) {
-            final ClassLoader loader = Thread.currentThread().getContextClassLoader();
+            final ClassLoader loader = context.getLoader().getClassLoader();
             classes.forEach(c -> {
                 try (final InputStream stream = loader.getResourceAsStream(c.getName().replace('.', '/') + ".class")) {
                     super.processAnnotationsStream(stream, fragment, handlesTypesOnly, javaClassCache);
