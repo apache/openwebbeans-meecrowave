@@ -19,6 +19,7 @@
 package org.apache.microwave.jpa.internal;
 
 import org.apache.microwave.Microwave;
+import org.apache.microwave.jpa.api.Jpa;
 import org.apache.microwave.jpa.api.PersistenceUnitInfoBuilder;
 import org.apache.microwave.jpa.api.Unit;
 
@@ -68,6 +69,13 @@ public class JpaExtension implements Extension {
     void addInternals(@Observes final BeforeBeanDiscovery bbd, final BeanManager bm) {
         Stream.of(JpaTransactionInterceptor.class, JpaNoTransactionInterceptor.class)
                 .forEach(interceptor -> bbd.addAnnotatedType(bm.createAnnotatedType(interceptor)));
+    }
+
+    <T> void addJpaToEmConsumers(@Observes @WithAnnotations(Unit.class) final ProcessAnnotatedType<T> pat) {
+        if (pat.getAnnotatedType().isAnnotationPresent(Jpa.class)) {
+            return;
+        }
+        pat.setAnnotatedType(new AutoJpaAnnotationType<T>(pat.getAnnotatedType()));
     }
 
     void collectEntityManagerInjections(@Observes final ProcessBean<?> bean) {

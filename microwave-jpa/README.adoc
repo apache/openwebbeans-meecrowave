@@ -70,3 +70,26 @@ public class JPADao {
 ----
 
 IMPORTANT: this integration is 100% based on `RESOURCE_LOCAL` units for now.
+
+Not that if a bean get injected an `EntityManager` it gets automatically `@Jpa(transactional=true)`
+so previous bean is equivalent to:
+
+[source,java]
+----
+@ApplicationScoped
+public class JPADao {
+    @Inject
+    @Unit(name = "test")
+    private EntityManager em;
+
+    public User save(final User user) {
+        em.persist(user);
+        return user;
+    }
+
+    @Jpa(transactional = false)
+    public User find(final long id) {
+        return em.find(User.class, id);
+    }
+}
+----

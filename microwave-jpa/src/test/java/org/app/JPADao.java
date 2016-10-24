@@ -34,19 +34,18 @@ import javax.persistence.Id;
 import javax.sql.DataSource;
 
 @ApplicationScoped
-@Jpa(transactional = false)
 public class JPADao {
     @Inject
     @Unit(name = "test")
     private EntityManager em;
 
-    @Jpa // tx
+    // tx by default
     public User save(final User user) {
         em.persist(user);
         return user;
     }
 
-    // inherit form class, no tx
+    @Jpa(transactional = false) // no tx
     public User find(final long id) {
         return em.find(User.class, id);
     }
