@@ -20,7 +20,6 @@ package org.app;
 
 import org.apache.commons.dbcp2.BasicDataSource;
 import org.apache.microwave.jpa.api.Jpa;
-import org.apache.microwave.jpa.api.PersistenceUnitInfoBuilder;
 import org.apache.microwave.jpa.api.Unit;
 import org.h2.Driver;
 
@@ -55,22 +54,12 @@ public class JPADao {
     @ApplicationScoped
     public static class JpaConfig {
         @Produces
+        @ApplicationScoped
         public DataSource dataSource() {
             final BasicDataSource source = new BasicDataSource();
             source.setDriver(new Driver());
             source.setUrl("jdbc:h2:mem:jpaextensiontest");
             return source;
-        }
-
-        @Produces
-        public PersistenceUnitInfoBuilder unit(final DataSource ds) {
-            return new PersistenceUnitInfoBuilder()
-                    .setUnitName("test")
-                    .setDataSource(ds)
-                    .setExcludeUnlistedClasses(true)
-                    .addManagedClazz(User.class)
-                    .addProperty("openjpa.RuntimeUnenhancedClasses", "supported")
-                    .addProperty("openjpa.jdbc.SynchronizeMappings", "buildSchema");
         }
     }
 

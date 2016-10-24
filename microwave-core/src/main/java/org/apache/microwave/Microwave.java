@@ -208,13 +208,10 @@ public class Microwave implements AutoCloseable {
 
         ctx.addServletContainerInitializer((c, ctx1) -> {
             ctx.getServletContext().setAttribute("microwave.configuration", configuration);
-            try {
-                new OWBAutoSetup().onStartup(c, ctx1);
-                new CxfCdiAutoSetup().onStartup(c, ctx1);
-                new TomcatAutoInitializer().onStartup(c, ctx1);
-            } finally {
-                ctx.getServletContext().removeAttribute("microwave.configuration");
-            }
+
+            new OWBAutoSetup().onStartup(c, ctx1);
+            new CxfCdiAutoSetup().onStartup(c, ctx1);
+            new TomcatAutoInitializer().onStartup(c, ctx1);
         }, emptySet());
 
         ofNullable(meta.consumer).ifPresent(c -> c.accept(ctx));

@@ -18,6 +18,7 @@
  */
 package org.apache.microwave.jpa.internal;
 
+import org.apache.microwave.Microwave;
 import org.apache.microwave.junit.MicrowaveRule;
 import org.app.JPADao;
 import org.junit.Rule;
@@ -29,7 +30,12 @@ import static org.junit.Assert.assertEquals;
 
 public class JpaExtensionTest {
     @Rule
-    public final MicrowaveRule rule = new MicrowaveRule().inject(this);
+    public final MicrowaveRule rule = new MicrowaveRule(
+            new Microwave.Builder().randomHttpPort()
+                    .property("jpa.property.openjpa.RuntimeUnenhancedClasses", "supported")
+                    .property("jpa.property.openjpa.jdbc.SynchronizeMappings", "buildSchema"),
+            "")
+            .inject(this);
 
     @Inject
     private JPADao service;

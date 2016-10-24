@@ -23,13 +23,17 @@ public class JpaConfig {
 }
 ----
 
+TIP: if your application uses a single persistence unit this is optional and
+a default one will be created if a single DataSource bean is available as Bean<?>.
+
 The datasource can be produces as you wish using your own configuration mecanism:
 
 [source,java]
 ----
 @ApplicationScoped
 public class JpaConfig {
-    @Produces // dbcp2 datasource
+    @Produces // dbcp2 datasource for instance
+    @ApplicationScoped
     public DataSource dataSource() {
         final BasicDataSource source = new BasicDataSource();
         source.setDriver(new Driver());

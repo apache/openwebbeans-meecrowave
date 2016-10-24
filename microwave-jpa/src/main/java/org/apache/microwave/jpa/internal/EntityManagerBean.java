@@ -5,7 +5,6 @@ import org.apache.microwave.jpa.api.EntityManagerScoped;
 import javax.enterprise.context.spi.CreationalContext;
 import javax.enterprise.inject.Vetoed;
 import javax.enterprise.inject.spi.Bean;
-import javax.enterprise.inject.spi.BeanManager;
 import javax.enterprise.inject.spi.InjectionPoint;
 import javax.enterprise.inject.spi.PassivationCapable;
 import javax.persistence.EntityManager;
@@ -40,7 +39,7 @@ public class EntityManagerBean implements Bean<EntityManager>, PassivationCapabl
         this.synchronization = synchronization;
     }
 
-    void init(final BeanManager bm, final PersistenceUnitInfo info) {
+    void init(final PersistenceUnitInfo info) {
         final PersistenceProvider provider;
         try {
             provider = PersistenceProvider.class.cast(
