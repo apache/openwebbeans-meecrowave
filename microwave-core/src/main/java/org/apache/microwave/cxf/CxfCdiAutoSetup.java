@@ -19,21 +19,15 @@
 package org.apache.microwave.cxf;
 
 import org.apache.cxf.cdi.CXFCdiServlet;
-import org.apache.cxf.common.util.ClassHelper;
-import org.apache.cxf.common.util.ClassUnwrapper;
 import org.apache.cxf.endpoint.Endpoint;
 import org.apache.cxf.jaxrs.JAXRSServiceFactoryBean;
 import org.apache.cxf.jaxrs.model.ApplicationInfo;
 import org.apache.cxf.jaxrs.model.ClassResourceInfo;
 import org.apache.cxf.jaxrs.model.MethodDispatcher;
 import org.apache.cxf.jaxrs.model.OperationResourceInfo;
-import org.apache.cxf.jaxrs.provider.ServerProviderFactory;
 import org.apache.cxf.transport.ChainInitiationObserver;
 import org.apache.cxf.transport.http.DestinationRegistry;
 import org.apache.cxf.transport.servlet.ServletDestination;
-import org.apache.johnzon.jaxrs.DelegateProvider;
-import org.apache.johnzon.jaxrs.JohnzonProvider;
-import org.apache.johnzon.jaxrs.JsrProvider;
 import org.apache.microwave.Microwave;
 import org.apache.microwave.logging.tomcat.LogFacade;
 
@@ -64,7 +58,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 
-import static java.util.Arrays.asList;
 import static java.util.Optional.ofNullable;
 
 // this look a bit complicated but it just:
@@ -76,7 +69,7 @@ public class CxfCdiAutoSetup implements ServletContainerInitializer {
     @Override
     public void onStartup(final Set<Class<?>> c, final ServletContext ctx) throws ServletException {
         final Microwave.Builder builder = Microwave.Builder.class.cast(ctx.getAttribute("microwave.configuration"));
-        final MicrowaveCXFCdiServlet delegate = new MicrowaveCXFCdiServlet(!builder.isJaxrsProviderSetup());
+        final MicrowaveCXFCdiServlet delegate = new MicrowaveCXFCdiServlet();
         final FilterRegistration.Dynamic jaxrs = ctx.addFilter(NAME, new Filter() {
             private final String servletPath = builder.getJaxrsMapping().endsWith("/*") ?
                     builder.getJaxrsMapping().substring(0, builder.getJaxrsMapping().length() - 2) : builder.getJaxrsMapping();
@@ -308,37 +301,7 @@ public class CxfCdiAutoSetup implements ServletContainerInitializer {
     }
 
     private static class MicrowaveCXFCdiServlet extends CXFCdiServlet {
-        private final boolean noProviderSetup;
         private String[] prefixes;
-
-        private MicrowaveCXFCdiServlet(final boolean noProviderSetup) {
-            this.noProviderSetup = noProviderSetup;
-        }
-
-        @Override
-        protected void loadBus(final ServletConfig servletConfig) {
-            super.loadBus(servletConfig);
-
-            if (noProviderSetup) {
-                return;
-            }
-
-            final List<DelegateProvider<?>> providers = asList(new JohnzonProvider<>(), new JsrProvider());
-
-            // client
-            if (bus.getProperty("org.apache.cxf.jaxrs.bus.providers") == null) {
-                bus.setProperty("skip.default.json.provider.registration", "true");
-                bus.setProperty("org.apache.cxf.jaxrs.bus.providers", providers);
-            }
-
-            // server
-            getDestinationRegistryFromBus().getDestinations()
-                    .forEach(d -> {
-                        final ChainInitiationObserver observer = ChainInitiationObserver.class.cast(d.getMessageObserver());
-                        final ServerProviderFactory providerFactory = ServerProviderFactory.class.cast(observer.getEndpoint().get(ServerProviderFactory.class.getName()));
-                        providerFactory.setUserProviders(providers);
-                    });
-        }
 
         @Override
         public void init(final ServletConfig sc) throws ServletException {

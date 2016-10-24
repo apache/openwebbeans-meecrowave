@@ -2,24 +2,36 @@ package org.apache.microwave.cxf;
 
 import org.apache.cxf.Bus;
 import org.apache.cxf.bus.extension.ExtensionManagerBus;
-import org.apache.cxf.common.util.ClassHelper;
 import org.apache.cxf.common.util.ClassUnwrapper;
 import org.apache.cxf.feature.Feature;
 import org.apache.cxf.interceptor.Interceptor;
 import org.apache.cxf.message.Message;
+import org.apache.johnzon.jaxrs.DelegateProvider;
+import org.apache.johnzon.jaxrs.JohnzonProvider;
+import org.apache.johnzon.jaxrs.JsrProvider;
+import org.apache.microwave.Microwave;
 
 import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
 import javax.inject.Named;
+import javax.servlet.ServletContext;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+
+import static java.util.Arrays.asList;
 
 @Named("cxf")
 @ApplicationScoped
 public class MicrowaveBus implements Bus {
     private final Bus delegate = new ExtensionManagerBus();
 
-    public MicrowaveBus() {
+    protected MicrowaveBus() {
+        // no-op: for proxies
+    }
+
+    @Inject
+    public MicrowaveBus(final ServletContext context) {
         setProperty(ClassUnwrapper.class.getName(), (ClassUnwrapper) o -> {
             final Class<?> aClass = o.getClass();
             if (aClass.getName().contains("$$")) {
@@ -27,6 +39,17 @@ public class MicrowaveBus implements Bus {
             }
             return aClass;
         });
+
+        final Microwave.Builder builder = Microwave.Builder.class.cast(context.getAttribute("microwave.configuration"));
+        if (builder.isJaxrsProviderSetup()) {
+            final List<DelegateProvider<?>> providers = asList(new JohnzonProvider<>(), new JsrProvider());
+
+            // client
+            if (getProperty("org.apache.cxf.jaxrs.bus.providers") == null) {
+                setProperty("skip.default.json.provider.registration", "true");
+                setProperty("org.apache.cxf.jaxrs.bus.providers", providers);
+            }
+        }
     }
 
     @Override
