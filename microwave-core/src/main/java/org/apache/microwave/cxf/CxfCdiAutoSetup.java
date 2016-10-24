@@ -19,12 +19,16 @@
 package org.apache.microwave.cxf;
 
 import org.apache.cxf.cdi.CXFCdiServlet;
+import org.apache.cxf.common.util.ReflectionUtil;
 import org.apache.cxf.endpoint.Endpoint;
 import org.apache.cxf.jaxrs.JAXRSServiceFactoryBean;
 import org.apache.cxf.jaxrs.model.ApplicationInfo;
 import org.apache.cxf.jaxrs.model.ClassResourceInfo;
 import org.apache.cxf.jaxrs.model.MethodDispatcher;
 import org.apache.cxf.jaxrs.model.OperationResourceInfo;
+import org.apache.cxf.jaxrs.model.ProviderInfo;
+import org.apache.cxf.jaxrs.provider.ProviderFactory;
+import org.apache.cxf.jaxrs.provider.ServerProviderFactory;
 import org.apache.cxf.transport.ChainInitiationObserver;
 import org.apache.cxf.transport.http.DestinationRegistry;
 import org.apache.cxf.transport.servlet.ServletDestination;
@@ -46,10 +50,12 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletRequestWrapper;
 import javax.ws.rs.core.Application;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Enumeration;
@@ -381,8 +387,33 @@ public class CxfCdiAutoSetup implements ServletContainerInitializer {
                         });
                         resourcesToLog.clear();
 
+                        // log @Providers
+                        final ServerProviderFactory spf = ServerProviderFactory.class.cast(endpoint.get(ServerProviderFactory.class.getName()));
+                        dump(log, spf, "MessageBodyReaders", "messageReaders");
+                        dump(log, spf, "MessageBodyWriters", "messageWriters");
+
                         return base;
                     }).toArray(String[]::new);
+        }
+
+        private void dump(final LogFacade log, final ServerProviderFactory spf, final String description, final String fieldName) {
+            final Field field = ReflectionUtil.getDeclaredField(ProviderFactory.class, fieldName);
+            if (!field.isAccessible()) {
+                field.setAccessible(true);
+            }
+            try {
+                final Collection<ProviderInfo<?>> providers = Collection.class.cast(field.get(spf));
+                log.info("     " + description);
+                providers.stream().map(ProviderInfo::getProvider).forEach(o -> {
+                    try {
+                        log.info("       - " + o);
+                    } catch (final RuntimeException re) {
+                        // no-op: maybe cdi context is not active
+                    }
+                });
+            } catch (IllegalAccessException e) {
+                // ignore, not that a big deal
+            }
         }
     }
 }
