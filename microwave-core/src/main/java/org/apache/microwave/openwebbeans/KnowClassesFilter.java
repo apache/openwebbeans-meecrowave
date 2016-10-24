@@ -147,6 +147,7 @@ public class KnowClassesFilter implements Filter { // one easy and efficient sol
         included.add("org.apache.myfaces.cdi");
         // included.add("org.apache.myfaces.application.cdi");
         included.add("org.apache.myfaces.flow.cdi");
+        included.add("org.apache.microwave.cxf.MicrowaveBus");
 
         delegateSkip = new OptimizedExclusionFilter(excluded);
         delegateAccept = new OptimizedExclusionFilter(included);

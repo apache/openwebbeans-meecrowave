@@ -47,6 +47,7 @@
     <module>microwave-gradle-plugin</module>
     <module>microwave-junit</module>
     <module>microwave-arquillian</module>
+    <module>microwave-jpa</module>
   </modules>
 
   <build>

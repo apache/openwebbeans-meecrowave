@@ -90,7 +90,7 @@ public class MonoMicrowave {
         }
     }
 
-    public static class Rule extends MicrowaveRuleBase {
+    public static class Rule extends MicrowaveRuleBase<Rule> {
         @Override
         public Microwave.Builder getConfiguration() {
             return CONFIGURATION.get();

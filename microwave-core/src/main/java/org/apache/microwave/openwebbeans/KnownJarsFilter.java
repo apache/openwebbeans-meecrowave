@@ -117,6 +117,7 @@ public class KnownJarsFilter implements JarScanFilter {
         add("gson-");
         add("guava-");
         add("guice-");
+        add("h2-");
         add("hamcrest-");
         add("hawtbuf-");
         add("hawtdispatch-");

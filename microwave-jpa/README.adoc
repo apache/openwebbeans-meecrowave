@@ -1,0 +1,68 @@
+= Microwave JPA
+
+The overall idea behind this module is to propose a CDI integration of JPA
+allowing to programmatically control its persistence units.
+
+Concretely you will create a persistence unit from a `PersistenceUnitBuilder`
+allowing you to fully configure your unit from CDI context including the datasource:
+
+[source,java]
+----
+@ApplicationScoped
+public class JpaConfig {
+    @Produces
+    public PersistenceUnitInfoBuilder unit(final DataSource ds) {
+        return new PersistenceUnitInfoBuilder()
+                .setUnitName("test")
+                .setDataSource(ds)
+                .setExcludeUnlistedClasses(true)
+                .addManagedClazz(User.class)
+                .addProperty("openjpa.RuntimeUnenhancedClasses", "supported")
+                .addProperty("openjpa.jdbc.SynchronizeMappings", "buildSchema");
+    }
+}
+----
+
+The datasource can be produces as you wish using your own configuration mecanism:
+
+[source,java]
+----
+@ApplicationScoped
+public class JpaConfig {
+    @Produces // dbcp2 datasource
+    public DataSource dataSource() {
+        final BasicDataSource source = new BasicDataSource();
+        source.setDriver(new Driver());
+        source.setUrl("jdbc:h2:mem:jpaextensiontest");
+        return source;
+    }
+}
+----
+
+Finally you can inject your entity manager using `@Unit`. Ensure to
+decorate with `@Jpa` a class/method before using the entity manager to activate
+the jpa CDI context:
+
+[source,java]
+----
+@ApplicationScoped
+@Jpa(transactional = false)
+public class JPADao {
+    @Inject
+    @Unit(name = "test")
+    private EntityManager em;
+
+    @Jpa // with a resource local transaction
+    public User save(final User user) {
+        em.persist(user);
+        return user;
+    }
+
+    // inherit form class, no tx
+    public User find(final long id) {
+        return em.find(User.class, id);
+    }
+}
+----
+
+IMPORTANT: this integration is 100% based on `RESOURCE_LOCAL` units for now.

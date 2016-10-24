@@ -16,30 +16,19 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.microwave.junit;
+package org.apache.microwave.jpa.internal;
 
-import org.apache.microwave.Microwave;
+import org.apache.microwave.jpa.api.Jpa;
 
-public class MicrowaveRule extends MicrowaveRuleBase<MicrowaveRule> {
-    private final Microwave.Builder configuration;
-    private final String context;
+import javax.annotation.Priority;
+import javax.interceptor.Interceptor;
 
-    public MicrowaveRule() {
-        this(new Microwave.Builder().randomHttpPort(), "");
-    }
-
-    public MicrowaveRule(final Microwave.Builder configuration, final String context) {
-        this.configuration = configuration;
-        this.context = context;
-    }
-
+@Jpa(transactional = false)
+@Interceptor
+@Priority(Interceptor.Priority.LIBRARY_BEFORE)
+public class JpaNoTransactionInterceptor extends JpaInterceptorBase {
     @Override
-    public Microwave.Builder getConfiguration() {
-        return configuration;
-    }
-
-    @Override
-    protected AutoCloseable onStart() {
-        return new Microwave(configuration).bake(context);
+    protected boolean isTransactional() {
+        return false;
     }
 }

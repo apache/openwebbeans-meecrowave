@@ -16,30 +16,22 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.microwave.junit;
+package org.apache.microwave.jpa.api;
 
-import org.apache.microwave.Microwave;
+import javax.inject.Qualifier;
+import javax.persistence.SynchronizationType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
 
-public class MicrowaveRule extends MicrowaveRuleBase<MicrowaveRule> {
-    private final Microwave.Builder configuration;
-    private final String context;
+import static java.lang.annotation.ElementType.FIELD;
+import static java.lang.annotation.ElementType.METHOD;
+import static java.lang.annotation.ElementType.PARAMETER;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
-    public MicrowaveRule() {
-        this(new Microwave.Builder().randomHttpPort(), "");
-    }
-
-    public MicrowaveRule(final Microwave.Builder configuration, final String context) {
-        this.configuration = configuration;
-        this.context = context;
-    }
-
-    @Override
-    public Microwave.Builder getConfiguration() {
-        return configuration;
-    }
-
-    @Override
-    protected AutoCloseable onStart() {
-        return new Microwave(configuration).bake(context);
-    }
+@Qualifier
+@Target({FIELD, METHOD, PARAMETER})
+@Retention(RUNTIME)
+public @interface Unit {
+    String name();
+    SynchronizationType synchronization() default SynchronizationType.SYNCHRONIZED;
 }

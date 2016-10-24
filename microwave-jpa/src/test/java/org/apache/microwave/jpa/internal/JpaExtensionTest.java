@@ -16,30 +16,28 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.microwave.junit;
+package org.apache.microwave.jpa.internal;
 
-import org.apache.microwave.Microwave;
+import org.apache.microwave.junit.MicrowaveRule;
+import org.app.JPADao;
+import org.junit.Rule;
+import org.junit.Test;
 
-public class MicrowaveRule extends MicrowaveRuleBase<MicrowaveRule> {
-    private final Microwave.Builder configuration;
-    private final String context;
+import javax.inject.Inject;
 
-    public MicrowaveRule() {
-        this(new Microwave.Builder().randomHttpPort(), "");
-    }
+import static org.junit.Assert.assertEquals;
 
-    public MicrowaveRule(final Microwave.Builder configuration, final String context) {
-        this.configuration = configuration;
-        this.context = context;
-    }
+public class JpaExtensionTest {
+    @Rule
+    public final MicrowaveRule rule = new MicrowaveRule().inject(this);
 
-    @Override
-    public Microwave.Builder getConfiguration() {
-        return configuration;
-    }
+    @Inject
+    private JPADao service;
 
-    @Override
-    protected AutoCloseable onStart() {
-        return new Microwave(configuration).bake(context);
+    @Test
+    public void run() {
+        final JPADao.User u = new JPADao.User();
+        u.setName("test");
+        assertEquals("test", service.find(service.save(u).getId()).getName());
     }
 }

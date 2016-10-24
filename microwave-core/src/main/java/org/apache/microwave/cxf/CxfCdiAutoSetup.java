@@ -19,6 +19,8 @@
 package org.apache.microwave.cxf;
 
 import org.apache.cxf.cdi.CXFCdiServlet;
+import org.apache.cxf.common.util.ClassHelper;
+import org.apache.cxf.common.util.ClassUnwrapper;
 import org.apache.cxf.endpoint.Endpoint;
 import org.apache.cxf.jaxrs.JAXRSServiceFactoryBean;
 import org.apache.cxf.jaxrs.model.ApplicationInfo;
@@ -316,6 +318,7 @@ public class CxfCdiAutoSetup implements ServletContainerInitializer {
         @Override
         protected void loadBus(final ServletConfig servletConfig) {
             super.loadBus(servletConfig);
+
             if (noProviderSetup) {
                 return;
             }
