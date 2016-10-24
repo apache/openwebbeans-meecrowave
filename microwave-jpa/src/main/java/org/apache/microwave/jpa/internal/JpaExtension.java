@@ -102,6 +102,20 @@ public class JpaExtension implements Extension {
     }
 
     void initBeans(@Observes final AfterDeploymentValidation adv, final BeanManager bm) {
+        if (entityManagerBeans.isEmpty()) {
+            return;
+        }
+
+        // only not portable part is this config read, could be optional
+        final ServletContext sc = ServletContext.class.cast(bm.getReference(bm.resolve(bm.getBeans(ServletContext.class)), ServletContext.class, bm.createCreationalContext(null)));
+        final Microwave.Builder config = Microwave.Builder.class.cast(sc.getAttribute("microwave.configuration"));
+        final Map<String, String> props = new HashMap<>();
+        if (config != null) {
+            ofNullable(config.getProperties()).ifPresent(p -> p.stringPropertyNames().stream()
+                    .filter(k -> k.startsWith("jpa.property."))
+                    .forEach(k -> props.put(k.substring("jpa.property.".length()), p.getProperty(k))));
+        }
+
         final Map<String, PersistenceUnitInfo> infoIndex = unitBuilders.stream()
                 .map(bean -> {
                     final CreationalContext<?> cc = bm.createCreationalContext(null);
@@ -114,6 +128,7 @@ public class JpaExtension implements Extension {
                         if (builder.getManagedClasses().isEmpty()) {
                             builder.setManagedClassNames(jpaClasses).setExcludeUnlistedClasses(true);
                         }
+                        props.forEach(builder::addProperty);
                         return builder.toInfo();
                     } finally {
                         cc.release();
@@ -123,17 +138,17 @@ public class JpaExtension implements Extension {
         entityManagerBeans.forEach((k, e) -> {
             PersistenceUnitInfo info = infoIndex.get(k.unitName);
             if (info == null) {
-                info = tryCreateDefaultPersistenceUnit(k.unitName, bm);
+                info = tryCreateDefaultPersistenceUnit(k.unitName, bm, props);
             }
             if (info == null) { // not valid
                 adv.addDeploymentProblem(new IllegalArgumentException("Didn't find any PersistenceUnitInfoBuilder for " + k));
             } else {
-                e.init(info);
+                e.init(info, bm);
             }
         });
     }
 
-    private PersistenceUnitInfo tryCreateDefaultPersistenceUnit(final String unitName, final BeanManager bm) {
+    private PersistenceUnitInfo tryCreateDefaultPersistenceUnit(final String unitName, final BeanManager bm, final Map<String, String> props) {
         final Set<Bean<?>> beans = bm.getBeans(DataSource.class);
         final Bean<?> bean = bm.resolve(beans);
         if (bean == null || !bm.isNormalScope(bean.getScope())) {
@@ -148,14 +163,7 @@ public class JpaExtension implements Extension {
                 .setUnitName(unitName)
                 .setDataSource(ds);
 
-        // only not portable part, we could make it optional
-        final ServletContext sc = ServletContext.class.cast(bm.getReference(bm.resolve(bm.getBeans(ServletContext.class)), ServletContext.class, bm.createCreationalContext(null)));
-        final Microwave.Builder config = Microwave.Builder.class.cast(sc.getAttribute("microwave.configuration"));
-        if (config != null) {
-            ofNullable(config.getProperties()).ifPresent(p -> p.stringPropertyNames().stream()
-                    .filter(k -> k.startsWith("jpa.property."))
-                    .forEach(k -> builder.addProperty(k.substring("jpa.property.".length()), p.getProperty(k))));
-        }
+        props.forEach(builder::addProperty);
 
         return builder.toInfo();
     }

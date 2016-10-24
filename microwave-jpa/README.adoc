@@ -43,6 +43,8 @@ public class JpaConfig {
 }
 ----
 
+NOTE: it is recommanded to ensure the `DataSource` is normal-scoped to not get surprises in term of behavior.
+
 Finally you can inject your entity manager using `@Unit`. Ensure to
 decorate with `@Jpa` a class/method before using the entity manager to activate
 the jpa CDI context:
@@ -93,3 +95,8 @@ public class JPADao {
     }
 }
 ----
+
+== Integration with Bean Validation
+
+The extension will try to find a `ValidatorFactory` in CDI context and will provide ir to the JPA provider
+if the `ValidationMode` is not `NONE` and a `Bean<ValidatorFactory>` exists.
