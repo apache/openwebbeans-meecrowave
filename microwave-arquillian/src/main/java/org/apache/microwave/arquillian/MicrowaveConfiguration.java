@@ -75,6 +75,7 @@ public class MicrowaveConfiguration implements ContainerConfiguration {
     private boolean tomcatScanning = true;
     private boolean tomcatAutoSetup = true;
     private boolean useShutdownHook = false /*arquillian*/;
+    private boolean useTomcatDefaults = true;
 
     @Override
     public void validate() throws ConfigurationException {
@@ -493,5 +494,13 @@ public class MicrowaveConfiguration implements ContainerConfiguration {
 
     public void setTomcatFilter(final String tomcatFilter) {
         this.tomcatFilter = tomcatFilter;
+    }
+
+    public boolean isUseTomcatDefaults() {
+        return useTomcatDefaults;
+    }
+
+    public void setUseTomcatDefaults(final boolean useTomcatDefaults) {
+        this.useTomcatDefaults = useTomcatDefaults;
     }
 }

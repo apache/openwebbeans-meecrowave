@@ -65,6 +65,15 @@ public class MicrowaveExtension {
     private boolean loggingGlobalSetup = true;
     private boolean useShutdownHook = true;
     private String tomcatFilter;
+    private boolean useTomcatDefaults = true;
+
+    public boolean isUseTomcatDefaults() {
+        return useTomcatDefaults;
+    }
+
+    public void setUseTomcatDefaults(final boolean useTomcatDefaults) {
+        this.useTomcatDefaults = useTomcatDefaults;
+    }
 
     public String getTomcatFilter() {
         return tomcatFilter;

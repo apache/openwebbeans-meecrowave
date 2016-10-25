@@ -73,6 +73,9 @@ public class MicrowaveRunMojo extends AbstractMojo {
     @Parameter(property = "microwave.keepServerXmlAsThis")
     private boolean keepServerXmlAsThis;
 
+    @Parameter(property = "microwave.useTomcatDefaults", defaultValue = "true")
+    private boolean useTomcatDefaults;
+
     @Parameter
     private Map<String, String> properties;
 

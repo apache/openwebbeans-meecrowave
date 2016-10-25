@@ -40,7 +40,5 @@ public class TomcatAutoInitializer implements ServletContainerInitializer {
         def.setInitParameter("debug", "0");
         def.setLoadOnStartup(1);
         def.addMapping("/");
-
-        // TODO: mimetypes
     }
 }

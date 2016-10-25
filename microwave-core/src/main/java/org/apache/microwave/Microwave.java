@@ -214,6 +214,24 @@ public class Microwave implements AutoCloseable {
             new TomcatAutoInitializer().onStartup(c, ctx1);
         }, emptySet());
 
+        if (configuration.isUseTomcatDefaults()) {
+            ctx.setSessionTimeout(30);
+            ctx.addWelcomeFile("index.html");
+            ctx.addWelcomeFile("index.htm");
+            try {
+                final Field mimesField = Tomcat.class.getDeclaredField("DEFAULT_MIME_MAPPINGS");
+                if (!mimesField.isAccessible()) {
+                    mimesField.setAccessible(true);
+                }
+                final String[] defaultMimes = String[].class.cast(mimesField.get(null));
+                for (int i = 0; i < defaultMimes.length; ) {
+                    ctx.addMimeMapping(defaultMimes[i++], defaultMimes[i++]);
+                }
+            } catch (final NoSuchFieldException | IllegalAccessException e) {
+                throw new IllegalStateException("Incompatible Tomcat", e);
+            }
+        }
+
         ofNullable(meta.consumer).ifPresent(c -> c.accept(ctx));
 
         tomcat.getHost().addChild(ctx);
@@ -725,8 +743,19 @@ public class Microwave implements AutoCloseable {
         @CliOption(name = "tomcat-filter", description = "A Tomcat JarScanFilter")
         private String tomcatFilter;
 
+        @CliOption(name = "tomcat-default", description = "Should Tomcat default be set (session timeout, mime mapping etc...)")
+        private boolean useTomcatDefaults = true;
+
         public Builder() { // load defaults
             loadFrom("microwave.properties");
+        }
+
+        public boolean isUseTomcatDefaults() {
+            return useTomcatDefaults;
+        }
+
+        public void setUseTomcatDefaults(final boolean useTomcatDefaults) {
+            this.useTomcatDefaults = useTomcatDefaults;
         }
 
         public String getTomcatFilter() {

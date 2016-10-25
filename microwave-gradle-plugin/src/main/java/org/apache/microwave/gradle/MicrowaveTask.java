@@ -89,6 +89,9 @@ public class MicrowaveTask extends DefaultTask {
 
     @Input
     @Optional
+    private boolean useTomcatDefaults = true;
+    @Input
+    @Optional
     private boolean skipHttp;
 
     @Input
@@ -810,5 +813,13 @@ public class MicrowaveTask extends DefaultTask {
 
     public void setTomcatFilter(final String tomcatFilter) {
         this.tomcatFilter = tomcatFilter;
+    }
+
+    public boolean isUseTomcatDefaults() {
+        return useTomcatDefaults;
+    }
+
+    public void setUseTomcatDefaults(final boolean useTomcatDefaults) {
+        this.useTomcatDefaults = useTomcatDefaults;
     }
 }

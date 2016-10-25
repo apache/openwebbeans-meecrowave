@@ -48,6 +48,7 @@
     <module>microwave-junit</module>
     <module>microwave-arquillian</module>
     <module>microwave-jpa</module>
+    <module>microwave-doc</module>
   </modules>
 
   <build>

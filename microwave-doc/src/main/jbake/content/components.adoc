@@ -1,0 +1,26 @@
+= Components
+:jbake-date: 2016-10-24
+:jbake-type: page
+:jbake-status: published
+:jbake-microwavepdf:
+:jbake-microwavetitleicon: icon icon_puzzle_alt
+:jbake-microwavecolor: body-pink
+:icons: font
+
+TBD
+
+== Microwave Core
+
+TBD
+
+== Microwave JPA
+
+TBD
+
+== Microwave Maven
+
+TBD
+
+== Microwave Gradle
+
+TBD
