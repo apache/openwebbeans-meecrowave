@@ -34,7 +34,7 @@
 
   <properties>
     <jbake.http>false</jbake.http>
-    <jbake.pdf>false</jbake.pdf>
+    <jbake.pdf>true</jbake.pdf>
 
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
@@ -49,6 +49,16 @@
       <groupId>org.asciidoctor</groupId>
       <artifactId>asciidoctorj</artifactId>
       <version>1.5.4</version>
+    </dependency>
+    <dependency>
+      <groupId>org.jruby</groupId>
+      <artifactId>jruby-complete</artifactId>
+      <version>1.7.24</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.tomee</groupId>
+      <artifactId>ziplock</artifactId>
+      <version>7.0.1</version>
     </dependency>
     <dependency>
       <groupId>org.apache.microwave</groupId>

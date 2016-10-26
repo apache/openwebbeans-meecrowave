@@ -7,7 +7,4 @@
 :jbake-microwavecolor: body-pink
 :icons: font
 
-== Builder
-
-TBD
-
+include::../../../../../target/generated-doc/Configuration.adoc[]

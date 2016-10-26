@@ -1,8 +1,29 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements. See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 package org.apache.microwave.doc;
 
 import com.orientechnologies.orient.core.Orient;
 import org.apache.commons.configuration.CompositeConfiguration;
+import org.apache.commons.configuration.MapConfiguration;
 import org.apache.microwave.Microwave;
+import org.apache.microwave.doc.generator.CliConfiguration;
+import org.apache.microwave.doc.generator.Configuration;
 import org.jbake.app.ConfigUtil;
 import org.jbake.app.Oven;
 
@@ -13,6 +34,8 @@ import java.nio.file.Path;
 import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -38,6 +61,10 @@ public class JBake {
         final boolean startHttp = args == null || args.length < 2 || Boolean.parseBoolean(args[2]); // by default we dev
         final boolean skipPdf = args != null && args.length > 3 && !Boolean.parseBoolean(args[3]); // by default...too slow sorry
 
+        // generation of dynamic content
+        new Configuration().run();
+        new CliConfiguration().run();
+
         final Runnable build = () -> {
             System.out.println("Building Microwave website in " + destination);
             final Orient orient = Orient.instance();
@@ -45,7 +72,14 @@ public class JBake {
                 orient.startup();
 
                 final Oven oven = new Oven(source, destination, new CompositeConfiguration() {{
-                    addConfiguration(ConfigUtil.load(source));
+                    final CompositeConfiguration config = new CompositeConfiguration();
+                    config.addConfiguration(new MapConfiguration(new HashMap<String, Object>() {{
+                        put("asciidoctor.attributes", new ArrayList<String>() {{
+                            add("source-highlighter=coderay");
+                        }});
+                    }}));
+                    config.addConfiguration(ConfigUtil.load(source));
+                    addConfiguration(config);
                 }}, true);
                 oven.setupPaths();
 

@@ -7,4 +7,11 @@
 :jbake-microwavecolor: body-pink
 :icons: font
 
-TBD
+
+Microwave provides a CLI (Command Line Interface) called `org.apache.microwave.runner.Cli`.
+
+It can be used to deploy the java classpath or a war. Here are the main options:
+
+include::../../../../../target/generated-doc/CliConfiguration.adoc[]
+
+Note that `help` command is supported as well.

@@ -32,6 +32,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import static org.asciidoctor.OptionsBuilder.options;
+import static org.asciidoctor.SafeMode.UNSAFE;
 
 public class PDFify {
     private PDFify() {
@@ -54,9 +55,16 @@ public class PDFify {
                         final Map<String, Object> attributes = asciidoctor.readDocumentHeader(asFile).getAttributes();
                         // if we generate the PDF link we need to create the PDF excepted if it is expected to be manual
                         if (attributes.containsKey("jbake-microwavepdf") && !attributes.containsKey("jbake-microwavepdf-manual")) {
+                            target.getParentFile().mkdirs();
                             asciidoctor.convertFile(
                                     asFile,
-                                    options().backend("pdf").attributes(AttributesBuilder.attributes().attribute("source-highlighter", "coderay")).toFile(target).get());
+                                    options()
+                                            //.baseDir(asFile.getParentFile())
+                                            .safe(UNSAFE)
+                                            .backend("pdf")
+                                            .attributes(AttributesBuilder.attributes()
+                                                    .attribute("source-highlighter", "coderay"))
+                                            .toFile(target).get());
                             System.out.println("Generated " + target);
                         }
                     });
