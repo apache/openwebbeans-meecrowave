@@ -1,4 +1,12 @@
 = Microwave JPA
+:jbake-date: 2016-10-24
+:jbake-type: page
+:jbake-status: published
+:jbake-microwavepdf:
+:jbake-microwavetitleicon: icon icon_puzzle_alt
+:jbake-microwavecolor: body-pink
+:icons: font
+
 
 The overall idea behind this module is to propose a CDI integration of JPA
 allowing to programmatically control its persistence units.

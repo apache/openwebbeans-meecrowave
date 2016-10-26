@@ -99,6 +99,10 @@ public class Microwave implements AutoCloseable {
     private Runnable postTask;
     private boolean clearCatalinaSystemProperties;
 
+    public Microwave() {
+        this(new Builder());
+    }
+
     public Microwave(final Builder builder) {
         this.configuration = builder;
         this.ownedTempDir = new File(configuration.tempDir, "microwave_" + System.nanoTime());

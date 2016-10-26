@@ -1,0 +1,16 @@
+= Microwave Testing
+:jbake-date: 2016-10-24
+:jbake-type: page
+:jbake-status: published
+:jbake-microwavepdf:
+:jbake-microwavetitleicon: icon icon_puzzle_alt
+:jbake-microwavecolor: body-pink
+:icons: font
+
+== JUnit: rules and runners
+
+TBD
+
+== Arquillian Container
+
+TBD

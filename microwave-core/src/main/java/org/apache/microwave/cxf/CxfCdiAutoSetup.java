@@ -337,7 +337,7 @@ public class CxfCdiAutoSetup implements ServletContainerInitializer {
 
                             final String address = Logs.singleSlash(base, info.getURITemplate().getValue());
 
-                            final String clazz = info.getResourceClass().getName();
+                            final String clazz = uproxyName(info.getResourceClass().getName());
                             classSize = Math.max(classSize, clazz.length());
                             addressSize = Math.max(addressSize, address.length());
 
@@ -367,7 +367,7 @@ public class CxfCdiAutoSetup implements ServletContainerInitializer {
 
                         // effective logging
                         log.info("REST Application: " + endpoint.getEndpointInfo().getAddress() + " -> "
-                                + ofNullable(app).map(ApplicationInfo::getResourceClass).map(Class::getName).orElse(""));
+                                + ofNullable(app).map(ApplicationInfo::getResourceClass).map(Class::getName).map(CxfCdiAutoSetup::uproxyName).orElse(""));
 
                         Collections.sort(resourcesToLog);
                         final int fClassSize = classSize;
@@ -415,5 +415,12 @@ public class CxfCdiAutoSetup implements ServletContainerInitializer {
                 // ignore, not that a big deal
             }
         }
+    }
+
+    private static String uproxyName(final String clazz) {
+        if (clazz.contains("$$")) {
+            return clazz.substring(0, clazz.indexOf("$$"));
+        }
+        return clazz;
     }
 }
