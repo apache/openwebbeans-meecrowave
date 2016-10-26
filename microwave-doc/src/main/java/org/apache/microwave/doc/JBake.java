@@ -28,6 +28,7 @@ public class JBake {
         // no-op
     }
 
+    // if you want to switch off PDF generation use as arguments: src/main/jbake target/site-tmp true false
     public static void main(final String[] args) throws Exception {
         System.setProperty("java.util.concurrent.ForkJoinPool.common.parallelism", "64"); // try to have parallelStream better than default
 
@@ -35,7 +36,7 @@ public class JBake {
         final File pdfSource = new File(source, "content");
         final File destination = args == null || args.length < 2 ? new File("target/site-tmp") : new File(args[1]);
         final boolean startHttp = args == null || args.length < 2 || Boolean.parseBoolean(args[2]); // by default we dev
-        final boolean skipPdf = args == null || args.length < 3 || Boolean.parseBoolean(args[3]); // by default...too slow sorry
+        final boolean skipPdf = args != null && args.length > 3 && !Boolean.parseBoolean(args[3]); // by default...too slow sorry
 
         final Runnable build = () -> {
             System.out.println("Building Microwave website in " + destination);
