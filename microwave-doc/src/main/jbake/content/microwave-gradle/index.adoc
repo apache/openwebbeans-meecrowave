@@ -7,4 +7,28 @@
 :jbake-microwavecolor: body-pink
 :icons: font
 
-TBD
+[source,groovy]
+----
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath "org.apache.microwave:microwave-gradle-plugin:${microwave.version}"
+    }
+}
+
+group 'com.app'
+version '1.0-SNAPSHOT'
+
+apply plugin: 'java'
+apply plugin: 'org.apache.microwave.microwave'
+
+microwave {
+    httpPort = 9090
+    // most of the microwave core configuration
+}
+
+----
+
+More coming soon, for now use gradle IDE integration or configuration documentation please.

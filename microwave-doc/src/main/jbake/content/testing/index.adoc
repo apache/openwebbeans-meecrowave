@@ -9,8 +9,71 @@
 
 == JUnit: rules and runners
 
-TBD
+Coordinates:
+
+[source,xml]
+----
+<dependency>
+  <groupId>org.apache.microwave</groupId>
+  <artifactId>microwave-junit</artifactId>
+  <version>${microwave.version}</version>
+</dependency>
+----
+
+Microwave provides two flavors of JUnit integration: mono or nor runners/rules. The mono one will
+ensure there is a single container for the whole JVM where the other ones will follow JUnit lifecycle (per class or test).
+
+Here how to use the not mono rule:
+
+[source,java]
+----
+public class MicrowaveRuleTest {
+    @ClassRule // started once for the class, @Rule would be per method
+    public static final MicrowaveRule RULE = new MicrowaveRule();
+
+    @Test
+    public void test() throws IOException {
+        // use "http://localhost:" + RULE.getConfiguration().getHttpPort()
+    }
+}
+----
+
+And here for the mono version:
+
+[source,java]
+----
+@RunWith(MonoMicrowave.Runner.class)
+public class MonoMicrowaveRuleTest {
+    /* or
+    @ClassRule
+    public static final MonoMicrowave.Rule RULE = new MonoMicrowave.Rule();
+    */
+
+    @MonoMicrowave.Runner.ConfigurationInject
+    private Microwave.Builder config;
+
+    @Test
+    public void test() throws IOException {
+        // use "http://localhost:" + config.getHttpPort()
+    }
+}
+----
+
+When using the mono runner, `@MonoMicrowave.Runner.ConfigurationInject` allows to still
+access the configuration and random HTTP port.
+
 
 == Arquillian Container
 
-TBD
+Container dependency:
+
+[source,xml]
+----
+<dependency>
+  <groupId>org.apache.microwave</groupId>
+  <artifactId>microwave-arquillian</artifactId>
+  <version>${microwave.version}</version>
+</dependency>
+----
+
+For the configuration check link:../microwave-core/configuration.html[Core configuration].
