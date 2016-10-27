@@ -20,4 +20,6 @@ Coordinates:
 
 TIP: most of the configuration is inherited from microwave-core.
 
-More coming soon, for now use gradle IDE integration or configuration documentation please.
+Here are the available options (see core configuration for the details):
+
+include::../../../../../target/generated-doc/MavenConfiguration.adoc[]

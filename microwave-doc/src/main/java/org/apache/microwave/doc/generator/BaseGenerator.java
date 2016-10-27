@@ -38,4 +38,8 @@ public abstract class BaseGenerator implements Runnable {
     }
 
     protected abstract String generate();
+
+    protected String tableConfig() {
+        return "[opts=\"header\",role=\"table table-bordered\"]\n";
+    }
 }

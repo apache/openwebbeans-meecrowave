@@ -62,6 +62,9 @@ public class MonoMicrowaveRuleTest {
 When using the mono runner, `@MonoMicrowave.Runner.ConfigurationInject` allows to still
 access the configuration and random HTTP port.
 
+For the configuration, mono rule will use a global configuration shared by all tests. To load it
+it will use a standard `ServiceLoader` on type `org.apache.microwave.Microwave$ConfigurationCustomizer`.
+
 
 == Arquillian Container
 
@@ -77,3 +80,10 @@ Container dependency:
 ----
 
 For the configuration check link:../microwave-core/configuration.html[Core configuration].
+
+Here is a sample:
+
+[source,xml]
+----
+include::../../../../../target/generated-doc/ArquillianConfiguration.adoc[]
+----

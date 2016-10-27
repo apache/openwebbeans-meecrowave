@@ -47,7 +47,7 @@
             <ul id="doc-menu" class="nav doc-menu hidden-xs affix-top" data-spy="affix">
                 <li><a href="<%if (content.rootpath) {%>${content.rootpath}<% } else { %><% }%>/index.html">Home</a></li>
                 <li><a href="<%if (content.rootpath) {%>${content.rootpath}<% } else { %><% }%>/start.html">Quick Start</a></li>
-                <li><a href="<%if (content.rootpath) {%>${content.rootpath}<% } else { %><% }%>/components.html">Extensions</a></li>
+                <li><a href="<%if (content.rootpath) {%>${content.rootpath}<% } else { %><% }%>/components.html">Components</a></li>
                 <li><a href="<%if (content.rootpath) {%>${content.rootpath}<% } else { %><% }%>/download.html">Download</a></li>
             </ul><!--//doc-menu-->
         </nav>

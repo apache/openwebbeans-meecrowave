@@ -632,6 +632,10 @@ public class Microwave implements AutoCloseable {
         return file.getAbsolutePath();
     }
 
+    public void await() {
+        tomcat.getServer().await();
+    }
+
     public static class Builder {
         @CliOption(name = "http", description = "HTTP port")
         private int httpPort = 8080;
@@ -1149,8 +1153,8 @@ public class Microwave implements AutoCloseable {
             return this;
         }
 
-        public void addCustomizer(final ConfigurationCustomizer configurationCustomizer) {
-            configurationCustomizer.customize(this);
+        public void addCustomizer(final Consumer<Builder> configurationCustomizer) {
+            configurationCustomizer.accept(this);
         }
 
         public void loadFromProperties(final Properties config) {
@@ -1248,18 +1252,14 @@ public class Microwave implements AutoCloseable {
                         }
                     }
                     securityConstraints.add(SecurityConstaintBuilder.class.cast(recipe.create()));
-                } else if (prop.equals("configurationCustomizer.")) {
-                    final String next = prop.substring("configurationCustomizer.".length());
-                    if (next.contains(".")) {
-                        continue;
-                    }
-                    final ObjectRecipe recipe = new ObjectRecipe(properties.getProperty(prop + ".class"));
+                } else if (prop.equals("configurationCustomizer")) {
+                    final ObjectRecipe recipe = new ObjectRecipe(properties.getProperty(prop));
                     for (final String nestedConfig : config.stringPropertyNames()) {
-                        if (nestedConfig.startsWith(prop) && !prop.endsWith(".class")) {
-                            recipe.setProperty(nestedConfig.substring(prop.length() + 1 /*dot*/), config.getProperty(nestedConfig));
+                        if (nestedConfig.startsWith(prop + '.')) {
+                            recipe.setProperty(nestedConfig.substring(prop.length() + 2 /*dot*/), config.getProperty(nestedConfig));
                         }
                     }
-                    addCustomizer(ConfigurationCustomizer.class.cast(recipe.create()));
+                    addCustomizer(Consumer.class.cast(recipe.create()));
                 }
             }
         }
@@ -1387,10 +1387,6 @@ public class Microwave implements AutoCloseable {
         public SecurityConstraint build() {
             return securityConstraint;
         }
-    }
-
-    public interface ConfigurationCustomizer {
-        void customize(Builder configuration);
     }
 
     private static class InternalTomcat extends Tomcat {
@@ -1557,5 +1553,9 @@ public class Microwave implements AutoCloseable {
             this.docBase = docBase;
             this.consumer = consumer;
         }
+    }
+
+    // just to type it and allow some extensions to use a ServiceLoader
+    public interface ConfigurationCustomizer extends Consumer<Microwave.Builder> {
     }
 }

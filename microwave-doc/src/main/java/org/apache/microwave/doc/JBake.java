@@ -22,8 +22,10 @@ import com.orientechnologies.orient.core.Orient;
 import org.apache.commons.configuration.CompositeConfiguration;
 import org.apache.commons.configuration.MapConfiguration;
 import org.apache.microwave.Microwave;
+import org.apache.microwave.doc.generator.ArquillianConfiguration;
 import org.apache.microwave.doc.generator.CliConfiguration;
 import org.apache.microwave.doc.generator.Configuration;
+import org.apache.microwave.doc.generator.MavenConfiguration;
 import org.jbake.app.ConfigUtil;
 import org.jbake.app.Oven;
 
@@ -64,6 +66,8 @@ public class JBake {
         // generation of dynamic content
         new Configuration().run();
         new CliConfiguration().run();
+        new ArquillianConfiguration().run();
+        new MavenConfiguration().run();
 
         final Runnable build = () -> {
             System.out.println("Building Microwave website in " + destination);

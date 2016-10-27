@@ -1,0 +1,12 @@
+= Community
+:jbake-date: 2016-10-27
+:jbake-type: page
+:jbake-status: published
+:jbake-microwavepdf:
+:jbake-microwavetitleicon: icon icon_puzzle_alt
+:jbake-microwavecolor: body-pink
+:icons: font
+
+For now please use OpenWebBeans mailing-lists, JIRA and IRC channel.
+
+See http://openwebbeans.apache.org/community.html[OpenWebBeans Community] page for more details.

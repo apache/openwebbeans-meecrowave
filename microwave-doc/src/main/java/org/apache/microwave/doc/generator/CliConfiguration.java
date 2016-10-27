@@ -28,7 +28,7 @@ import static java.util.stream.Collectors.joining;
 public class CliConfiguration extends BaseGenerator {
     @Override
     protected String generate() {
-        return "[opts=\"header\"]\n|===\n|Name|Description\n" +
+        return super.tableConfig() + "|===\n|Name|Description\n" +
                 Stream.of(Microwave.Builder.class.getDeclaredFields())
                         .sorted((o1, o2) -> o1.getName().compareTo(o2.getName()))
                         .map(f -> f.getAnnotation(CliOption.class))
