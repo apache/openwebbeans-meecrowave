@@ -125,7 +125,8 @@ public class Microwave implements AutoCloseable {
     }
 
     public Microwave deployClasspath(final DeploymentMeta meta) {
-        final Consumer<Context> builtInCustomizer = c -> c.setLoader(new ProvidedLoader(Thread.currentThread().getContextClassLoader()));
+        final ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+        final Consumer<Context> builtInCustomizer = c -> c.setLoader(new ProvidedLoader(classLoader, configuration.isTomcatWrapLoader()));
         return deployWebapp(new DeploymentMeta(meta.context, meta.docBase, ofNullable(meta.consumer).map(c -> (Consumer<Context>) ctx -> {
             builtInCustomizer.accept(ctx);
             c.accept(ctx);
@@ -733,6 +734,9 @@ public class Microwave implements AutoCloseable {
         @CliOption(name = "jaxrs-provider-setup", description = "Should default JAX-RS provider be configured")
         private boolean jaxrsProviderSetup = true;
 
+        @CliOption(name = "jaxrs-log-provider", description = "Should JAX-RS providers be logged")
+        private boolean jaxrsLogProviders = false;
+
         @CliOption(name = "logging-global-setup", description = "Should logging be configured to use log4j2 (it is global)")
         private boolean loggingGlobalSetup = true;
 
@@ -754,8 +758,20 @@ public class Microwave implements AutoCloseable {
         @CliOption(name = "tomcat-default", description = "Should Tomcat default be set (session timeout, mime mapping etc...)")
         private boolean useTomcatDefaults = true;
 
+        @CliOption(name = "tomcat-wrap-loader", description = "(Experimental) When deploying a classpath (current classloader), " +
+                "should microwave wrap the loader to define another loader identity but still use the same classes and resources.")
+        private boolean tomcatWrapLoader = false;
+
         public Builder() { // load defaults
             loadFrom("microwave.properties");
+        }
+
+        public boolean isJaxrsLogProviders() {
+            return jaxrsLogProviders;
+        }
+
+        public void setJaxrsLogProviders(final boolean jaxrsLogProviders) {
+            this.jaxrsLogProviders = jaxrsLogProviders;
         }
 
         public boolean isUseTomcatDefaults() {
@@ -1151,6 +1167,14 @@ public class Microwave implements AutoCloseable {
         public Builder noShutdownHook() {
             setUseShutdownHook(false);
             return this;
+        }
+
+        public boolean isTomcatWrapLoader() {
+            return tomcatWrapLoader;
+        }
+
+        public void setTomcatWrapLoader(final boolean tomcatWrapLoader) {
+            this.tomcatWrapLoader = tomcatWrapLoader;
         }
 
         public void addCustomizer(final Consumer<Builder> configurationCustomizer) {

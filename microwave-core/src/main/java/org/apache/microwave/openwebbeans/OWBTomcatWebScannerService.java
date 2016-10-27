@@ -18,19 +18,30 @@
  */
 package org.apache.microwave.openwebbeans;
 
+import org.apache.microwave.logging.tomcat.LogFacade;
 import org.apache.tomcat.JarScanFilter;
 import org.apache.webbeans.web.scanner.WebScannerService;
 
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 
+import static java.util.Optional.ofNullable;
 import static org.apache.tomcat.JarScanType.PLUGGABILITY;
 
 public class OWBTomcatWebScannerService extends WebScannerService {
+    private final LogFacade logger = new LogFacade(OWBTomcatWebScannerService.class.getName());
+
     private JarScanFilter filter;
     private String jreBase;
+
+    // just for logging (== temp)
+    private final List<String> urls = new ArrayList<>(8);
+    private String docBase;
 
     @Override
     public void scan() {
@@ -38,6 +49,35 @@ public class OWBTomcatWebScannerService extends WebScannerService {
             return;
         }
         super.scan();
+        if (!urls.isEmpty()) {
+            Collections.sort(urls);
+            logger.info("OpenWebBeans scanning:");
+            final String m2 = new File(System.getProperty("user.home", "."), ".m2/repository").getAbsolutePath();
+            final String base = ofNullable(docBase).orElse("$$$");
+            urls.forEach(u -> {
+                String shownValue = u
+                        // protocol
+                        .replace("file://", "")
+                        .replace("file:", "")
+                        .replace("jar:", "")
+                        // URL suffix
+                        .replace("!/META-INF/beans.xml", "")
+                        .replace("!/", "")
+                        // beans.xml
+                        .replace("META-INF/beans.xml", "");
+
+                // try to make it shorter
+                if (shownValue.startsWith(m2)) {
+                    shownValue = "${maven}/" + shownValue.substring(shownValue.replace(File.separatorChar, '/').lastIndexOf('/') + 1);
+                } else if (shownValue.startsWith(base)) {
+                    shownValue = "${app}" + shownValue.replace(base, "");
+                }
+
+                // finally log
+                logger.info("    " + shownValue);
+            });
+            urls.clear(); // no more needed
+        }
         filter = null;
     }
 
@@ -60,11 +100,11 @@ public class OWBTomcatWebScannerService extends WebScannerService {
 
     @Override
     protected int isExcludedJar(final String path) {
-        if (path.startsWith(jreBase)) {
+        if (path.startsWith(jreBase) || (path.startsWith("jar:") && path.indexOf(jreBase) == 4)) {
             return jreBase.length();
         }
 
-        final int filenameIdx = path.replace(File.separatorChar, '/').lastIndexOf('/') + 1;
+        final int filenameIdx = path.replace(File.separatorChar, '/').replace("!/", "").lastIndexOf('/') + 1;
         if (filenameIdx < 0 || filenameIdx >= path.length()) { // unlikely
             return -1;
         }
@@ -74,5 +114,16 @@ public class OWBTomcatWebScannerService extends WebScannerService {
 
     public void setFilter(final JarScanFilter filter) {
         this.filter = filter;
+    }
+
+    @Override
+    protected void addWebBeansXmlLocation(final URL beanArchiveUrl) {
+        urls.add(beanArchiveUrl.toExternalForm());
+        // we just customize the logging
+        super.doAddWebBeansXmlLocation(beanArchiveUrl);
+    }
+
+    public void setDocBase(final String docBase) {
+        this.docBase = docBase;
     }
 }

@@ -388,9 +388,11 @@ public class CxfCdiAutoSetup implements ServletContainerInitializer {
                         resourcesToLog.clear();
 
                         // log @Providers
-                        final ServerProviderFactory spf = ServerProviderFactory.class.cast(endpoint.get(ServerProviderFactory.class.getName()));
-                        dump(log, spf, "MessageBodyReaders", "messageReaders");
-                        dump(log, spf, "MessageBodyWriters", "messageWriters");
+                        if (Microwave.Builder.class.cast(sc.getServletContext().getAttribute("microwave.configuration")).isJaxrsLogProviders()) {
+                            final ServerProviderFactory spf = ServerProviderFactory.class.cast(endpoint.get(ServerProviderFactory.class.getName()));
+                            dump(log, spf, "MessageBodyReaders", "messageReaders");
+                            dump(log, spf, "MessageBodyWriters", "messageWriters");
+                        }
 
                         return base;
                     }).toArray(String[]::new);

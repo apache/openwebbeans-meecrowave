@@ -73,6 +73,12 @@ public class MicrowaveRunMojo extends AbstractMojo {
     @Parameter(property = "microwave.keepServerXmlAsThis")
     private boolean keepServerXmlAsThis;
 
+    @Parameter(property = "microwave.jaxrsLogProviders", defaultValue = "false")
+    private boolean jaxrsLogProviders;
+
+    @Parameter(property = "microwave.jaxrsLogProviders", defaultValue = "true")
+    private boolean tomcatWrapLoader;
+
     @Parameter(property = "microwave.useTomcatDefaults", defaultValue = "true")
     private boolean useTomcatDefaults;
 

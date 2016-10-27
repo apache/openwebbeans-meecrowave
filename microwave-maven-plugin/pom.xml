@@ -95,6 +95,20 @@
       <artifactId>ziplock</artifactId>
       <version>7.0.1</version>
       <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>org.apache.tomee</groupId>
+          <artifactId>javaee-api</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.apache.tomee</groupId>
+          <artifactId>openejb-jee</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.jboss.shrinkwrap</groupId>
+          <artifactId>shrinkwrap-api</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
   </dependencies>
 

@@ -76,6 +76,8 @@ public class MicrowaveConfiguration implements ContainerConfiguration {
     private boolean tomcatAutoSetup = true;
     private boolean useShutdownHook = false /*arquillian*/;
     private boolean useTomcatDefaults = true;
+    private boolean jaxrsLogProviders;
+    private boolean tomcatWrapLoader = true;
 
     @Override
     public void validate() throws ConfigurationException {
@@ -502,5 +504,21 @@ public class MicrowaveConfiguration implements ContainerConfiguration {
 
     public void setUseTomcatDefaults(final boolean useTomcatDefaults) {
         this.useTomcatDefaults = useTomcatDefaults;
+    }
+
+    public boolean isJaxrsLogProviders() {
+        return jaxrsLogProviders;
+    }
+
+    public void setJaxrsLogProviders(final boolean jaxrsLogProviders) {
+        this.jaxrsLogProviders = jaxrsLogProviders;
+    }
+
+    public boolean isTomcatWrapLoader() {
+        return tomcatWrapLoader;
+    }
+
+    public void setTomcatWrapLoader(final boolean tomcatWrapLoader) {
+        this.tomcatWrapLoader = tomcatWrapLoader;
     }
 }

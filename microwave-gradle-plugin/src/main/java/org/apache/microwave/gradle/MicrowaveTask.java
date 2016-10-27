@@ -81,11 +81,19 @@ public class MicrowaveTask extends DefaultTask {
 
     @Input
     @Optional
+    private boolean tomcatWrapLoader = false;
+
+    @Input
+    @Optional
     private Map<String, String> properties;
 
     @Input
     @Optional
     private boolean quickSession = true;
+
+    @Input
+    @Optional
+    private boolean jaxrsLogProviders = false;
 
     @Input
     @Optional
@@ -821,5 +829,21 @@ public class MicrowaveTask extends DefaultTask {
 
     public void setUseTomcatDefaults(final boolean useTomcatDefaults) {
         this.useTomcatDefaults = useTomcatDefaults;
+    }
+
+    public boolean isJaxrsLogProviders() {
+        return jaxrsLogProviders;
+    }
+
+    public void setJaxrsLogProviders(final boolean jaxrsLogProviders) {
+        this.jaxrsLogProviders = jaxrsLogProviders;
+    }
+
+    public boolean isTomcatWrapLoader() {
+        return tomcatWrapLoader;
+    }
+
+    public void setTomcatWrapLoader(final boolean tomcatWrapLoader) {
+        this.tomcatWrapLoader = tomcatWrapLoader;
     }
 }

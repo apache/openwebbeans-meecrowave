@@ -19,16 +19,27 @@
 package org.apache.microwave.tomcat;
 
 import org.apache.catalina.Context;
+import org.apache.catalina.LifecycleException;
+import org.apache.catalina.LifecycleState;
 import org.apache.catalina.Loader;
+import org.apache.catalina.util.LifecycleBase;
 
 import java.beans.PropertyChangeListener;
 
-public class ProvidedLoader implements Loader {
+// used to not recreate another classloader,
+// it has a small workaround cause tomcat set properties (clear*) on the classloader
+// and AppLoader doesnt support it leading to warnings we don't want
+public class ProvidedLoader extends LifecycleBase implements Loader {
+    private static final ClassLoader MOCK = new TomcatSettersClassLoader(ProvidedLoader.class.getClassLoader());
+
     private final ClassLoader delegate;
     private Context context;
+    private int mockReturns = -1;
 
-    public ProvidedLoader(final ClassLoader loader) {
-        this.delegate = loader == null ? ClassLoader.getSystemClassLoader() : loader;
+    public ProvidedLoader(final ClassLoader loader, final boolean wrap) {
+        // use another classloader cause tomcat set properties on the classloader
+        final ClassLoader impl = loader == null ? ClassLoader.getSystemClassLoader() : loader;
+        this.delegate = wrap ? new TomcatSettersClassLoader(impl) : impl;
     }
 
     @Override
@@ -38,6 +49,10 @@ public class ProvidedLoader implements Loader {
 
     @Override
     public ClassLoader getClassLoader() {
+        if (mockReturns > 0) {
+            mockReturns--;
+            return MOCK;
+        }
         return delegate;
     }
 
@@ -84,6 +99,51 @@ public class ProvidedLoader implements Loader {
     @Override
     public void removePropertyChangeListener(final PropertyChangeListener listener) {
         // no-op
+    }
+
+    @Override
+    protected void startInternal() throws LifecycleException {
+        mockReturns = 4; // check StandardContext.startInternal, while there is no warnings in the log and tests pass we are good
+        setState(LifecycleState.STARTING);
+    }
+
+    @Override
+    protected void initInternal() throws LifecycleException {
+        // no-op
+    }
+
+    @Override
+    protected void stopInternal() throws LifecycleException {
+        setState(LifecycleState.STOPPING);
+    }
+
+    @Override
+    protected void destroyInternal() throws LifecycleException {
+        // no-op
+    }
+
+    // avoid warnings cause AppLoader doesn't support these setters but tomcat expects it
+    public static class TomcatSettersClassLoader extends ClassLoader {
+        private TomcatSettersClassLoader(final ClassLoader classLoader) {
+            super(classLoader);
+        }
+
+
+        public void setClearReferencesHttpClientKeepAliveThread(final boolean ignored) {
+            // no-op
+        }
+
+        public void setClearReferencesRmiTargets(final boolean ignored) {
+            // no-op
+        }
+
+        public void setClearReferencesStopThreads(final boolean ignored) {
+            // no-op
+        }
+
+        public void setClearReferencesStopTimerThreads(final boolean ignored) {
+            // no-op
+        }
     }
 }
 

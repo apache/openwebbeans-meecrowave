@@ -26,17 +26,20 @@ import org.apache.tomcat.util.descriptor.web.WebXml;
 import org.apache.webbeans.config.WebBeansContext;
 import org.apache.webbeans.corespi.scanner.xbean.CdiArchive;
 import org.apache.webbeans.corespi.scanner.xbean.OwbAnnotationFinder;
+import org.xml.sax.InputSource;
 
 import javax.servlet.ServletContainerInitializer;
 import javax.servlet.annotation.HandlesTypes;
 import javax.servlet.annotation.WebFilter;
 import javax.servlet.annotation.WebListener;
 import javax.servlet.annotation.WebServlet;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Modifier;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -47,6 +50,8 @@ import java.util.stream.Stream;
 import static java.util.Optional.ofNullable;
 
 public class MicrowaveContextConfig extends ContextConfig {
+    private static final byte[] DEFAULT_WEB_XML = "<web-app version=\"3.1\" />".getBytes(StandardCharsets.UTF_8);
+
     private final Microwave.Builder configuration;
     private final Map<String, Collection<Class<?>>> webClasses = new HashMap<>();
     private OwbAnnotationFinder finder;
@@ -70,6 +75,7 @@ public class MicrowaveContextConfig extends ContextConfig {
         try {
             final OWBTomcatWebScannerService scannerService = OWBTomcatWebScannerService.class.cast(WebBeansContext.getInstance().getScannerService());
             ofNullable(context.getJarScanner()).ifPresent(s -> scannerService.setFilter(s.getJarScanFilter()));
+            scannerService.setDocBase(context.getDocBase());
             scannerService.scan();
             finder = scannerService.getFinder();
             finder.link();
@@ -91,6 +97,11 @@ public class MicrowaveContextConfig extends ContextConfig {
             webClasses.clear();
             finder = null;
         }
+    }
+
+    @Override  // just to avoid an info log pretty useless for us
+    protected InputSource getGlobalWebXmlSource() {
+        return ofNullable(super.getGlobalWebXmlSource()).orElse(new InputSource(new ByteArrayInputStream(DEFAULT_WEB_XML)));
     }
 
     @Override

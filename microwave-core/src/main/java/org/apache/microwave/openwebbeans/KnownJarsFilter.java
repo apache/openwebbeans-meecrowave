@@ -43,6 +43,7 @@ public class KnownJarsFilter implements JarScanFilter {
         add("akka-remote-");
         add("antlr-");
         add("aopalliance-");
+        add("args4j-");
         add("arquillian-core.jar");
         add("arquillian-testng.jar");
         add("arquillian-junit.jar");
@@ -58,6 +59,7 @@ public class KnownJarsFilter implements JarScanFilter {
         add("arquillian-test-impl-base");
         add("arquillian-test-spi");
         add("arquillian-tomee-");
+        add("asciidoctorj-");
         add("asm-");
         add("avalon-framework-");
         add("axis-");
@@ -77,6 +79,7 @@ public class KnownJarsFilter implements JarScanFilter {
         add("commons-cli-");
         add("commons-codec-");
         add("commons-collections-");
+        add("commons-configuration-");
         add("commons-dbcp");
         add("commons-dbcp-all-1.3-");
         add("commons-digester-");
@@ -107,8 +110,10 @@ public class KnownJarsFilter implements JarScanFilter {
         add("jce.jar");
         add("jfr.jar");
         add("jfxrt.jar");
+        add("jna-");
         add("jnr-");
         add("johnzon-");
+        add("json-simple-");
         add("fusemq-leveldb-");
         add("geronimo-");
         add("google-");
@@ -151,6 +156,7 @@ public class KnownJarsFilter implements JarScanFilter {
         add("javax.");
         add("jaxb-");
         add("jaxp-");
+        add("jbake-");
         add("jboss-");
         add("jbossall-");
         add("jbosscx-");
@@ -164,11 +170,13 @@ public class KnownJarsFilter implements JarScanFilter {
         add("jmdns-");
         add("joda-time-");
         add("johnzon-");
+        add("jruby-");
         add("jsoup-");
         add("jsp-api");
         add("jsr299-");
         add("jsr311-");
         add("jsse.jar");
+        add("jul-to-slf4j-");
         add("juli-");
         add("junit-");
         add("kahadb-");
@@ -201,6 +209,9 @@ public class KnownJarsFilter implements JarScanFilter {
         add("org.eclipse.");
         add("org.junit.");
         add("org.osgi.core-");
+        add("orient-commons-");
+        add("orientdb-core-");
+        add("orientdb-nativeos-");
         add("oro-");
         add("pax-url");
         add("PDFBox");
@@ -226,7 +237,7 @@ public class KnownJarsFilter implements JarScanFilter {
         add("slf4j-");
         add("smack-");
         add("smackx-");
-        add("snappy-java-");
+        add("snappy-");
         add("spring-");
         add("sshd-");
         add("stax-api-");
