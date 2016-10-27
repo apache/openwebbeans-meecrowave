@@ -31,12 +31,11 @@
 
   <artifactId>microwave-doc</artifactId>
   <name>Microwave :: Doc</name>
+  <description>A module building the static website in ${project.build.directory}/${project.build.finalName}</description>
 
   <properties>
     <jbake.http>false</jbake.http>
     <jbake.pdf>true</jbake.pdf>
-
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
 
   <dependencies>

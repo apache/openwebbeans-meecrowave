@@ -9,7 +9,7 @@
           </div>
         </div>
 
-        <div class="container">
+        <div class="container"><!-- don't remove it otherwise theme is no more creative common -->
             <small class="copyright">Designed with <i class="fa fa-heart"></i> by <a href="http://themes.3rdwavemedia.com/" target="_blank">Xiaoying Riley</a> for developers</small>
         </div><!--//container-->
     </footer><!--//footer-->
