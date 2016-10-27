@@ -49,6 +49,7 @@
                 <li><a href="<%if (content.rootpath) {%>${content.rootpath}<% } else { %><% }%>/start.html">Quick Start</a></li>
                 <li><a href="<%if (content.rootpath) {%>${content.rootpath}<% } else { %><% }%>/components.html">Components</a></li>
                 <li><a href="<%if (content.rootpath) {%>${content.rootpath}<% } else { %><% }%>/download.html">Download</a></li>
+                <li><a href="<%if (content.rootpath) {%>${content.rootpath}<% } else { %><% }%>/community.html">Community</a></li>
             </ul><!--//doc-menu-->
         </nav>
     </div>

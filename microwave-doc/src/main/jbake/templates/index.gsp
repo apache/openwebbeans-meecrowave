@@ -53,6 +53,16 @@
                               <a class="link" href="download.html"><span></span></a>
                           </div><!--//item-inner-->
                       </div><!--//item-->
+                        <div class="item item-primary item-2 col-md-offset-4 col-md-4 col-sm-offset-2 col-xs-offset-2 col-sm-6 col-xs-6">
+                            <div class="item-inner">
+                                <div class="icon-holder">
+                                    <span aria-hidden="true" class="icon icon_puzzle_alt"></span>
+                                </div><!--//icon-holder-->
+                                <h3 class="title">Community</h3>
+                                <p class="intro">OpenWebBeans community is proud to host Microwave project.</p>
+                                <a class="link" href="community.html"><span></span></a>
+                            </div><!--//item-inner-->
+                        </div><!--//item-->
                   </div><!--//cards-->
 
               </div><!--//container-->

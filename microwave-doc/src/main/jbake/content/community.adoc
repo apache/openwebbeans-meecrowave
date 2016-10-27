@@ -10,3 +10,21 @@
 For now please use OpenWebBeans mailing-lists, JIRA and IRC channel.
 
 See http://openwebbeans.apache.org/community.html[OpenWebBeans Community] page for more details.
+
+== Source code
+
+Source code can be found at http://svn.apache.org/repos/asf/openwebbeans/microwave/trunk/
+
+[source]
+----
+svn co http://svn.apache.org/repos/asf/openwebbeans/microwave/trunk/ microwave
+----
+
+=== Build it
+
+To build the project just run maven:
+
+[source]
+----
+mvn clean install
+----
