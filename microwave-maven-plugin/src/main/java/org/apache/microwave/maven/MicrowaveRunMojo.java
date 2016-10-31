@@ -160,6 +160,9 @@ public class MicrowaveRunMojo extends AbstractMojo {
     @Parameter(property = "microwave.skip")
     private boolean skip;
 
+    @Parameter(property = "microwave.jaxrs-default-providers")
+    private String jaxrsDefaultProviders;
+
     @Parameter(property = "microwave.jaxrs-provider-setup", defaultValue = "true")
     private boolean jaxrsProviderSetup;
 

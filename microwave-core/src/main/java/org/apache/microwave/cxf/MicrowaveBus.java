@@ -6,9 +6,8 @@ import org.apache.cxf.common.util.ClassUnwrapper;
 import org.apache.cxf.feature.Feature;
 import org.apache.cxf.interceptor.Interceptor;
 import org.apache.cxf.message.Message;
-import org.apache.johnzon.jaxrs.DelegateProvider;
-import org.apache.johnzon.jaxrs.JohnzonProvider;
 import org.apache.johnzon.jaxrs.JsrProvider;
+import org.apache.johnzon.jaxrs.jsonb.jaxrs.JsonbJaxrsProvider;
 import org.apache.microwave.Microwave;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -18,8 +17,11 @@ import javax.servlet.ServletContext;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static java.util.Arrays.asList;
+import static java.util.Optional.ofNullable;
 
 @Named("cxf")
 @ApplicationScoped
@@ -42,7 +44,18 @@ public class MicrowaveBus implements Bus {
 
         final Microwave.Builder builder = Microwave.Builder.class.cast(context.getAttribute("microwave.configuration"));
         if (builder.isJaxrsProviderSetup()) {
-            final List<DelegateProvider<?>> providers = asList(new JohnzonProvider<>(), new JsrProvider());
+            final List<Object> providers =
+                    ofNullable(builder.getJaxrsDefaultProviders())
+                            .map(s -> Stream.of(s.split(" *, *"))
+                                    .map(name -> {
+                                        try {
+                                            return Thread.currentThread().getContextClassLoader().loadClass(s).newInstance();
+                                        } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
+                                            throw new IllegalArgumentException(name + " can't be created");
+                                        }
+                                    })
+                                    .collect(Collectors.<Object>toList()))
+                            .orElseGet(() -> asList(/*new JohnzonProvider<>(),*/ new JsonbJaxrsProvider(), new JsrProvider()));
 
             // client
             if (getProperty("org.apache.cxf.jaxrs.bus.providers") == null) {

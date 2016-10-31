@@ -188,6 +188,10 @@ public class MicrowaveTask extends DefaultTask {
 
     @Input
     @Optional
+    private String jaxrsDefaultProviders;
+
+    @Input
+    @Optional
     private boolean loggingGlobalSetup = true;
 
     @Input
@@ -845,5 +849,13 @@ public class MicrowaveTask extends DefaultTask {
 
     public void setTomcatWrapLoader(final boolean tomcatWrapLoader) {
         this.tomcatWrapLoader = tomcatWrapLoader;
+    }
+
+    public String getJaxrsDefaultProviders() {
+        return jaxrsDefaultProviders;
+    }
+
+    public void setJaxrsDefaultProviders(final String jaxrsDefaultProviders) {
+        this.jaxrsDefaultProviders = jaxrsDefaultProviders;
     }
 }

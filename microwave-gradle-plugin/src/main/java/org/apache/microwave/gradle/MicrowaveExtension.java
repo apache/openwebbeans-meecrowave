@@ -68,6 +68,15 @@ public class MicrowaveExtension {
     private boolean useTomcatDefaults = true;
     private boolean jaxrsLogProviders = false;
     private boolean tomcatWrapLoader = false;
+    private String jaxrsDefaultProviders;
+
+    public String getJaxrsDefaultProviders() {
+        return jaxrsDefaultProviders;
+    }
+
+    public void setJaxrsDefaultProviders(final String jaxrsDefaultProviders) {
+        this.jaxrsDefaultProviders = jaxrsDefaultProviders;
+    }
 
     public boolean isTomcatWrapLoader() {
         return tomcatWrapLoader;

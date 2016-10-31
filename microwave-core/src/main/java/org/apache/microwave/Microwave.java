@@ -734,6 +734,9 @@ public class Microwave implements AutoCloseable {
         @CliOption(name = "jaxrs-provider-setup", description = "Should default JAX-RS provider be configured")
         private boolean jaxrsProviderSetup = true;
 
+        @CliOption(name = "jaxrs-default-providers", description = "If jaxrsProviderSetup is true the list of default providers to load (or defaulting to johnson jsonb and jsonp ones)")
+        private String jaxrsDefaultProviders;
+
         @CliOption(name = "jaxrs-log-provider", description = "Should JAX-RS providers be logged")
         private boolean jaxrsLogProviders = false;
 
@@ -1179,6 +1182,14 @@ public class Microwave implements AutoCloseable {
 
         public void addCustomizer(final Consumer<Builder> configurationCustomizer) {
             configurationCustomizer.accept(this);
+        }
+
+        public String getJaxrsDefaultProviders() {
+            return jaxrsDefaultProviders;
+        }
+
+        public void setJaxrsDefaultProviders(final String jaxrsDefaultProviders) {
+            this.jaxrsDefaultProviders = jaxrsDefaultProviders;
         }
 
         public void loadFromProperties(final Properties config) {
