@@ -79,6 +79,7 @@ public class MicrowaveConfiguration implements ContainerConfiguration {
     private boolean jaxrsLogProviders;
     private boolean tomcatWrapLoader = true;
     private String jaxrsDefaultProviders;
+    private String sharedLibraries;
 
     @Override
     public void validate() throws ConfigurationException {
@@ -529,5 +530,13 @@ public class MicrowaveConfiguration implements ContainerConfiguration {
 
     public void setJaxrsDefaultProviders(final String jaxrsDefaultProviders) {
         this.jaxrsDefaultProviders = jaxrsDefaultProviders;
+    }
+
+    public String getSharedLibraries() {
+        return sharedLibraries;
+    }
+
+    public void setSharedLibraries(final String sharedLibraries) {
+        this.sharedLibraries = sharedLibraries;
     }
 }

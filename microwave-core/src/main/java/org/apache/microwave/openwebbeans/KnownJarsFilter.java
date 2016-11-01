@@ -172,6 +172,7 @@ public class KnownJarsFilter implements JarScanFilter {
         add("johnzon-");
         add("jruby-");
         add("jsoup-");
+        add("jsonb-api");
         add("jsp-api");
         add("jsr299-");
         add("jsr311-");

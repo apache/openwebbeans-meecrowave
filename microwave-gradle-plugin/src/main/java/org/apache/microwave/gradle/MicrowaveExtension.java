@@ -69,6 +69,15 @@ public class MicrowaveExtension {
     private boolean jaxrsLogProviders = false;
     private boolean tomcatWrapLoader = false;
     private String jaxrsDefaultProviders;
+    private String sharedLibraries;
+
+    public String getSharedLibraries() {
+        return sharedLibraries;
+    }
+
+    public void setSharedLibraries(final String sharedLibraries) {
+        this.sharedLibraries = sharedLibraries;
+    }
 
     public String getJaxrsDefaultProviders() {
         return jaxrsDefaultProviders;

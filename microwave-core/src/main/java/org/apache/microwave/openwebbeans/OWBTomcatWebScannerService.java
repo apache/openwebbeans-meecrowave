@@ -25,11 +25,10 @@ import org.apache.webbeans.web.scanner.WebScannerService;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Set;
 
+import static java.util.Optional.of;
 import static java.util.Optional.ofNullable;
 import static org.apache.tomcat.JarScanType.PLUGGABILITY;
 
@@ -40,8 +39,9 @@ public class OWBTomcatWebScannerService extends WebScannerService {
     private String jreBase;
 
     // just for logging (== temp)
-    private final List<String> urls = new ArrayList<>(8);
+    private final Set<String> urls = new HashSet<>();
     private String docBase;
+    private String shared;
 
     @Override
     public void scan() {
@@ -50,11 +50,11 @@ public class OWBTomcatWebScannerService extends WebScannerService {
         }
         super.scan();
         if (!urls.isEmpty()) {
-            Collections.sort(urls);
             logger.info("OpenWebBeans scanning:");
             final String m2 = new File(System.getProperty("user.home", "."), ".m2/repository").getAbsolutePath();
             final String base = ofNullable(docBase).orElse("$$$");
-            urls.forEach(u -> {
+            final String sharedBase = ofNullable(shared).orElse("$$$");
+            urls.stream().map(u -> {
                 String shownValue = u
                         // protocol
                         .replace("file://", "")
@@ -71,14 +71,17 @@ public class OWBTomcatWebScannerService extends WebScannerService {
                     shownValue = "${maven}/" + shownValue.substring(shownValue.replace(File.separatorChar, '/').lastIndexOf('/') + 1);
                 } else if (shownValue.startsWith(base)) {
                     shownValue = "${app}" + shownValue.replace(base, "");
+                } else if (sharedBase != null && shownValue.startsWith(sharedBase)) {
+                    shownValue = "${shared}" + shownValue.replace(sharedBase, "");
                 }
 
-                // finally log
-                logger.info("    " + shownValue);
-            });
-            urls.clear(); // no more needed
+                return shownValue;
+            }).sorted().forEach(v -> logger.info("    " + v));
         }
+        urls.clear(); // no more needed
         filter = null;
+        docBase = null;
+        shared = null;
     }
 
     @Override
@@ -118,9 +121,16 @@ public class OWBTomcatWebScannerService extends WebScannerService {
 
     @Override
     protected void addWebBeansXmlLocation(final URL beanArchiveUrl) {
-        urls.add(beanArchiveUrl.toExternalForm());
-        // we just customize the logging
-        super.doAddWebBeansXmlLocation(beanArchiveUrl);
+        final String url = beanArchiveUrl.toExternalForm();
+        if (urls.add(of(url)
+                .map(s -> s.startsWith("jar:") && s.endsWith("!/META-INF/beans.xml") ? s.substring("jar:".length(), s.length() - "!/META-INF/beans.xml".length()) : s)
+                .get())) {
+            super.doAddWebBeansXmlLocation(beanArchiveUrl);
+        }
+    }
+
+    public void setShared(final String shared) {
+        this.shared = ofNullable(shared).map(File::new).filter(File::isDirectory).map(File::getAbsolutePath).orElse(null);
     }
 
     public void setDocBase(final String docBase) {

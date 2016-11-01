@@ -71,8 +71,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Field;
+import java.net.MalformedURLException;
 import java.net.ServerSocket;
 import java.net.URL;
+import java.net.URLClassLoader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -84,8 +86,10 @@ import java.util.TreeMap;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
+import static java.util.Collections.emptyList;
 import static java.util.Collections.emptySet;
 import static java.util.Optional.ofNullable;
+import static java.util.stream.Collectors.toList;
 
 public class Microwave implements AutoCloseable {
     private final Builder configuration;
@@ -125,8 +129,14 @@ public class Microwave implements AutoCloseable {
     }
 
     public Microwave deployClasspath(final DeploymentMeta meta) {
-        final ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-        final Consumer<Context> builtInCustomizer = c -> c.setLoader(new ProvidedLoader(classLoader, configuration.isTomcatWrapLoader()));
+        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+        final ClassLoader parentLoader = tomcat.getServer().getParentClassLoader();
+        if (parentLoader.getParent() == classLoader) {
+            classLoader = parentLoader;
+        }
+
+        final ProvidedLoader loader = new ProvidedLoader(classLoader, configuration.isTomcatWrapLoader());
+        final Consumer<Context> builtInCustomizer = c -> c.setLoader(loader);
         return deployWebapp(new DeploymentMeta(meta.context, meta.docBase, ofNullable(meta.consumer).map(c -> (Consumer<Context>) ctx -> {
             builtInCustomizer.accept(ctx);
             c.accept(ctx);
@@ -379,6 +389,25 @@ public class Microwave implements AutoCloseable {
             initialized = false;
         }
 
+        ofNullable(configuration.getSharedLibraries()).map(File::new).filter(File::isDirectory).ifPresent(libRoot -> {
+            final Collection<URL> libs = new ArrayList<>();
+            try {
+                libs.add(libRoot.toURI().toURL());
+            } catch (final MalformedURLException e) {
+                throw new IllegalStateException(e);
+            }
+            libs.addAll(ofNullable(libRoot.listFiles((dir, name) -> name.endsWith(".jar") || name.endsWith(".zip")))
+                    .map(Stream::of).map(s -> s.map(f -> {
+                        try {
+                            return f.toURI().toURL();
+                        } catch (final MalformedURLException e) {
+                            throw new IllegalStateException(e);
+                        }
+                    }).collect(toList()))
+                    .orElse(emptyList()));
+            tomcat.getServer().setParentClassLoader(new MicrowaveContainerLoader(libs.toArray(new URL[libs.size()]), Thread.currentThread().getContextClassLoader()));
+        });
+
         if (!initialized) {
             tomcat.setHostname(configuration.host);
             tomcat.getEngine().setDefaultHost(configuration.host);
@@ -504,6 +533,13 @@ public class Microwave implements AutoCloseable {
             this.hook = null;
         }
         beforeStop();
+        if (MicrowaveContainerLoader.class.isInstance(tomcat.getServer().getParentClassLoader())) {
+            try {
+                MicrowaveContainerLoader.class.cast(tomcat.getServer().getParentClassLoader()).close();
+            } catch (final IOException e) {
+                new LogFacade(Microwave.class.getName()).error(e.getMessage(), e);
+            }
+        }
         try {
             contexts.values().forEach(Runnable::run);
         } finally {
@@ -765,8 +801,24 @@ public class Microwave implements AutoCloseable {
                 "should microwave wrap the loader to define another loader identity but still use the same classes and resources.")
         private boolean tomcatWrapLoader = false;
 
+        @CliOption(name = "shared-librariries", description = "A folder containing shared libraries.")
+        private String sharedLibraries;
+
         public Builder() { // load defaults
             loadFrom("microwave.properties");
+        }
+
+        public String getSharedLibraries() {
+            return sharedLibraries;
+        }
+
+        public Builder sharedLibraries(final String sharedLibraries) {
+            setSharedLibraries(sharedLibraries);
+            return this;
+        }
+
+        public void setSharedLibraries(final String sharedLibraries) {
+            this.sharedLibraries = sharedLibraries;
         }
 
         public boolean isJaxrsLogProviders() {
@@ -1608,5 +1660,11 @@ public class Microwave implements AutoCloseable {
 
     // just to type it and allow some extensions to use a ServiceLoader
     public interface ConfigurationCustomizer extends Consumer<Microwave.Builder> {
+    }
+
+    private static final class MicrowaveContainerLoader extends URLClassLoader {
+        private MicrowaveContainerLoader(final URL[] urls, final ClassLoader parent) {
+            super(urls, parent);
+        }
     }
 }

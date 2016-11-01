@@ -73,6 +73,10 @@ public class MicrowaveTask extends DefaultTask {
 
     @Input
     @Optional
+    private String sharedLibraries;
+
+    @Input
+    @Optional
     private File serverXml;
 
     @Input
@@ -857,5 +861,13 @@ public class MicrowaveTask extends DefaultTask {
 
     public void setJaxrsDefaultProviders(final String jaxrsDefaultProviders) {
         this.jaxrsDefaultProviders = jaxrsDefaultProviders;
+    }
+
+    public String getSharedLibraries() {
+        return sharedLibraries;
+    }
+
+    public void setSharedLibraries(final String sharedLibraries) {
+        this.sharedLibraries = sharedLibraries;
     }
 }

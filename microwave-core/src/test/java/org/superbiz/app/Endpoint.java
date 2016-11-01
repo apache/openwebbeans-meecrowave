@@ -19,16 +19,19 @@
 package org.superbiz.app;
 
 import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.inject.spi.BeanManager;
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import java.security.Principal;
 
 import static java.util.Optional.ofNullable;
+import static org.junit.Assert.assertNotNull;
 
 @Path("test")
 @ApplicationScoped
@@ -41,6 +44,9 @@ public class Endpoint {
 
     @Inject
     private HttpServletRequest request;
+
+    @Inject
+    private BeanManager bm;
 
     @GET
     @Produces(MediaType.TEXT_PLAIN)
@@ -55,13 +61,29 @@ public class Endpoint {
         return new Simple("test");
     }
 
-
     @GET
     @Path("principal")
     @Produces(MediaType.TEXT_PLAIN)
     public String principal() {
         return request.getUserPrincipal().getClass().getName() + "_" + request.getUserPrincipal().getName() + "  " +
                 pcp.getClass().getName().replaceAll("\\$\\$OwbNormalScopeProxy[0-9]+", "") + "_" + pcp.getName();
+    }
+
+    @GET
+    @Path("load/{name}")
+    @Produces(MediaType.TEXT_PLAIN)
+    public String load(@PathParam("name") final String fqn) {
+        try {
+            final ClassLoader loader = Thread.currentThread().getContextClassLoader(); // if sharedlib is set should be MicrowaveClassloader
+            if (fqn.contains("deltaspike")) {
+                final Class<?> ce = loader.loadClass("org.apache.deltaspike.core.impl.config.ConfigurationExtension");
+                final Object extensionBeanInstance = bm.getReference(bm.resolve(bm.getBeans(ce)), ce, bm.createCreationalContext(null));
+                assertNotNull(extensionBeanInstance);
+            }
+            return loader.loadClass(fqn).getName();
+        } catch (final ClassNotFoundException cnfe) {
+            return "oops";
+        }
     }
 
     public static class Simple {

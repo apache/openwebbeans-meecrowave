@@ -76,6 +76,7 @@ public class MicrowaveContextConfig extends ContextConfig {
             final OWBTomcatWebScannerService scannerService = OWBTomcatWebScannerService.class.cast(WebBeansContext.getInstance().getScannerService());
             ofNullable(context.getJarScanner()).ifPresent(s -> scannerService.setFilter(s.getJarScanFilter()));
             scannerService.setDocBase(context.getDocBase());
+            scannerService.setShared(configuration.getSharedLibraries());
             scannerService.scan();
             finder = scannerService.getFinder();
             finder.link();

@@ -190,6 +190,10 @@ public class MicrowaveRunMojo extends AbstractMojo {
     @Parameter(property = "microwave.context", defaultValue = "")
     private String context;
 
+    // we don't need to resolve from maven coordinates cause can be added to the plugin deps, just here to reproduce manual deployments
+    @Parameter(property = "microwave.shared-libraries")
+    private String sharedLibraries;
+
     @Parameter(property = "microwave.webapp")
     private File webapp;
 
