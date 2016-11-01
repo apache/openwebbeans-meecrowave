@@ -20,11 +20,13 @@ package org.superbiz.app;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
+import java.security.Principal;
 
 import static java.util.Optional.ofNullable;
 
@@ -33,6 +35,12 @@ import static java.util.Optional.ofNullable;
 public class Endpoint {
     @Inject
     private Injectable injectable;
+
+    @Inject
+    private Principal pcp;
+
+    @Inject
+    private HttpServletRequest request;
 
     @GET
     @Produces(MediaType.TEXT_PLAIN)
@@ -45,6 +53,15 @@ public class Endpoint {
     @Produces(MediaType.APPLICATION_JSON)
     public Simple json() {
         return new Simple("test");
+    }
+
+
+    @GET
+    @Path("principal")
+    @Produces(MediaType.TEXT_PLAIN)
+    public String principal() {
+        return request.getUserPrincipal().getClass().getName() + "_" + request.getUserPrincipal().getName() + "  " +
+                pcp.getClass().getName().replaceAll("\\$\\$OwbNormalScopeProxy[0-9]+", "") + "_" + pcp.getName();
     }
 
     public static class Simple {

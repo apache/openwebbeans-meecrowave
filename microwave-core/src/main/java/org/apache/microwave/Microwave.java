@@ -188,14 +188,13 @@ public class Microwave implements AutoCloseable {
             }
             ctx.setJarScanner(jarScanner);
         });
-        ctx.addLifecycleListener(new Tomcat.FixContextListener());
         ctx.addLifecycleListener(new MicrowaveContextConfig(configuration));
         ctx.addLifecycleListener(event -> {
             switch (event.getType()) {
                 case Lifecycle.AFTER_START_EVENT:
                     ctx.getResources().setCachingAllowed(configuration.webResourceCached);
                     break;
-                case Lifecycle.BEFORE_START_EVENT:
+                case Lifecycle.BEFORE_INIT_EVENT:
                     if (configuration.loginConfig != null) {
                         ctx.setLoginConfig(configuration.loginConfig.build());
                     }
@@ -210,6 +209,7 @@ public class Microwave implements AutoCloseable {
             }
 
         });
+        ctx.addLifecycleListener(new Tomcat.FixContextListener()); // after having configured the security!!!
 
         ctx.addServletContainerInitializer((c, ctx1) -> {
             ctx.getServletContext().setAttribute("microwave.configuration", configuration);
@@ -973,6 +973,11 @@ public class Microwave implements AutoCloseable {
             return loginConfig;
         }
 
+        public Builder loginConfig(final LoginConfigBuilder loginConfig) {
+            setLoginConfig(loginConfig);
+            return this;
+        }
+
         public void setLoginConfig(final LoginConfigBuilder loginConfig) {
             this.loginConfig = loginConfig;
         }
@@ -981,12 +986,23 @@ public class Microwave implements AutoCloseable {
             return securityConstraints;
         }
 
+        public Builder securityConstraints(final SecurityConstaintBuilder securityConstraint) {
+            securityConstraints = securityConstraints == null ? new ArrayList<>() : securityConstraints;
+            securityConstraints.add(securityConstraint);
+            return this;
+        }
+
         public void setSecurityConstraints(final Collection<SecurityConstaintBuilder> securityConstraints) {
             this.securityConstraints = securityConstraints;
         }
 
         public Realm getRealm() {
             return realm;
+        }
+
+        public Builder realm(final Realm realm) {
+            setRealm(realm);
+            return this;
         }
 
         public void setRealm(final Realm realm) {
