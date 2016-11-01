@@ -55,6 +55,7 @@ import org.apache.tomcat.JarScanFilter;
 import org.apache.tomcat.util.descriptor.web.LoginConfig;
 import org.apache.tomcat.util.descriptor.web.SecurityCollection;
 import org.apache.tomcat.util.descriptor.web.SecurityConstraint;
+import org.apache.tomcat.util.net.SSLHostConfig;
 import org.apache.xbean.finder.ResourceFinder;
 import org.apache.xbean.recipe.ObjectRecipe;
 import org.xml.sax.Attributes;
@@ -434,9 +435,6 @@ public class Microwave implements AutoCloseable {
             if (connector.getAttribute("connectionTimeout") == null) {
                 connector.setAttribute("connectionTimeout", "3000");
             }
-            if (configuration.http2) { // would likely need SSLHostConfig programmatically
-                connector.addUpgradeProtocol(new Http2Protocol());
-            }
 
             tomcat.getService().addConnector(connector);
             tomcat.setConnector(connector);
@@ -460,12 +458,9 @@ public class Microwave implements AutoCloseable {
             if (configuration.clientAuth != null) {
                 httpsConnector.setAttribute("clientAuth", configuration.clientAuth);
             }
+
             if (configuration.keyAlias != null) {
                 httpsConnector.setAttribute("keyAlias", configuration.keyAlias);
-            }
-
-            if (configuration.http2) { // would likely need SSLHostConfig programmatically
-                httpsConnector.addUpgradeProtocol(new Http2Protocol());
             }
 
             tomcat.getService().addConnector(httpsConnector);
@@ -473,6 +468,15 @@ public class Microwave implements AutoCloseable {
             if (configuration.skipHttp) {
                 tomcat.setConnector(httpsConnector);
             }
+        }
+
+        if (configuration.http2) {
+            final Connector c = configuration.ssl ?
+                    tomcat.getService().findConnectors()[tomcat.getService().findConnectors().length - 1] :
+                    ofNullable(tomcat.getRawConnector()).orElse(tomcat.getService().findConnectors()[0]);
+
+            c.addUpgradeProtocol(new Http2Protocol());
+            c.addSslHostConfig(buildSslHostConfig());
         }
 
         for (final Connector c : configuration.connectors) {
@@ -513,6 +517,18 @@ public class Microwave implements AutoCloseable {
             Runtime.getRuntime().addShutdownHook(hook);
         }
         return this;
+    }
+
+    private SSLHostConfig buildSslHostConfig() {
+        final ObjectRecipe recipe = new ObjectRecipe(SSLHostConfig.class);
+        for (final String key : configuration.properties.stringPropertyNames()) {
+            if (!key.startsWith("connector.sslhostconfig.")) {
+                continue;
+            }
+            final String substring = key.substring("connector.sslhostconfig.".length());
+            recipe.setProperty(substring, configuration.properties.getProperty(key));
+        }
+        return SSLHostConfig.class.cast(recipe.create());
     }
 
     protected void beforeStart() {
@@ -576,7 +592,12 @@ public class Microwave implements AutoCloseable {
                 if (!key.startsWith("connector.")) {
                     continue;
                 }
+
                 final String substring = key.substring("connector.".length());
+                if (substring.startsWith("sslhostconfig.")) {
+                    continue;
+                }
+
                 if (!substring.startsWith("attributes.")) {
                     recipe.setProperty(substring, properties.getProperty(key));
                 } else {
