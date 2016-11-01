@@ -176,6 +176,10 @@ public class MicrowaveTask extends DefaultTask {
 
     @Input
     @Optional
+    private boolean useLog4j2JulLogManager = System.getProperty("java.util.logging.manager") == null;
+
+    @Input
+    @Optional
     private String conf;
 
     @Input
@@ -869,5 +873,13 @@ public class MicrowaveTask extends DefaultTask {
 
     public void setSharedLibraries(final String sharedLibraries) {
         this.sharedLibraries = sharedLibraries;
+    }
+
+    public boolean isUseLog4j2JulLogManager() {
+        return useLog4j2JulLogManager;
+    }
+
+    public void setUseLog4j2JulLogManager(final boolean useLog4j2JulLogManager) {
+        this.useLog4j2JulLogManager = useLog4j2JulLogManager;
     }
 }

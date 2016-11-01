@@ -80,6 +80,7 @@ public class MicrowaveConfiguration implements ContainerConfiguration {
     private boolean tomcatWrapLoader = true;
     private String jaxrsDefaultProviders;
     private String sharedLibraries;
+    private boolean useLog4j2JulLogManager = System.getProperty("java.util.logging.manager") == null;
 
     @Override
     public void validate() throws ConfigurationException {
@@ -538,5 +539,13 @@ public class MicrowaveConfiguration implements ContainerConfiguration {
 
     public void setSharedLibraries(final String sharedLibraries) {
         this.sharedLibraries = sharedLibraries;
+    }
+
+    public boolean isUseLog4j2JulLogManager() {
+        return useLog4j2JulLogManager;
+    }
+
+    public void setUseLog4j2JulLogManager(final boolean useLog4j2JulLogManager) {
+        this.useLog4j2JulLogManager = useLog4j2JulLogManager;
     }
 }

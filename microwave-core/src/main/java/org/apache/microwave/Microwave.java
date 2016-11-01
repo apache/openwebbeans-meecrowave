@@ -275,6 +275,9 @@ public class Microwave implements AutoCloseable {
 
     public Microwave start() {
         clearCatalinaSystemProperties = System.getProperty("catalina.base") == null && System.getProperty("catalina.home") == null;
+        if (configuration.isUseLog4j2JulLogManager()) {
+            System.setProperty("java.util.logging.manager", "org.apache.logging.log4j.jul.LogManager");
+        }
 
         if (configuration.loggingGlobalSetup) {
             final String[] toRestore = new String[]{
@@ -568,6 +571,9 @@ public class Microwave implements AutoCloseable {
                 if (clearCatalinaSystemProperties) {
                     Stream.of("catalina.base", "catalina.home").forEach(System::clearProperty);
                 }
+                if (configuration.isUseLog4j2JulLogManager()) {
+                    System.clearProperty("java.util.logging.manager");
+                }
                 ofNullable(postTask).ifPresent(Runnable::run);
                 postTask = null;
                 try {
@@ -822,8 +828,11 @@ public class Microwave implements AutoCloseable {
                 "should microwave wrap the loader to define another loader identity but still use the same classes and resources.")
         private boolean tomcatWrapLoader = false;
 
-        @CliOption(name = "shared-librariries", description = "A folder containing shared libraries.")
+        @CliOption(name = "shared-librairies", description = "A folder containing shared libraries.")
         private String sharedLibraries;
+
+        @CliOption(name = "log4j2-jul-bridge", description = "Should JUL logs be redirected to Log4j2 - only works before JUL usage.")
+        private boolean useLog4j2JulLogManager = System.getProperty("java.util.logging.manager") == null;
 
         public Builder() { // load defaults
             loadFrom("microwave.properties");
@@ -1279,6 +1288,14 @@ public class Microwave implements AutoCloseable {
 
         public void setJaxrsDefaultProviders(final String jaxrsDefaultProviders) {
             this.jaxrsDefaultProviders = jaxrsDefaultProviders;
+        }
+
+        public boolean isUseLog4j2JulLogManager() {
+            return useLog4j2JulLogManager;
+        }
+
+        public void setUseLog4j2JulLogManager(final boolean useLog4j2JulLogManager) {
+            this.useLog4j2JulLogManager = useLog4j2JulLogManager;
         }
 
         public void loadFromProperties(final Properties config) {

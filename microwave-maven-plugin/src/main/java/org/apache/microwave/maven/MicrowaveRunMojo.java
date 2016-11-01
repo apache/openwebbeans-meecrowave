@@ -197,6 +197,9 @@ public class MicrowaveRunMojo extends AbstractMojo {
     @Parameter(property = "microwave.webapp")
     private File webapp;
 
+    @Parameter(property = "microwave.log4j2-jul-bridge", defaultValue = "true")
+    private boolean useLog4j2JulLogManager;
+
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         if (skip) {

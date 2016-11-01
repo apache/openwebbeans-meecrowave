@@ -70,6 +70,15 @@ public class MicrowaveExtension {
     private boolean tomcatWrapLoader = false;
     private String jaxrsDefaultProviders;
     private String sharedLibraries;
+    private boolean useLog4j2JulLogManager = true;
+
+    public boolean isUseLog4j2JulLogManager() {
+        return useLog4j2JulLogManager;
+    }
+
+    public void setUseLog4j2JulLogManager(final boolean useLog4j2JulLogManager) {
+        this.useLog4j2JulLogManager = useLog4j2JulLogManager;
+    }
 
     public String getSharedLibraries() {
         return sharedLibraries;
