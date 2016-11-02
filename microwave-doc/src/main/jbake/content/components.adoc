@@ -12,9 +12,9 @@
 Core component is the backbone of Microwave. It is based on Tomcat embedded for
 Servlet container, CXF for JAX-RS, OpenWebBeans for CDI and Log4j2 for the logging.
 
-link:microwave-core/configuration.html[Read about Microwave configuration]
+link:{context_rootpath}/microwave-core/configuration.html[Read about Microwave configuration]
 
-link:microwave-core/cli.html[Read about Microwave command line]
+link:{context_rootpath}/microwave-core/cli.html[Read about Microwave command line]
 
 == Microwave JPA
 
@@ -22,22 +22,22 @@ Microwave JPA provides a thin layer on top of JPA to make it easier to use JPA
 without requiring to use a full container like JavaEE or Spring. It is just a
 CDI extension.
 
-link:microwave-jpa/index.html[Read More]
+link:{context_rootpath}/microwave-jpa/index.html[Read More]
 
 == Microwave Maven
 
 Microwave provides a Maven plugin to run microwave with your preferred build tool.
 
-link:microwave-maven/index.html[Read More]
+link:{context_rootpath}/microwave-maven/index.html[Read More]
 
 == Microwave Gradle
 
 Microwave provides a Gradle plugin to run microwave with your preferred build tool.
 
-link:microwave-gradle/index.html[Read More]
+link:{context_rootpath}/microwave-gradle/index.html[Read More]
 
 == Microwave and the Testing
 
 Microwave provides two main testing integration: a JUnit one and an Arquillian Container.
 
-link:testing/index.html[Read More]
+link:{context_rootpath}/testing/index.html[Read More]

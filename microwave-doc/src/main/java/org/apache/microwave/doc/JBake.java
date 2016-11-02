@@ -80,6 +80,7 @@ public class JBake {
                     config.addConfiguration(new MapConfiguration(new HashMap<String, Object>() {{
                         put("asciidoctor.attributes", new ArrayList<String>() {{
                             add("source-highlighter=coderay");
+                            add("context_rootpath=/microwave");
                         }});
                     }}));
                     config.addConfiguration(ConfigUtil.load(source));
@@ -202,9 +203,9 @@ public class JBake {
                 setWebResourceCached(false);
             }}) {{
                 start();
-                deployWebapp(destination);
+                deployWebapp("/microwave", destination);
             }}) {
-                System.out.println("Started on http://localhost:" + container.getConfiguration().getHttpPort());
+                System.out.println("Started on http://localhost:" + container.getConfiguration().getHttpPort() + "/microwave");
 
                 final Scanner console = new Scanner(System.in);
                 String cmd;

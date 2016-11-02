@@ -79,7 +79,7 @@ Container dependency:
 </dependency>
 ----
 
-For the configuration check link:../microwave-core/configuration.html[Core configuration].
+For the configuration check link:{context_rootpath}/microwave-core/configuration.html[Core configuration].
 
 Here is a sample:
 

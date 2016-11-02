@@ -5,7 +5,7 @@
                   <div class="branding">
                       <h1 class="logo">
                           <span aria-hidden="true" class="icon_documents_alt icon"></span>
-                          <a href="<%if (content.rootpath) {%>${content.rootpath}<% } else { %><% }%>/index.html">
+                          <a href="/microwave/index.html">
                             <span class="text-highlight">Micro</span><span class="text-bold">wave</span>
                           </a>
                       </h1>
@@ -30,7 +30,7 @@
                               </div><!--//icon-holder-->
                               <h3 class="title">Quick Start</h3>
                               <p class="intro">Deploy a JSON webservice in 5 mn!</p>
-                              <a class="link" href="start.html"><span></span></a>
+                              <a class="link" href="/microwave/start.html"><span></span></a>
                           </div><!--//item-inner-->
                       </div><!--//item-->
                       <div class="item item-pink item-2 col-md-4 col-sm-6 col-xs-6">
@@ -40,7 +40,7 @@
                               </div><!--//icon-holder-->
                               <h3 class="title">Components</h3>
                               <p class="intro">Microwave extensions making development and production smoother.</p>
-                              <a class="link" href="components.html"><span></span></a>
+                              <a class="link" href="/microwave/components.html"><span></span></a>
                           </div><!--//item-inner-->
                       </div><!--//item-->
                       <div class="item item-blue col-md-4 col-sm-6 col-xs-6">
@@ -50,7 +50,7 @@
                               </div><!--//icon-holder-->
                               <h3 class="title">Downloads and License</h3>
                               <p class="intro">Ready to get started? Grab microwave and run your services!</p>
-                              <a class="link" href="download.html"><span></span></a>
+                              <a class="link" href="/microwave/download.html"><span></span></a>
                           </div><!--//item-inner-->
                       </div><!--//item-->
                         <div class="item item-primary item-2 col-md-offset-4 col-md-4 col-sm-offset-2 col-xs-offset-2 col-sm-6 col-xs-6">
@@ -60,7 +60,7 @@
                                 </div><!--//icon-holder-->
                                 <h3 class="title">Community</h3>
                                 <p class="intro">OpenWebBeans community is proud to host Microwave project.</p>
-                                <a class="link" href="community.html"><span></span></a>
+                                <a class="link" href="/microwave/community.html"><span></span></a>
                             </div><!--//item-inner-->
                         </div><!--//item-->
                   </div><!--//cards-->

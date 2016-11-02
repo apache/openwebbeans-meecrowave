@@ -63,7 +63,8 @@ public class PDFify {
                                             .safe(UNSAFE)
                                             .backend("pdf")
                                             .attributes(AttributesBuilder.attributes()
-                                                    .attribute("source-highlighter", "coderay"))
+                                                    .attribute("source-highlighter", "coderay")
+                                                    .attribute("context_rootpath", "http://openwebbeans.apache.org/microwave"))
                                             .toFile(target).get());
                             System.out.println("Generated " + target);
                         }
