@@ -19,9 +19,7 @@
 package org.apache.microwave;
 
 import org.apache.catalina.Context;
-import org.apache.catalina.Engine;
 import org.apache.catalina.Globals;
-import org.apache.catalina.Host;
 import org.apache.catalina.Lifecycle;
 import org.apache.catalina.LifecycleException;
 import org.apache.catalina.Manager;
@@ -425,7 +423,6 @@ public class Microwave implements AutoCloseable {
                 host.setWorkDir(new File(base, "work").getAbsolutePath());
             }
             tomcat.setHost(host);
-            tomcat.getEngine().addChild(host);
         }
 
         if (configuration.realm != null) {
@@ -1531,27 +1528,15 @@ public class Microwave implements AutoCloseable {
     }
 
     private static class InternalTomcat extends Tomcat {
+        private Connector connector;
+
         private void server(final Server s) {
             server = s;
-            if (service == null) {
-                final Service[] services = server.findServices();
-                if (services.length > 0) {
-                    service = services[0];
-                    if (service.getContainer() != null) {
-                        engine = Engine.class.cast(service.getContainer());
-                        final org.apache.catalina.Container[] hosts = engine.findChildren();
-                        if (hosts.length > 0) {
-                            host = Host.class.cast(hosts[0]);
-                        }
-                    }
-                }
-                if (service.findConnectors().length > 0) {
-                    connector = service.findConnectors()[0];
-                }
-            }
+            connector = server != null && server.findServices().length > 0 && server.findServices()[0].findConnectors().length > 0 ?
+                    server.findServices()[0].findConnectors()[0] : null;
         }
 
-        public Connector getRawConnector() {
+        Connector getRawConnector() {
             return connector;
         }
     }
