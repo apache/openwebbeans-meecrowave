@@ -20,6 +20,7 @@ package org.apache.meecrowave;
 
 import org.apache.cxf.helpers.FileUtils;
 import org.apache.meecrowave.io.IO;
+import org.apache.meecrowave.runner.cli.CliOption;
 import org.junit.Test;
 import org.superbiz.app.Endpoint;
 import org.superbiz.app.RsApp;
@@ -48,7 +49,7 @@ public class MeecrowaveTest {
                 .property("my-prefix-a-last-port-value", "9632")
                 .property("my-prefix-passthrough", "any value")
                 .property("my-prefix-bool", "true")
-                .bind(new MyConfig(), "my-prefix-");
+                .bind(new MyConfig());
         assertNotNull(config);
         assertEquals(1234, config.port);
         assertEquals(5678, config.anotherPort);
@@ -134,10 +135,19 @@ public class MeecrowaveTest {
     }
 
     public static class MyConfig {
+        @CliOption(name = "my-prefix-port", description = "")
         private int port;
+
+        @CliOption(name = "my-prefix-another-port", description = "")
         private int anotherPort;
+
+        @CliOption(name = "my-prefix-a-last-port-value", description = "")
         private int aLastPortValue;
+
+        @CliOption(name = "my-prefix-passthrough", description = "")
         private String passthrough;
+
+        @CliOption(name = "my-prefix-bool", description = "")
         private boolean bool;
     }
 }

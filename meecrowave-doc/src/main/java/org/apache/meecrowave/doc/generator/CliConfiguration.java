@@ -30,6 +30,7 @@ public class CliConfiguration extends BaseGenerator {
     protected String generate() {
         return super.tableConfig() + "|===\n|Name|Description\n" +
                 Stream.of(Meecrowave.Builder.class.getDeclaredFields())
+                        .filter(f -> f.isAnnotationPresent(CliOption.class))
                         .sorted((o1, o2) -> o1.getName().compareTo(o2.getName()))
                         .map(f -> f.getAnnotation(CliOption.class))
                         .map(opt -> "|--" + opt.name() + "|" + opt.description())

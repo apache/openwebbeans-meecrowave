@@ -30,8 +30,9 @@ public class Configuration extends BaseGenerator {
     protected String generate() {
         return super.tableConfig() + "|===\n|Name|Description\n" +
                 Stream.of(Meecrowave.Builder.class.getDeclaredFields())
-                .sorted((o1, o2) -> o1.getName().compareTo(o2.getName()))
-                .map(f -> "|" + f.getName() + "|" + f.getAnnotation(CliOption.class).description())
-                .collect(joining("\n")) + "\n|===\n";
+                        .filter(f -> f.isAnnotationPresent(CliOption.class))
+                        .sorted((o1, o2) -> o1.getName().compareTo(o2.getName()))
+                        .map(f -> "|" + f.getName() + "|" + f.getAnnotation(CliOption.class).description())
+                        .collect(joining("\n")) + "\n|===\n";
     }
 }

@@ -86,8 +86,6 @@ import java.util.TreeMap;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
-import static java.beans.Introspector.decapitalize;
-import static java.lang.Character.toUpperCase;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptySet;
 import static java.util.Optional.ofNullable;
@@ -873,8 +871,26 @@ public class Meecrowave implements AutoCloseable {
         @CliOption(name = "log4j2-jul-bridge", description = "Should JUL logs be redirected to Log4j2 - only works before JUL usage.")
         private boolean useLog4j2JulLogManager = System.getProperty("java.util.logging.manager") == null;
 
+        private final Map<Class<?>, Object> extensions = new HashMap<>();
+
         public Builder() { // load defaults
             loadFrom("meecrowave.properties");
+        }
+
+        public <T> T getExtension(final Class<T> extension) {
+            // in the cli we read the values from the cli but in other mode from properties
+            // to ensure we can do the same in all modes keeping a nice cli
+            return extension.cast(extensions.computeIfAbsent(extension, k -> {
+                try {
+                    return bind(k.newInstance());
+                } catch (final InstantiationException | IllegalAccessException e) {
+                    throw new IllegalArgumentException(e);
+                }
+            }));
+        }
+
+        public void setExtension(final Class<?> type, final Object value) {
+            extensions.put(type, value);
         }
 
         public String getJsonpBufferStrategy() {
@@ -1548,57 +1564,38 @@ public class Meecrowave implements AutoCloseable {
             }
         }
 
-        public <T> T bind(final T instance, final String prefix) {
-            ofNullable(properties.stringPropertyNames()).orElse(emptySet()).stream()
-                    .filter(p -> p.startsWith(prefix))
-                    .forEach(p -> {
-                        final String value = properties.getProperty(p);
-
-                        // convert iphen case to camel case (a-simple-sample becomes aSimpleSample)
-                        final int startIdx = prefix.length();
-                        final StringBuilder nameBuilder = new StringBuilder(p.length() /*ok this is wrong but allocates something big enough*/);
-                        nameBuilder.append(decapitalize(p.substring(startIdx, startIdx + 1)));
-                        boolean uppercase = false;
-                        for (int i = 1; i < p.length() - prefix.length(); i++) {
-                            final char c = p.charAt(startIdx + i);
-                            if (c == '-') {
-                                uppercase = true;
-                            } else if (uppercase) {
-                                nameBuilder.append(toUpperCase(c));
-                                uppercase = false;
-                            } else {
-                                nameBuilder.append(c);
+        public <T> T bind(final T instance) {
+            Class<? extends Object> type = instance.getClass();
+            do {
+                Stream.of(type.getDeclaredFields())
+                        .filter(f -> f.isAnnotationPresent(CliOption.class))
+                        .forEach(f -> {
+                            final CliOption annotation = f.getAnnotation(CliOption.class);
+                            final String value = properties.getProperty(annotation.name());
+                            if (value == null) {
+                                return;
                             }
-                        }
 
-                        final String name = nameBuilder.toString();
-                        Class<?> current = instance.getClass();
-                        do {
+                            if (!f.isAccessible()) {
+                                f.setAccessible(true);
+                            }
+                            final Class<?> t = f.getType();
                             try {
-                                final Field f = instance.getClass().getDeclaredField(name);
-                                if (!f.isAccessible()) {
-                                    f.setAccessible(true);
-                                }
-                                final Class<?> type = f.getType();
-                                if (type == String.class) {
+                                if (t == String.class) {
                                     f.set(instance, value);
-                                } else if (type == int.class) {
+                                } else if (t == int.class) {
                                     f.set(instance, Integer.parseInt(value));
-                                } else if (type == boolean.class) {
+                                } else if (t == boolean.class) {
                                     f.set(instance, Boolean.parseBoolean(value));
                                 } else {
-                                    throw new IllegalArgumentException("Unsupported type " + type);
+                                    throw new IllegalArgumentException("Unsupported type " + t);
                                 }
-                                return;
-                            } catch (final NoSuchFieldException e) {
-                                // continue
-                            } catch (final IllegalAccessException e) {
-                                new LogFacade(Meecrowave.class.getName()).warn("Can't set " + value + " to " + name + " on " + instance);
+                            } catch (final IllegalAccessException iae) {
+                                throw new IllegalStateException(iae);
                             }
-                            current = current.getSuperclass();
-                        } while (current != Object.class && current != null);
-                        throw new IllegalArgumentException("Didn't find " + name + " on " + instance);
-                    });
+                        });
+                type = type.getSuperclass();
+            } while (type != Object.class);
             return instance;
         }
     }

@@ -22,7 +22,6 @@ import org.apache.catalina.connector.Connector;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
 import org.apache.meecrowave.Meecrowave;
@@ -36,10 +35,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.ServiceLoader;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import static java.util.Optional.ofNullable;
+import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toMap;
 
 @Vetoed
 public class Cli {
@@ -48,17 +51,23 @@ public class Cli {
     }
 
     public static void main(final String[] args) {
-        final Options options = new Options();
+        final org.apache.commons.cli.Options options = new org.apache.commons.cli.Options();
         options.addOption("help", false, "Show help");
         options.addOption("context", true, "The context to use to deploy the webapp");
         options.addOption("webapp", true, "Location of the webapp, if not set the classpath will be deployed");
         final List<Field> fields = Stream.of(Meecrowave.Builder.class.getDeclaredFields())
                 .filter(f -> f.isAnnotationPresent(CliOption.class))
                 .collect(toList());
+        final Map<Object, List<Field>> propertiesOptions = StreamSupport.stream(ServiceLoader.load(Options.class).spliterator(), false)
+                .collect(toMap(identity(), o -> Stream.of(o.getClass().getDeclaredFields()).filter(f -> f.isAnnotationPresent(CliOption.class)).collect(toList())));
         fields.forEach(f -> {
             final CliOption opt = f.getAnnotation(CliOption.class);
             options.addOption(null, opt.name(), f.getType() != boolean.class, opt.description());
         });
+        propertiesOptions.values().forEach(all -> all.forEach(f -> {
+            final CliOption opt = f.getAnnotation(CliOption.class);
+            options.addOption(null, opt.name(), f.getType() != boolean.class, opt.description());
+        }));
 
         final CommandLineParser parser = new PosixParser();
         final CommandLine line;
@@ -74,7 +83,7 @@ public class Cli {
             return;
         }
 
-        try (final Meecrowave meecrowave = new Meecrowave(buildConfig(line, fields))) {
+        try (final Meecrowave meecrowave = new Meecrowave(buildConfig(line, fields, propertiesOptions))) {
             final String ctx = line.getOptionValue("context", "");
             final String fixedCtx = !ctx.isEmpty() && !ctx.startsWith("/") ? '/' + ctx : ctx;
             final String war = line.getOptionValue("webapp");
@@ -87,8 +96,18 @@ public class Cli {
         }
     }
 
-    private static Meecrowave.Builder buildConfig(final CommandLine line, final List<Field> fields) {
+    private static Meecrowave.Builder buildConfig(final CommandLine line, final List<Field> fields,
+                                                  final Map<Object, List<Field>> propertiesOptions) {
         final Meecrowave.Builder config = new Meecrowave.Builder();
+        bind(line, fields, config);
+        propertiesOptions.forEach((o, f) -> {
+            bind(line, f, o);
+            config.setExtension(o.getClass(), o);
+        });
+        return config;
+    }
+
+    private static void bind(final CommandLine line, final List<Field> fields, final Object config) {
         fields.forEach(f -> {
             final CliOption opt = f.getAnnotation(CliOption.class);
             final String name = opt.name();
@@ -108,7 +127,6 @@ public class Cli {
                         });
             }
         });
-        return config;
     }
 
     private static Object toValue(final String name, final String[] optionValues, final Class<?> type) {
@@ -196,7 +214,10 @@ public class Cli {
         }
     }
 
-    private static void help(final Options options) {
+    private static void help(final org.apache.commons.cli.Options options) {
         new HelpFormatter().printHelp("java -jar meecrowave.jar", options);
+    }
+
+    public interface Options {
     }
 }
