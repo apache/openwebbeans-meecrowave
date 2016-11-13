@@ -86,6 +86,8 @@ import java.util.TreeMap;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
+import static java.beans.Introspector.decapitalize;
+import static java.lang.Character.toUpperCase;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptySet;
 import static java.util.Optional.ofNullable;
@@ -1544,6 +1546,60 @@ public class Meecrowave implements AutoCloseable {
                     addCustomizer(Consumer.class.cast(recipe.create()));
                 }
             }
+        }
+
+        public <T> T bind(final T instance, final String prefix) {
+            ofNullable(properties.stringPropertyNames()).orElse(emptySet()).stream()
+                    .filter(p -> p.startsWith(prefix))
+                    .forEach(p -> {
+                        final String value = properties.getProperty(p);
+
+                        // convert iphen case to camel case (a-simple-sample becomes aSimpleSample)
+                        final int startIdx = prefix.length();
+                        final StringBuilder nameBuilder = new StringBuilder(p.length() /*ok this is wrong but allocates something big enough*/);
+                        nameBuilder.append(decapitalize(p.substring(startIdx, startIdx + 1)));
+                        boolean uppercase = false;
+                        for (int i = 1; i < p.length() - prefix.length(); i++) {
+                            final char c = p.charAt(startIdx + i);
+                            if (c == '-') {
+                                uppercase = true;
+                            } else if (uppercase) {
+                                nameBuilder.append(toUpperCase(c));
+                                uppercase = false;
+                            } else {
+                                nameBuilder.append(c);
+                            }
+                        }
+
+                        final String name = nameBuilder.toString();
+                        Class<?> current = instance.getClass();
+                        do {
+                            try {
+                                final Field f = instance.getClass().getDeclaredField(name);
+                                if (!f.isAccessible()) {
+                                    f.setAccessible(true);
+                                }
+                                final Class<?> type = f.getType();
+                                if (type == String.class) {
+                                    f.set(instance, value);
+                                } else if (type == int.class) {
+                                    f.set(instance, Integer.parseInt(value));
+                                } else if (type == boolean.class) {
+                                    f.set(instance, Boolean.parseBoolean(value));
+                                } else {
+                                    throw new IllegalArgumentException("Unsupported type " + type);
+                                }
+                                return;
+                            } catch (final NoSuchFieldException e) {
+                                // continue
+                            } catch (final IllegalAccessException e) {
+                                new LogFacade(Meecrowave.class.getName()).warn("Can't set " + value + " to " + name + " on " + instance);
+                            }
+                            current = current.getSuperclass();
+                        } while (current != Object.class && current != null);
+                        throw new IllegalArgumentException("Didn't find " + name + " on " + instance);
+                    });
+            return instance;
         }
     }
 

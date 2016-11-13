@@ -35,9 +35,28 @@ import java.net.URL;
 import java.util.stream.Stream;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public class MeecrowaveTest {
+    @Test
+    public void configBinding() {
+        final MyConfig config = new Meecrowave.Builder()
+                .property("my-prefix-port", "1234")
+                .property("my-prefix-another-port", "5678")
+                .property("my-prefix-a-last-port-value", "9632")
+                .property("my-prefix-passthrough", "any value")
+                .property("my-prefix-bool", "true")
+                .bind(new MyConfig(), "my-prefix-");
+        assertNotNull(config);
+        assertEquals(1234, config.port);
+        assertEquals(5678, config.anotherPort);
+        assertEquals(9632, config.aLastPortValue);
+        assertEquals("any value", config.passthrough);
+        assertTrue(config.bool);
+    }
+
     @Test
     public void simpleWebapp() {
         final File root = new File("target/MeecrowaveTest/simpleWebapp/app");
@@ -112,5 +131,13 @@ public class MeecrowaveTest {
             fail(e.getMessage());
         }
         return null;
+    }
+
+    public static class MyConfig {
+        private int port;
+        private int anotherPort;
+        private int aLastPortValue;
+        private String passthrough;
+        private boolean bool;
     }
 }
