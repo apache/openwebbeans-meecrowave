@@ -698,6 +698,10 @@ public class Meecrowave implements AutoCloseable {
         tomcat.getServer().await();
     }
 
+    // this class holds all the built-in config,
+    // extension can use extensions feature (see cli.html) which is basically the same kind of bean
+    // accessible through builder.getExtension(type) builder being accessible through the meecrowave.configuration
+    // attribute of the ServletContext.
     public static class Builder {
         @CliOption(name = "http", description = "HTTP port")
         private int httpPort = 8080;

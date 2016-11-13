@@ -18,23 +18,35 @@
  */
 package org.apache.meecrowave.runner;
 
+import org.apache.meecrowave.Meecrowave;
 import org.apache.meecrowave.io.IO;
+import org.apache.meecrowave.runner.cli.CliOption;
 import org.junit.Test;
 
+import javax.servlet.ServletContainerInitializer;
+import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public class CliTest {
+    private static final AtomicBoolean OPTS_SET = new AtomicBoolean();
+
     @Test
     public void bake() throws IOException {
+        OPTS_SET.set(false);
+
         int stop;
         int http;
         try (final ServerSocket s1 = new ServerSocket(0)) {
@@ -54,16 +66,19 @@ public class CliTest {
                         "--context=app",
                         "--stop=" + stop,
                         "--http=" + http,
-                        "--tmp-dir=target/CliTest/simple"
+                        "--tmp-dir=target/CliTest/simple",
+                        "--my-config=val"
                 });
             }
         };
         try {
             runner.start();
+            boolean jsonOk = false;
             for (int i = 0; i < 60; i++) {
                 try {
                     assertEquals("{\"name\":\"test\"}", slurp(new URL("http://localhost:" + http + "/app/api/test/json")));
-                    return;
+                    jsonOk = true;
+                    break;
                 } catch (final AssertionError notYet) {
                     try {
                         Thread.sleep(1000);
@@ -73,7 +88,8 @@ public class CliTest {
                     }
                 }
             }
-            fail("Didnt achieved the request");
+            assertTrue(jsonOk);
+            assertTrue(OPTS_SET.get());
         } finally {
             try (final Socket client = new Socket("localhost", stop)) {
                 client.getOutputStream().write("SHUTDOWN".getBytes(StandardCharsets.UTF_8));
@@ -96,5 +112,18 @@ public class CliTest {
             fail(e.getMessage());
         }
         return null;
+    }
+
+    public static class MyOpts implements Cli.Options {
+        @CliOption(name = "my-config", description = "test")
+        private String opt;
+    }
+
+    public static class BeanTester implements ServletContainerInitializer {
+        @Override
+        public void onStartup(final Set<Class<?>> set, final ServletContext servletContext) throws ServletException {
+            OPTS_SET.set("val".equals(
+                    Meecrowave.Builder.class.cast(servletContext.getAttribute("meecrowave.configuration")).getExtension(MyOpts.class).opt));
+        }
     }
 }
