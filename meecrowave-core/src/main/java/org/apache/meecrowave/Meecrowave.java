@@ -37,6 +37,7 @@ import org.apache.catalina.startup.Tomcat;
 import org.apache.commons.lang3.text.StrLookup;
 import org.apache.commons.lang3.text.StrSubstitutor;
 import org.apache.coyote.http2.Http2Protocol;
+import org.apache.johnzon.core.BufferStrategy;
 import org.apache.meecrowave.cxf.CxfCdiAutoSetup;
 import org.apache.meecrowave.io.IO;
 import org.apache.meecrowave.logging.jul.Log4j2Logger;
@@ -800,6 +801,45 @@ public class Meecrowave implements AutoCloseable {
         @CliOption(name = "jaxrs-log-provider", description = "Should JAX-RS providers be logged")
         private boolean jaxrsLogProviders = false;
 
+        @CliOption(name = "jsonp-buffer-strategy", description = "JSON-P JAX-RS provider buffer strategy (see johnzon)")
+        private String jsonpBufferStrategy = BufferStrategy.QUEUE.name();
+
+        @CliOption(name = "jsonp-max-string-length", description = "JSON-P JAX-RS provider max string limit size (see johnzon)")
+        private int jsonpMaxStringLen = 10 * 1024 * 1024;
+
+        @CliOption(name = "jsonp-read-buffer-length", description = "JSON-P JAX-RS provider read buffer limit size (see johnzon)")
+        private int jsonpMaxReadBufferLen = 64 * 1024;
+
+        @CliOption(name = "jsonp-write-buffer-length", description = "JSON-P JAX-RS provider write buffer limit size (see johnzon)")
+        private int jsonpMaxWriteBufferLen = 64 * 1024;
+
+        @CliOption(name = "jsonp-supports-comment", description = "Should JSON-P JAX-RS provider support comments (see johnzon)")
+        private boolean jsonpSupportsComment = false;
+
+        @CliOption(name = "jsonp-supports-comment", description = "Should JSON-P JAX-RS provider prettify the outputs (see johnzon)")
+        private boolean jsonpPrettify = false;
+
+        @CliOption(name = "jsonb-encoding", description = "Which encoding provider JSON-B should use")
+        private String jsonbEncoding = "UTF-8";
+
+        @CliOption(name = "jsonb-nulls", description = "Should JSON-B provider serialize nulls")
+        private boolean jsonbNulls = false;
+
+        @CliOption(name = "jsonb-ijson", description = "Should JSON-B provider comply to I-JSON")
+        private boolean jsonbIJson = false;
+
+        @CliOption(name = "jsonb-prettify", description = "Should JSON-B provider prettify the output")
+        private boolean jsonbPrettify = false;
+
+        @CliOption(name = "jsonb-binary-strategy", description = "Should JSON-B provider prettify the output")
+        private String jsonbBinaryStrategy;
+
+        @CliOption(name = "jsonb-naming-strategy", description = "Should JSON-B provider prettify the output")
+        private String jsonbNamingStrategy;
+
+        @CliOption(name = "jsonb-order-strategy", description = "Should JSON-B provider prettify the output")
+        private String jsonbOrderStrategy;
+
         @CliOption(name = "logging-global-setup", description = "Should logging be configured to use log4j2 (it is global)")
         private boolean loggingGlobalSetup = true;
 
@@ -833,6 +873,110 @@ public class Meecrowave implements AutoCloseable {
 
         public Builder() { // load defaults
             loadFrom("meecrowave.properties");
+        }
+
+        public String getJsonpBufferStrategy() {
+            return jsonpBufferStrategy;
+        }
+
+        public String getJsonbEncoding() {
+            return jsonbEncoding;
+        }
+
+        public void setJsonbEncoding(final String jsonbEncoding) {
+            this.jsonbEncoding = jsonbEncoding;
+        }
+
+        public boolean isJsonbNulls() {
+            return jsonbNulls;
+        }
+
+        public void setJsonbNulls(final boolean jsonbNulls) {
+            this.jsonbNulls = jsonbNulls;
+        }
+
+        public boolean isJsonbIJson() {
+            return jsonbIJson;
+        }
+
+        public void setJsonbIJson(final boolean jsonbIJson) {
+            this.jsonbIJson = jsonbIJson;
+        }
+
+        public boolean isJsonbPrettify() {
+            return jsonbPrettify;
+        }
+
+        public void setJsonbPrettify(final boolean jsonbPrettify) {
+            this.jsonbPrettify = jsonbPrettify;
+        }
+
+        public String getJsonbBinaryStrategy() {
+            return jsonbBinaryStrategy;
+        }
+
+        public void setJsonbBinaryStrategy(final String jsonbBinaryStrategy) {
+            this.jsonbBinaryStrategy = jsonbBinaryStrategy;
+        }
+
+        public String getJsonbNamingStrategy() {
+            return jsonbNamingStrategy;
+        }
+
+        public void setJsonbNamingStrategy(final String jsonbNamingStrategy) {
+            this.jsonbNamingStrategy = jsonbNamingStrategy;
+        }
+
+        public String getJsonbOrderStrategy() {
+            return jsonbOrderStrategy;
+        }
+
+        public void setJsonbOrderStrategy(final String jsonbOrderStrategy) {
+            this.jsonbOrderStrategy = jsonbOrderStrategy;
+        }
+
+        public void setJsonpBufferStrategy(final String jsonpBufferStrategy) {
+            this.jsonpBufferStrategy = jsonpBufferStrategy;
+        }
+
+        public int getJsonpMaxStringLen() {
+            return jsonpMaxStringLen;
+        }
+
+        public void setJsonpMaxStringLen(final int jsonpMaxStringLen) {
+            this.jsonpMaxStringLen = jsonpMaxStringLen;
+        }
+
+        public int getJsonpMaxReadBufferLen() {
+            return jsonpMaxReadBufferLen;
+        }
+
+        public void setJsonpMaxReadBufferLen(final int jsonpMaxReadBufferLen) {
+            this.jsonpMaxReadBufferLen = jsonpMaxReadBufferLen;
+        }
+
+        public int getJsonpMaxWriteBufferLen() {
+            return jsonpMaxWriteBufferLen;
+        }
+
+        public void setJsonpMaxWriteBufferLen(final int jsonpMaxWriteBufferLen) {
+            this.jsonpMaxWriteBufferLen = jsonpMaxWriteBufferLen;
+        }
+
+        public boolean isJsonpSupportsComment() {
+            return jsonpSupportsComment;
+        }
+
+        public void setJsonpSupportsComment(final boolean jsonpSupportsComment) {
+            this.jsonpSupportsComment = jsonpSupportsComment;
+        }
+
+        public boolean isJsonpPrettify() {
+            return jsonpPrettify;
+        }
+
+        public void setJsonpPrettify(final boolean jsonpPrettify) {
+            this.jsonpPrettify = jsonpPrettify;
         }
 
         public String getSharedLibraries() {

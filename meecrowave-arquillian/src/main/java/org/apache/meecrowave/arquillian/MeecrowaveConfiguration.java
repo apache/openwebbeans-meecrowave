@@ -81,6 +81,19 @@ public class MeecrowaveConfiguration implements ContainerConfiguration {
     private String jaxrsDefaultProviders;
     private String sharedLibraries;
     private boolean useLog4j2JulLogManager = System.getProperty("java.util.logging.manager") == null;
+    private String jsonpBufferStrategy = "QUEUE";
+    private int jsonpMaxStringLen = 10 * 1024 * 1024;
+    private int jsonpMaxReadBufferLen = 64 * 1024;
+    private int jsonpMaxWriteBufferLen = 64 * 1024;
+    private boolean jsonpSupportsComment = false;
+    private boolean jsonpPrettify = false;
+    private String jsonbEncoding = "UTF-8";
+    private boolean jsonbNulls = false;
+    private boolean jsonbIJson = false;
+    private boolean jsonbPrettify = false;
+    private String jsonbBinaryStrategy;
+    private String jsonbNamingStrategy;
+    private String jsonbOrderStrategy;
 
     @Override
     public void validate() throws ConfigurationException {

@@ -200,6 +200,45 @@ public class MeecrowaveRunMojo extends AbstractMojo {
     @Parameter(property = "meecrowave.log4j2-jul-bridge", defaultValue = "true")
     private boolean useLog4j2JulLogManager;
 
+    @Parameter(property = "meecrowave.jsonp-buffer-strategy", defaultValue = "QUEUE")
+    private String jsonpBufferStrategy;
+
+    @Parameter(property = "meecrowave.jsonp-max-string-length", defaultValue = "10485760")
+    private int jsonpMaxStringLen;
+
+    @Parameter(property = "meecrowave.jsonp-max-read-buffer-size", defaultValue = "65536")
+    private int jsonpMaxReadBufferLen;
+
+    @Parameter(property = "meecrowave.jsonp-max-write-buffer-size", defaultValue = "65536")
+    private int jsonpMaxWriteBufferLen;
+
+    @Parameter(property = "meecrowave.jsonp-comments", defaultValue = "false")
+    private boolean jsonpSupportsComment;
+
+    @Parameter(property = "meecrowave.jsonp-prettify", defaultValue = "false")
+    private boolean jsonpPrettify;
+
+    @Parameter(property = "meecrowave.jsonb-encoding", defaultValue = "UTF-8")
+    private String jsonbEncoding;
+
+    @Parameter(property = "meecrowave.jsonb-nulls", defaultValue = "false")
+    private boolean jsonbNulls = false;
+
+    @Parameter(property = "meecrowave.jsonb-ijson", defaultValue = "false")
+    private boolean jsonbIJson;
+
+    @Parameter(property = "meecrowave.jsonb-prettify", defaultValue = "false")
+    private boolean jsonbPrettify;
+
+    @Parameter(property = "meecrowave.jsonb-binary-strategy")
+    private String jsonbBinaryStrategy;
+
+    @Parameter(property = "meecrowave.jsonb-naming-strategy")
+    private String jsonbNamingStrategy;
+
+    @Parameter(property = "meecrowave.jsonb-order-strategy")
+    private String jsonbOrderStrategy;
+
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         if (skip) {

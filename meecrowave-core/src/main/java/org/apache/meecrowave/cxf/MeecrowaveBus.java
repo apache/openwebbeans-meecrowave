@@ -6,21 +6,34 @@ import org.apache.cxf.common.util.ClassUnwrapper;
 import org.apache.cxf.feature.Feature;
 import org.apache.cxf.interceptor.Interceptor;
 import org.apache.cxf.message.Message;
-import org.apache.johnzon.jaxrs.JsrProvider;
+import org.apache.johnzon.core.AbstractJsonFactory;
+import org.apache.johnzon.core.JsonGeneratorFactoryImpl;
+import org.apache.johnzon.core.JsonParserFactoryImpl;
+import org.apache.johnzon.jaxrs.DelegateProvider;
+import org.apache.johnzon.jaxrs.JsrMessageBodyReader;
+import org.apache.johnzon.jaxrs.JsrMessageBodyWriter;
 import org.apache.johnzon.jaxrs.jsonb.jaxrs.JsonbJaxrsProvider;
 import org.apache.meecrowave.Meecrowave;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.json.Json;
+import javax.json.JsonStructure;
+import javax.json.stream.JsonGenerator;
 import javax.servlet.ServletContext;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.Produces;
+import javax.ws.rs.ext.Provider;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.util.Arrays.asList;
+import static java.util.Optional.of;
 import static java.util.Optional.ofNullable;
 
 @Named("cxf")
@@ -55,7 +68,16 @@ public class MeecrowaveBus implements Bus {
                                         }
                                     })
                                     .collect(Collectors.<Object>toList()))
-                            .orElseGet(() -> asList(/*new JohnzonProvider<>(),*/ new JsonbJaxrsProvider(), new JsrProvider()));
+                            .orElseGet(() -> asList(
+                                    new ConfiguredJsonbJaxrsProvider(
+                                            builder.getJsonbEncoding(), builder.isJsonbNulls(),
+                                            builder.isJsonbIJson(), builder.isJsonbPrettify(),
+                                            builder.getJsonbBinaryStrategy(), builder.getJsonbNamingStrategy(),
+                                            builder.getJsonbOrderStrategy()),
+                                    new ConfiguredJsrProvider(
+                                            builder.getJsonpBufferStrategy(), builder.getJsonpMaxStringLen(),
+                                            builder.getJsonpMaxReadBufferLen(), builder.getJsonpMaxWriteBufferLen(),
+                                            builder.isJsonpSupportsComment(), builder.isJsonpPrettify())));
 
             // client
             if (getProperty("org.apache.cxf.jaxrs.bus.providers") == null) {
@@ -148,5 +170,62 @@ public class MeecrowaveBus implements Bus {
     @Override
     public List<Interceptor<? extends Message>> getOutFaultInterceptors() {
         return delegate.getOutFaultInterceptors();
+    }
+
+    @Provider
+    @Produces({
+            "application/json", "*/json",
+            "*/*+json", "*/x-json",
+            "*/javascript", "*/x-javascript"
+    })
+    @Consumes({
+            "application/json", "*/json",
+            "*/*+json", "*/x-json",
+            "*/javascript", "*/x-javascript"
+    })
+    public static class ConfiguredJsonbJaxrsProvider<T> extends JsonbJaxrsProvider<T> {
+        private ConfiguredJsonbJaxrsProvider(final String encoding,
+                                             final boolean nulls,
+                                             final boolean iJson,
+                                             final boolean pretty,
+                                             final String binaryStrategy,
+                                             final String namingStrategy,
+                                             final String orderStrategy) {
+            ofNullable(encoding).ifPresent(this::setEncoding);
+            ofNullable(namingStrategy).ifPresent(this::setPropertyNamingStrategy);
+            ofNullable(orderStrategy).ifPresent(this::setPropertyOrderStrategy);
+            ofNullable(binaryStrategy).ifPresent(this::setBinaryDataStrategy);
+            setNullValues(nulls);
+            setIJson(iJson);
+            setPretty(pretty);
+        }
+    }
+
+    @Provider
+    @Produces({
+            "application/json", "*/json",
+            "*/*+json", "*/x-json",
+            "*/javascript", "*/x-javascript"
+    })
+    @Consumes({
+            "application/json", "*/json",
+            "*/*+json", "*/x-json",
+            "*/javascript", "*/x-javascript"
+    })
+    public static class ConfiguredJsrProvider extends DelegateProvider<JsonStructure> { // TODO: probably wire the encoding in johnzon
+        private ConfiguredJsrProvider(final String bufferStrategy, final int maxStringLen,
+                                      final int maxReadBufferLen, final int maxWriteBufferLen,
+                                      final boolean supportsComment, final boolean pretty) {
+            super(new JsrMessageBodyReader(Json.createReaderFactory(new HashMap<String, Object>() {{
+                put(JsonParserFactoryImpl.SUPPORTS_COMMENTS, supportsComment);
+                of(maxStringLen).filter(v -> v > 0).ifPresent(s -> put(JsonParserFactoryImpl.MAX_STRING_LENGTH, s));
+                of(maxReadBufferLen).filter(v -> v > 0).ifPresent(s -> put(JsonParserFactoryImpl.BUFFER_LENGTH, s));
+                ofNullable(bufferStrategy).ifPresent(s -> put(AbstractJsonFactory.BUFFER_STRATEGY, s));
+            }}), false), new JsrMessageBodyWriter(Json.createWriterFactory(new HashMap<String, Object>() {{
+                put(JsonGenerator.PRETTY_PRINTING, pretty);
+                of(maxWriteBufferLen).filter(v -> v > 0).ifPresent(v -> put(JsonGeneratorFactoryImpl.GENERATOR_BUFFER_LENGTH, v));
+                ofNullable(bufferStrategy).ifPresent(s -> put(AbstractJsonFactory.BUFFER_STRATEGY, s));
+            }}), false));
+        }
     }
 }

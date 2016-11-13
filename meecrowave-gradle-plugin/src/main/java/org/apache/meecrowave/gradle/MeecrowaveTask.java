@@ -48,6 +48,7 @@ import static java.util.Arrays.asList;
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toList;
 
+// Note we can nest inputs objects, if you think it is better (jsonb, jsonp, jaxrs etc..) send a mail on the list ;)
 public class MeecrowaveTask extends DefaultTask {
     private Configuration classpath;
 
@@ -241,6 +242,58 @@ public class MeecrowaveTask extends DefaultTask {
     @Input
     @Optional
     private File webapp;
+
+    @Input
+    @Optional
+    private String jsonpBufferStrategy = "QUEUE";
+
+    @Input
+    @Optional
+    private int jsonpMaxStringLen = 10 * 1024 * 1024;
+
+    @Input
+    @Optional
+    private int jsonpMaxReadBufferLen = 64 * 1024;
+
+    @Input
+    @Optional
+    private int jsonpMaxWriteBufferLen = 64 * 1024;
+
+    @Input
+    @Optional
+    private boolean jsonpSupportsComment = false;
+
+    @Input
+    @Optional
+    private boolean jsonpPrettify = false;
+
+    @Input
+    @Optional
+    private String jsonbEncoding = "UTF-8";
+
+    @Input
+    @Optional
+    private boolean jsonbNulls = false;
+
+    @Input
+    @Optional
+    private boolean jsonbIJson = false;
+
+    @Input
+    @Optional
+    private boolean jsonbPrettify = false;
+
+    @Input
+    @Optional
+    private String jsonbBinaryStrategy;
+
+    @Input
+    @Optional
+    private String jsonbNamingStrategy;
+
+    @Input
+    @Optional
+    private String jsonbOrderStrategy;
 
     @TaskAction
     public void bake() {

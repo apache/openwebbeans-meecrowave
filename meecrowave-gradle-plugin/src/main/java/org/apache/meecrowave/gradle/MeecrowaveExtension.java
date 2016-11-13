@@ -71,6 +71,123 @@ public class MeecrowaveExtension {
     private String jaxrsDefaultProviders;
     private String sharedLibraries;
     private boolean useLog4j2JulLogManager = true;
+    private String jsonpBufferStrategy = "QUEUE";
+    private int jsonpMaxStringLen = 10 * 1024 * 1024;
+    private int jsonpMaxReadBufferLen = 64 * 1024;
+    private int jsonpMaxWriteBufferLen = 64 * 1024;
+    private boolean jsonpSupportsComment = false;
+    private boolean jsonpPrettify = false;
+    private String jsonbEncoding = "UTF-8";
+    private boolean jsonbNulls = false;
+    private boolean jsonbIJson = false;
+    private boolean jsonbPrettify = false;
+    private String jsonbBinaryStrategy;
+    private String jsonbNamingStrategy;
+    private String jsonbOrderStrategy;
+
+    public String getJsonpBufferStrategy() {
+        return jsonpBufferStrategy;
+    }
+
+    public void setJsonpBufferStrategy(final String jsonpBufferStrategy) {
+        this.jsonpBufferStrategy = jsonpBufferStrategy;
+    }
+
+    public int getJsonpMaxStringLen() {
+        return jsonpMaxStringLen;
+    }
+
+    public void setJsonpMaxStringLen(final int jsonpMaxStringLen) {
+        this.jsonpMaxStringLen = jsonpMaxStringLen;
+    }
+
+    public int getJsonpMaxReadBufferLen() {
+        return jsonpMaxReadBufferLen;
+    }
+
+    public void setJsonpMaxReadBufferLen(final int jsonpMaxReadBufferLen) {
+        this.jsonpMaxReadBufferLen = jsonpMaxReadBufferLen;
+    }
+
+    public int getJsonpMaxWriteBufferLen() {
+        return jsonpMaxWriteBufferLen;
+    }
+
+    public void setJsonpMaxWriteBufferLen(final int jsonpMaxWriteBufferLen) {
+        this.jsonpMaxWriteBufferLen = jsonpMaxWriteBufferLen;
+    }
+
+    public boolean isJsonpSupportsComment() {
+        return jsonpSupportsComment;
+    }
+
+    public void setJsonpSupportsComment(final boolean jsonpSupportsComment) {
+        this.jsonpSupportsComment = jsonpSupportsComment;
+    }
+
+    public boolean isJsonpPrettify() {
+        return jsonpPrettify;
+    }
+
+    public void setJsonpPrettify(final boolean jsonpPrettify) {
+        this.jsonpPrettify = jsonpPrettify;
+    }
+
+    public String getJsonbEncoding() {
+        return jsonbEncoding;
+    }
+
+    public void setJsonbEncoding(final String jsonbEncoding) {
+        this.jsonbEncoding = jsonbEncoding;
+    }
+
+    public boolean isJsonbNulls() {
+        return jsonbNulls;
+    }
+
+    public void setJsonbNulls(final boolean jsonbNulls) {
+        this.jsonbNulls = jsonbNulls;
+    }
+
+    public boolean isJsonbIJson() {
+        return jsonbIJson;
+    }
+
+    public void setJsonbIJson(final boolean jsonbIJson) {
+        this.jsonbIJson = jsonbIJson;
+    }
+
+    public boolean isJsonbPrettify() {
+        return jsonbPrettify;
+    }
+
+    public void setJsonbPrettify(final boolean jsonbPrettify) {
+        this.jsonbPrettify = jsonbPrettify;
+    }
+
+    public String getJsonbBinaryStrategy() {
+        return jsonbBinaryStrategy;
+    }
+
+    public void setJsonbBinaryStrategy(final String jsonbBinaryStrategy) {
+        this.jsonbBinaryStrategy = jsonbBinaryStrategy;
+    }
+
+    public String getJsonbNamingStrategy() {
+        return jsonbNamingStrategy;
+    }
+
+    public void setJsonbNamingStrategy(final String jsonbNamingStrategy) {
+        this.jsonbNamingStrategy = jsonbNamingStrategy;
+    }
+
+    public String getJsonbOrderStrategy() {
+        return jsonbOrderStrategy;
+    }
+
+    public void setJsonbOrderStrategy(final String jsonbOrderStrategy) {
+        this.jsonbOrderStrategy = jsonbOrderStrategy;
+    }
 
     public boolean isUseLog4j2JulLogManager() {
         return useLog4j2JulLogManager;
