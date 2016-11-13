@@ -1,0 +1,17 @@
+= Meecrowave Command Line Interface
+:jbake-date: 2016-10-24
+:jbake-type: page
+:jbake-status: published
+:jbake-meecrowavepdf:
+:jbake-meecrowavetitleicon: icon icon_puzzle_alt
+:jbake-meecrowavecolor: body-pink
+:icons: font
+
+
+Meecrowave provides a CLI (Command Line Interface) called `org.apache.meecrowave.runner.Cli`.
+
+It can be used to deploy the java classpath or a war. Here are the main options:
+
+include::../../../../../target/generated-doc/CliConfiguration.adoc[]
+
+Note that `help` command is supported as well.

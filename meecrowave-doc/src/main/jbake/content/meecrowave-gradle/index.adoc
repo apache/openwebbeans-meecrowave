@@ -1,0 +1,34 @@
+= Meecrowave Gradle
+:jbake-date: 2016-10-24
+:jbake-type: page
+:jbake-status: published
+:jbake-meecrowavepdf:
+:jbake-meecrowavetitleicon: icon icon_puzzle_alt
+:jbake-meecrowavecolor: body-pink
+:icons: font
+
+[source,groovy]
+----
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath "org.apache.meecrowave:meecrowave-gradle-plugin:${meecrowave.version}"
+    }
+}
+
+group 'com.app'
+version '1.0-SNAPSHOT'
+
+apply plugin: 'java'
+apply plugin: 'org.apache.meecrowave.meecrowave'
+
+meecrowave {
+    httpPort = 9090
+    // most of the meecrowave core configuration
+}
+
+----
+
+More coming soon, for now use gradle IDE integration or configuration documentation please.

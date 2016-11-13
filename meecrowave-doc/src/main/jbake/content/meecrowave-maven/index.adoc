@@ -1,0 +1,25 @@
+= Meecrowave Maven
+:jbake-date: 2016-10-24
+:jbake-type: page
+:jbake-status: published
+:jbake-meecrowavepdf:
+:jbake-meecrowavetitleicon: icon icon_puzzle_alt
+:jbake-meecrowavecolor: body-pink
+:icons: font
+
+Coordinates:
+
+[source,xml]
+----
+<plugin>
+  <groupId>org.apache.meecrowave</groupId>
+  <artifactId>meecrowave-maven-plugin</artifactId>
+  <version>${meecrowave.version}</version>
+</plugin>
+----
+
+TIP: most of the configuration is inherited from meecrowave-core.
+
+Here are the available options (see core configuration for the details):
+
+include::../../../../../target/generated-doc/MavenConfiguration.adoc[]

@@ -1,0 +1,89 @@
+= Meecrowave Testing
+:jbake-date: 2016-10-24
+:jbake-type: page
+:jbake-status: published
+:jbake-meecrowavepdf:
+:jbake-meecrowavetitleicon: icon icon_puzzle_alt
+:jbake-meecrowavecolor: body-pink
+:icons: font
+
+== JUnit: rules and runners
+
+Coordinates:
+
+[source,xml]
+----
+<dependency>
+  <groupId>org.apache.meecrowave</groupId>
+  <artifactId>meecrowave-junit</artifactId>
+  <version>${meecrowave.version}</version>
+</dependency>
+----
+
+Meecrowave provides two flavors of JUnit integration: mono or nor runners/rules. The mono one will
+ensure there is a single container for the whole JVM where the other ones will follow JUnit lifecycle (per class or test).
+
+Here how to use the not mono rule:
+
+[source,java]
+----
+public class MeecrowaveRuleTest {
+    @ClassRule // started once for the class, @Rule would be per method
+    public static final MeecrowaveRule RULE = new MeecrowaveRule();
+
+    @Test
+    public void test() throws IOException {
+        // use "http://localhost:" + RULE.getConfiguration().getHttpPort()
+    }
+}
+----
+
+And here for the mono version:
+
+[source,java]
+----
+@RunWith(MonoMeecrowave.Runner.class)
+public class MonoMeecrowaveRuleTest {
+    /* or
+    @ClassRule
+    public static final MonoMeecrowave.Rule RULE = new MonoMeecrowave.Rule();
+    */
+
+    @MonoMeecrowave.Runner.ConfigurationInject
+    private Meecrowave.Builder config;
+
+    @Test
+    public void test() throws IOException {
+        // use "http://localhost:" + config.getHttpPort()
+    }
+}
+----
+
+When using the mono runner, `@MonoMeecrowave.Runner.ConfigurationInject` allows to still
+access the configuration and random HTTP port.
+
+For the configuration, mono rule will use a global configuration shared by all tests. To load it
+it will use a standard `ServiceLoader` on type `org.apache.meecrowave.Meecrowave$ConfigurationCustomizer`.
+
+
+== Arquillian Container
+
+Container dependency:
+
+[source,xml]
+----
+<dependency>
+  <groupId>org.apache.meecrowave</groupId>
+  <artifactId>meecrowave-arquillian</artifactId>
+  <version>${meecrowave.version}</version>
+</dependency>
+----
+
+For the configuration check link:{context_rootpath}/meecrowave-core/configuration.html[Core configuration].
+
+Here is a sample:
+
+[source,xml]
+----
+include::../../../../../target/generated-doc/ArquillianConfiguration.adoc[]
+----

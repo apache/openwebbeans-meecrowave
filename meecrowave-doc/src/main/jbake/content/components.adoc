@@ -1,0 +1,43 @@
+= Components
+:jbake-date: 2016-10-24
+:jbake-type: page
+:jbake-status: published
+:jbake-meecrowavepdf:
+:jbake-meecrowavetitleicon: icon icon_puzzle_alt
+:jbake-meecrowavecolor: body-pink
+:icons: font
+
+== Meecrowave Core
+
+Core component is the backbone of Meecrowave. It is based on Tomcat embedded for
+Servlet container, CXF for JAX-RS, OpenWebBeans for CDI and Log4j2 for the logging.
+
+link:{context_rootpath}/meecrowave-core/configuration.html[Read about Meecrowave configuration]
+
+link:{context_rootpath}/meecrowave-core/cli.html[Read about Meecrowave command line]
+
+== Meecrowave JPA
+
+Meecrowave JPA provides a thin layer on top of JPA to make it easier to use JPA
+without requiring to use a full container like JavaEE or Spring. It is just a
+CDI extension.
+
+link:{context_rootpath}/meecrowave-jpa/index.html[Read More]
+
+== Meecrowave Maven
+
+Meecrowave provides a Maven plugin to run meecrowave with your preferred build tool.
+
+link:{context_rootpath}/meecrowave-maven/index.html[Read More]
+
+== Meecrowave Gradle
+
+Meecrowave provides a Gradle plugin to run meecrowave with your preferred build tool.
+
+link:{context_rootpath}/meecrowave-gradle/index.html[Read More]
+
+== Meecrowave and the Testing
+
+Meecrowave provides two main testing integration: a JUnit one and an Arquillian Container.
+
+link:{context_rootpath}/testing/index.html[Read More]
