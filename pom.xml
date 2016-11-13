@@ -30,11 +30,11 @@
     <version>18</version>
   </parent>
 
-  <groupId>org.apache.microwave</groupId>
-  <artifactId>microwave</artifactId>
+  <groupId>org.apache.meecrowave</groupId>
+  <artifactId>meecrowave</artifactId>
   <packaging>pom</packaging>
   <version>0.0.1-SNAPSHOT</version>
-  <name>Microwave</name>
+  <name>Meecrowave</name>
   <description>A Microprofile server @ ASF</description>
 
   <properties>
@@ -44,13 +44,13 @@
   </properties>
 
   <modules>
-    <module>microwave-core</module>
-    <module>microwave-maven-plugin</module>
-    <module>microwave-gradle-plugin</module>
-    <module>microwave-junit</module>
-    <module>microwave-arquillian</module>
-    <module>microwave-jpa</module>
-    <module>microwave-doc</module>
+    <module>meecrowave-core</module>
+    <module>meecrowave-maven-plugin</module>
+    <module>meecrowave-gradle-plugin</module>
+    <module>meecrowave-junit</module>
+    <module>meecrowave-arquillian</module>
+    <module>meecrowave-jpa</module>
+    <module>meecrowave-doc</module>
   </modules>
 
   <build>
