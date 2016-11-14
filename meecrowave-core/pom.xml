@@ -79,8 +79,7 @@
     <dependency>
       <groupId>org.apache.tomcat</groupId>
       <artifactId>tomcat-jaspic-api</artifactId>
-      <!--<version>${tomcat.version}</version>-->
-      <version>9.0-SNAPSHOT</version>
+      <version>${tomcat.version}</version>
     </dependency>
     
     <dependency>
