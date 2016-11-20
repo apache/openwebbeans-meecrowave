@@ -84,6 +84,15 @@ public class MeecrowaveExtension {
     private String jsonbBinaryStrategy;
     private String jsonbNamingStrategy;
     private String jsonbOrderStrategy;
+    private boolean java9SkipWorkarounds = false;
+
+    public boolean isJava9SkipWorkarounds() {
+        return java9SkipWorkarounds;
+    }
+
+    public void setJava9SkipWorkarounds(final boolean java9SkipWorkarounds) {
+        this.java9SkipWorkarounds = java9SkipWorkarounds;
+    }
 
     public String getJsonpBufferStrategy() {
         return jsonpBufferStrategy;

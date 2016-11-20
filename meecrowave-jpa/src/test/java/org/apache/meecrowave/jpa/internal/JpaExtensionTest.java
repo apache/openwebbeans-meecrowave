@@ -21,21 +21,32 @@ package org.apache.meecrowave.jpa.internal;
 import org.apache.meecrowave.Meecrowave;
 import org.apache.meecrowave.junit.MeecrowaveRule;
 import org.app.JPADao;
+import org.junit.Assume;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestRule;
+import org.junit.runners.model.Statement;
 
 import javax.inject.Inject;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.rules.RuleChain.outerRule;
 
 public class JpaExtensionTest {
     @Rule
-    public final MeecrowaveRule rule = new MeecrowaveRule(
+    public final TestRule rule = outerRule((base, description) -> new Statement() {
+        @Override
+        public void evaluate() throws Throwable {
+            final String jVersion = System.getProperty("java.version");
+            Assume.assumeFalse(jVersion.startsWith("9-") || jVersion.startsWith("1.9")); // openjpa loops on java 9 bytecode
+            base.evaluate();
+        }
+    }).around(new MeecrowaveRule(
             new Meecrowave.Builder().randomHttpPort()
                     .property("jpa.property.openjpa.RuntimeUnenhancedClasses", "supported")
                     .property("jpa.property.openjpa.jdbc.SynchronizeMappings", "buildSchema"),
             "")
-            .inject(this);
+            .inject(this));
 
     @Inject
     private JPADao service;

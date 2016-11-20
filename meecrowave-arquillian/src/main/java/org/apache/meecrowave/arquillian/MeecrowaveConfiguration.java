@@ -94,6 +94,7 @@ public class MeecrowaveConfiguration implements ContainerConfiguration {
     private String jsonbBinaryStrategy;
     private String jsonbNamingStrategy;
     private String jsonbOrderStrategy;
+    private boolean java9SkipWorkarounds = false;
 
     @Override
     public void validate() throws ConfigurationException {

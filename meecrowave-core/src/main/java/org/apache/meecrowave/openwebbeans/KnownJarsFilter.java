@@ -107,6 +107,7 @@ public class KnownJarsFilter implements JarScanFilter {
         add("eclipselink-");
         add("ehcache-");
         add("FastInfoset");
+        add("jaxb-");
         add("jce.jar");
         add("jfr.jar");
         add("jfxrt.jar");

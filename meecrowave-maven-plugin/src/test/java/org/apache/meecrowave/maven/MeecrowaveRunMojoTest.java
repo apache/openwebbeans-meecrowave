@@ -27,6 +27,7 @@ import org.apache.maven.plugin.testing.MojoRule;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.ProjectBuilder;
 import org.apache.maven.project.ProjectBuildingRequest;
+import org.apache.meecrowave.hack.Java9WorkArounds;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.eclipse.aether.DefaultRepositorySystemSession;
 import org.eclipse.aether.internal.impl.SimpleLocalRepositoryManagerFactory;
@@ -47,6 +48,10 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 public class MeecrowaveRunMojoTest {
+    static { // if not that eager then we can't run the test on java 9
+        Java9WorkArounds.execute();
+    }
+
     @Rule
     public final MojoRule mojo = new MojoRule();
 

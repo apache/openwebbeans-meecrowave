@@ -38,6 +38,7 @@
     <cxf.version>3.1.9-SNAPSHOT</cxf.version>
     <johnzon.version>0.9.5</johnzon.version>
     <log4j2.version>2.7</log4j2.version>
+    <jaxb.version>2.2.11</jaxb.version>
   </properties>
 
   <dependencies>
