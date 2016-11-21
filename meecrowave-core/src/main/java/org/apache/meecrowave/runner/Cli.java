@@ -90,6 +90,7 @@ public class Cli {
             if (war == null) {
                 meecrowave.bake(fixedCtx);
             } else {
+                meecrowave.start();
                 meecrowave.deployWebapp(fixedCtx, new File(war));
             }
             meecrowave.getTomcat().getServer().await();
