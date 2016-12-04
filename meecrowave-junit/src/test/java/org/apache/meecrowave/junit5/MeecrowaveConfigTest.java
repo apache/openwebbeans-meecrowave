@@ -16,33 +16,28 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.meecrowave.junit;
+package org.apache.meecrowave.junit5;
 
 import org.apache.meecrowave.Meecrowave;
 import org.apache.meecrowave.io.IO;
 import org.apache.meecrowave.testing.ConfigurationInject;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.MalformedURLException;
 import java.net.URL;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
-@RunWith(MonoMeecrowave.Runner.class)
-public class MonoMeecrowaveRuleTest {
-    /* or
-    @ClassRule
-    public static final MonoMeecrowave.Rule RULE = new MonoMeecrowave.Rule();
-    */
-
+@MeecrowaveConfig
+public class MeecrowaveConfigTest {
     @ConfigurationInject
     private Meecrowave.Builder config;
 
     @Test
-    public void test() throws IOException {
+    public void run() throws MalformedURLException {
         assertEquals("simple", slurp(new URL("http://localhost:" + config.getHttpPort() + "/api/test")));
     }
 

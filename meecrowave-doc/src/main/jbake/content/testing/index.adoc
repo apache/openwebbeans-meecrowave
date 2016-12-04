@@ -7,7 +7,7 @@
 :jbake-meecrowavecolor: body-pink
 :icons: font
 
-== JUnit: rules and runners
+== JUnit
 
 Coordinates:
 
@@ -19,6 +19,8 @@ Coordinates:
   <version>${meecrowave.version}</version>
 </dependency>
 ----
+
+=== Rules and Runners
 
 Meecrowave provides two flavors of JUnit integration: mono or nor runners/rules. The mono one will
 ensure there is a single container for the whole JVM where the other ones will follow JUnit lifecycle (per class or test).
@@ -65,6 +67,38 @@ access the configuration and random HTTP port.
 For the configuration, mono rule will use a global configuration shared by all tests. To load it
 it will use a standard `ServiceLoader` on type `org.apache.meecrowave.Meecrowave$ConfigurationCustomizer`.
 
+=== JUnit 5
+
+JUnit 5 integrates a new `Extension` system. It is not yet very well supported by IDEs but you can already use it with
+Gradle and Maven (see http://junit.org/junit5/docs/current/user-guide/#running-tests).
+
+The usage has two annotations: `@MeecrowaveConfig` which remaps most of the configuration of Meecrowave and `@MonoMeecrowaveConfig`
+which is close to `MonoMeecrowave.Runner` in term of usage.
+
+[source,java]
+----
+@MeecrowaveConfig /*(some config)*/
+public class MeecrowaveConfigTest {
+    @ConfigurationInject
+    private Meecrowave.Builder config;
+
+    @Test
+    public void run() throws MalformedURLException {
+        final String base = "http://localhost:" + config.getHttpPort();
+        // asserts
+    }
+}
+----
+
+Or
+
+[source,java]
+----
+@MonoMeecrowaveConfig
+public class MeecrowaveConfigTest {
+    // ...
+}
+----
 
 == Arquillian Container
 

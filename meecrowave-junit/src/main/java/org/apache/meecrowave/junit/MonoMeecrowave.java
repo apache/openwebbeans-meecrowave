@@ -19,27 +19,19 @@
 package org.apache.meecrowave.junit;
 
 import org.apache.meecrowave.Meecrowave;
+import org.apache.meecrowave.testing.Injector;
+import org.apache.meecrowave.testing.MonoBase;
 import org.junit.rules.MethodRule;
 import org.junit.runners.BlockJUnit4ClassRunner;
 import org.junit.runners.model.InitializationError;
 import org.junit.runners.model.Statement;
 
-import java.io.File;
-import java.lang.annotation.Retention;
-import java.lang.annotation.Target;
+import javax.enterprise.context.spi.CreationalContext;
 import java.util.List;
-import java.util.ServiceLoader;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
-
-import static java.lang.annotation.ElementType.FIELD;
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 // a MeecrowaveRule starting a single container, very awesome for forkCount=1, reuseForks=true
 public class MonoMeecrowave {
-    private static final AtomicReference<AutoCloseable> CONTAINER = new AtomicReference<>();
-    private static final AtomicReference<Meecrowave.Builder> CONFIGURATION = new AtomicReference<>();
+    private static final MonoBase BASE = new MonoBase();
     private static final AutoCloseable NOOP_CLOSEABLE = () -> {
     };
 
@@ -54,24 +46,18 @@ public class MonoMeecrowave {
             rules.add((base, method, target) -> new Statement() {
                 @Override
                 public void evaluate() throws Throwable {
-                    doBoot();
+                    BASE.startIfNeeded();
                     configInjection(test.getClass(), test);
-                    base.evaluate();
+                    final CreationalContext<?> creationalContext = Injector.inject(true);
+                    try {
+                        base.evaluate();
+                    } finally {
+                        creationalContext.release();
+                    }
                 }
 
                 private void configInjection(final Class<?> aClass, final Object test) {
-                    Stream.of(aClass.getDeclaredFields())
-                            .filter(f -> f.isAnnotationPresent(ConfigurationInject.class))
-                            .forEach(f -> {
-                                if (!f.isAccessible()) {
-                                    f.setAccessible(true);
-                                }
-                                try {
-                                    f.set(test, CONFIGURATION.get());
-                                } catch (final IllegalAccessException e) {
-                                    throw new IllegalStateException(e);
-                                }
-                            });
+                    Injector.injectConfig(BASE.getConfiguration(), test);
                     final Class<?> parent = aClass.getSuperclass();
                     if (parent != null && parent != Object.class) {
                         configInjection(parent, true);
@@ -80,74 +66,18 @@ public class MonoMeecrowave {
             });
             return rules;
         }
-
-        /**
-         * Only working with the runner
-         */
-        @Target(FIELD)
-        @Retention(RUNTIME)
-        public @interface ConfigurationInject {
-        }
     }
 
     public static class Rule extends MeecrowaveRuleBase<Rule> {
         @Override
         public Meecrowave.Builder getConfiguration() {
-            return CONFIGURATION.get();
+            return BASE.getConfiguration();
         }
 
         @Override
         protected AutoCloseable onStart() {
-            if (CONTAINER.get() == null) { // yes synchro could be simpler but it does the job, feel free to rewrite it
-                synchronized (CONTAINER) {
-                    if (CONTAINER.get() == null) {
-                        doBoot();
-                    }
-                }
-            }
+            BASE.startIfNeeded();
             return NOOP_CLOSEABLE;
-        }
-    }
-
-    private static void doBoot() {
-        final Meecrowave.Builder configuration = new Meecrowave.Builder().randomHttpPort().noShutdownHook(/*the rule does*/);
-        StreamSupport.stream(ServiceLoader.load(Meecrowave.ConfigurationCustomizer.class).spliterator(), false)
-                .forEach(c -> c.accept(configuration));
-        CONFIGURATION.compareAndSet(null, configuration);
-
-        final Meecrowave meecrowave = new Meecrowave(CONFIGURATION.get());
-        if (CONTAINER.compareAndSet(null, meecrowave)) {
-            final Configuration runnerConfig = StreamSupport.stream(ServiceLoader.load(Configuration.class).spliterator(), false)
-                    .findAny()
-                    .orElseGet(() -> new Configuration() {
-                    });
-
-            final File war = runnerConfig.application();
-            if (war == null) {
-                meecrowave.bake(runnerConfig.context());
-            } else {
-                meecrowave.deployWebapp(runnerConfig.context(), runnerConfig.application());
-            }
-            Runtime.getRuntime().addShutdownHook(new Thread() {
-                {
-                    setName("Meecrowave-mono-rue-stopping");
-                }
-
-                @Override
-                public void run() {
-                    meecrowave.close();
-                }
-            });
-        }
-    }
-
-    public interface Configuration {
-        default String context() {
-            return "";
-        }
-
-        default File application() {
-            return null;
         }
     }
 }

@@ -107,6 +107,15 @@ public class OWBTomcatWebScannerService extends WebScannerService {
             return jreBase.length();
         }
 
+        // jar:file:spring-boot-cdi-launcher-1.0-SNAPSHOT.jar!/BOOT-INF/lib/x.jar!/
+        if (path.startsWith("jar:file:") && path.endsWith(".jar!/")) {
+            final int lastSep = path.substring(0, path.length() - 2).lastIndexOf('/');
+            if (lastSep > 0) {
+                return filter.check(PLUGGABILITY, path.substring(lastSep + 1, path.length() - 2)) ?
+                        -1 : (path.indexOf(".jar") - 1 /*should be lastIndexOf but filterExcludedJar logic would be broken*/);
+            }
+        }
+
         final int filenameIdx = path.replace(File.separatorChar, '/').replace("!/", "").lastIndexOf('/') + 1;
         if (filenameIdx < 0 || filenameIdx >= path.length()) { // unlikely
             return -1;
