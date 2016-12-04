@@ -32,16 +32,6 @@
   <artifactId>meecrowave-core</artifactId>
   <name>Meecrowave :: Core</name>
 
-  <properties>
-    <tomcat.version>9.0.0.M13</tomcat.version>
-    <openwebbeans.version>1.7.1-SNAPSHOT</openwebbeans.version>
-    <cxf.version>3.1.9-SNAPSHOT</cxf.version>
-    <johnzon.version>0.9.5</johnzon.version>
-    <log4j2.version>2.7</log4j2.version>
-    <deltaspike.version>1.7.2</deltaspike.version>
-    <jaxb.version>2.2.11</jaxb.version>
-  </properties>
-
   <dependencies>
     <dependency>
       <groupId>org.apache.geronimo.specs</groupId>
