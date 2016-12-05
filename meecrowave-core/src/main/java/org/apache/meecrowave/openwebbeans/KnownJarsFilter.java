@@ -18,11 +18,16 @@
  */
 package org.apache.meecrowave.openwebbeans;
 
+import org.apache.meecrowave.Meecrowave;
 import org.apache.tomcat.JarScanFilter;
 import org.apache.tomcat.JarScanType;
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.stream.Stream;
+
+import static java.util.Optional.ofNullable;
+import static java.util.stream.Collectors.toSet;
 
 public class KnownJarsFilter implements JarScanFilter {
     private final Collection<String> forceIncludes = new HashSet<String>() {{
@@ -297,9 +302,21 @@ public class KnownJarsFilter implements JarScanFilter {
         add("zipfs.jar");
     }};
 
+    public KnownJarsFilter() {
+        // no-op
+    }
+
+    KnownJarsFilter(final Meecrowave.Builder config) {
+        ofNullable(config.getScanningIncludes()).ifPresent(i -> {
+            forceIncludes.clear();
+            forceIncludes.addAll(Stream.of(i.split(",")).map(String::trim).filter(j -> !j.isEmpty()).collect(toSet()));
+        });
+        ofNullable(config.getScanningExcludes())
+                .ifPresent(i -> excludes.addAll(Stream.of(i.split(",")).map(String::trim).filter(j -> !j.isEmpty()).collect(toSet())));
+    }
+
     @Override
     public boolean check(final JarScanType jarScanType, final String jarName) {
-        return forceIncludes.stream().filter(jarName::startsWith).findAny().isPresent()
-                || !excludes.stream().filter(jarName::startsWith).findAny().isPresent();
+        return forceIncludes.stream().anyMatch(jarName::startsWith) || excludes.stream().noneMatch(jarName::startsWith);
     }
 }

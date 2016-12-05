@@ -85,6 +85,8 @@ public class MeecrowaveExtension {
     private String jsonbNamingStrategy;
     private String jsonbOrderStrategy;
     private boolean java9SkipWorkarounds = false;
+    private String scanningIncludes;
+    private String scanningExcludes;
 
     public boolean isJava9SkipWorkarounds() {
         return java9SkipWorkarounds;
@@ -564,5 +566,21 @@ public class MeecrowaveExtension {
 
     public void setTomcatAutoSetup(final boolean tomcatAutoSetup) {
         this.tomcatAutoSetup = tomcatAutoSetup;
+    }
+
+    public String getScanningIncludes() {
+        return scanningIncludes;
+    }
+
+    public void setScanningIncludes(final String scanningIncludes) {
+        this.scanningIncludes = scanningIncludes;
+    }
+
+    public String getScanningExcludes() {
+        return scanningExcludes;
+    }
+
+    public void setScanningExcludes(final String scanningExcludes) {
+        this.scanningExcludes = scanningExcludes;
     }
 }

@@ -22,6 +22,7 @@ import org.apache.catalina.WebResource;
 import org.apache.meecrowave.Meecrowave;
 import org.apache.meecrowave.logging.tomcat.LogFacade;
 import org.apache.meecrowave.openwebbeans.OWBTomcatWebScannerService;
+import org.apache.tomcat.JarScanner;
 import org.apache.tomcat.util.descriptor.web.WebXml;
 import org.apache.webbeans.config.WebBeansContext;
 import org.apache.webbeans.corespi.scanner.xbean.CdiArchive;
@@ -74,7 +75,7 @@ public class MeecrowaveContextConfig extends ContextConfig {
         thread.setContextClassLoader(loader);
         try {
             final OWBTomcatWebScannerService scannerService = OWBTomcatWebScannerService.class.cast(WebBeansContext.getInstance().getScannerService());
-            ofNullable(context.getJarScanner()).ifPresent(s -> scannerService.setFilter(s.getJarScanFilter()));
+            scannerService.setFilter(ofNullable(context.getJarScanner()).map(JarScanner::getJarScanFilter).orElse(null), context.getServletContext());
             scannerService.setDocBase(context.getDocBase());
             scannerService.setShared(configuration.getSharedLibraries());
             scannerService.scan();

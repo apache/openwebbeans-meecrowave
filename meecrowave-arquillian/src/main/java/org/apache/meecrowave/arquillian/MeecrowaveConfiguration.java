@@ -95,6 +95,8 @@ public class MeecrowaveConfiguration implements ContainerConfiguration {
     private String jsonbNamingStrategy;
     private String jsonbOrderStrategy;
     private boolean java9SkipWorkarounds = false;
+    private String scanningIncludes;
+    private String scanningExcludes;
 
     @Override
     public void validate() throws ConfigurationException {
@@ -561,5 +563,21 @@ public class MeecrowaveConfiguration implements ContainerConfiguration {
 
     public void setUseLog4j2JulLogManager(final boolean useLog4j2JulLogManager) {
         this.useLog4j2JulLogManager = useLog4j2JulLogManager;
+    }
+
+    public String getScanningIncludes() {
+        return scanningIncludes;
+    }
+
+    public void setScanningIncludes(final String scanningIncludes) {
+        this.scanningIncludes = scanningIncludes;
+    }
+
+    public String getScanningExcludes() {
+        return scanningExcludes;
+    }
+
+    public void setScanningExcludes(final String scanningExcludes) {
+        this.scanningExcludes = scanningExcludes;
     }
 }

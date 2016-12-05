@@ -299,6 +299,14 @@ public class MeecrowaveTask extends DefaultTask {
     @Optional
     private boolean java9SkipWorkarounds = false;
 
+    @Input
+    @Optional
+    private String scanningIncludes;
+
+    @Input
+    @Optional
+    private String scanningExcludes;
+
     @TaskAction
     public void bake() {
         fixConfig();
@@ -946,5 +954,21 @@ public class MeecrowaveTask extends DefaultTask {
 
     public void setJava9SkipWorkarounds(final boolean java9SkipWorkarounds) {
         this.java9SkipWorkarounds = java9SkipWorkarounds;
+    }
+
+    public String getScanningIncludes() {
+        return scanningIncludes;
+    }
+
+    public void setScanningIncludes(final String scanningIncludes) {
+        this.scanningIncludes = scanningIncludes;
+    }
+
+    public String getScanningExcludes() {
+        return scanningExcludes;
+    }
+
+    public void setScanningExcludes(final String scanningExcludes) {
+        this.scanningExcludes = scanningExcludes;
     }
 }

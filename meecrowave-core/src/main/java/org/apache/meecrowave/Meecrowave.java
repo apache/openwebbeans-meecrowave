@@ -183,10 +183,11 @@ public class Meecrowave implements AutoCloseable {
             return d;
         });
 
+        final OWBJarScanner scanner = new OWBJarScanner();
         final StandardContext ctx = new StandardContext();
         ctx.setPath(meta.context);
         ctx.setName(meta.context);
-        ctx.setJarScanner(new OWBJarScanner());
+        ctx.setJarScanner(scanner);
         ctx.setInstanceManager(new CDIInstanceManager());
         try {
             ctx.setDocBase(dir.getCanonicalPath());
@@ -194,13 +195,11 @@ public class Meecrowave implements AutoCloseable {
             ctx.setDocBase(dir.getAbsolutePath());
         }
         ofNullable(configuration.tomcatFilter).ifPresent(filter -> {
-            final OWBJarScanner jarScanner = new OWBJarScanner();
             try {
-                jarScanner.setJarScanFilter(JarScanFilter.class.cast(Thread.currentThread().getContextClassLoader().loadClass(filter).newInstance()));
+                scanner.setJarScanFilter(JarScanFilter.class.cast(Thread.currentThread().getContextClassLoader().loadClass(filter).newInstance()));
             } catch (final ClassNotFoundException | InstantiationException | IllegalAccessException e) {
                 throw new IllegalArgumentException(e);
             }
-            ctx.setJarScanner(jarScanner);
         });
         ctx.addLifecycleListener(new MeecrowaveContextConfig(configuration));
         ctx.addLifecycleListener(event -> {
@@ -209,6 +208,7 @@ public class Meecrowave implements AutoCloseable {
                     ctx.getResources().setCachingAllowed(configuration.webResourceCached);
                     break;
                 case Lifecycle.BEFORE_INIT_EVENT:
+                    ctx.getServletContext().setAttribute("meecrowave.configuration", configuration);
                     if (configuration.loginConfig != null) {
                         ctx.setLoginConfig(configuration.loginConfig.build());
                     }
@@ -226,8 +226,6 @@ public class Meecrowave implements AutoCloseable {
         ctx.addLifecycleListener(new Tomcat.FixContextListener()); // after having configured the security!!!
 
         ctx.addServletContainerInitializer((c, ctx1) -> {
-            ctx.getServletContext().setAttribute("meecrowave.configuration", configuration);
-
             new OWBAutoSetup().onStartup(c, ctx1);
             new CxfCdiAutoSetup().onStartup(c, ctx1);
             new TomcatAutoInitializer().onStartup(c, ctx1);
@@ -869,6 +867,12 @@ public class Meecrowave implements AutoCloseable {
         @CliOption(name = "tomcat-filter", description = "A Tomcat JarScanFilter")
         private String tomcatFilter;
 
+        @CliOption(name = "scanning-include", description = "A forced include list of jar names (comma separated values)")
+        private String scanningIncludes;
+
+        @CliOption(name = "scanning-exclude", description = "A forced exclude list of jar names (comma separated values)")
+        private String scanningExcludes;
+
         @CliOption(name = "tomcat-default", description = "Should Tomcat default be set (session timeout, mime mapping etc...)")
         private boolean useTomcatDefaults = true;
 
@@ -902,6 +906,22 @@ public class Meecrowave implements AutoCloseable {
 
         public void setExtension(final Class<?> type, final Object value) {
             extensions.put(type, value);
+        }
+
+        public String getScanningIncludes() {
+            return scanningIncludes;
+        }
+
+        public void setScanningIncludes(final String scanningIncludes) {
+            this.scanningIncludes = scanningIncludes;
+        }
+
+        public String getScanningExcludes() {
+            return scanningExcludes;
+        }
+
+        public void setScanningExcludes(final String scanningExcludes) {
+            this.scanningExcludes = scanningExcludes;
         }
 
         public boolean isJava9SkipWorkarounds() {

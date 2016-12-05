@@ -242,6 +242,12 @@ public class MeecrowaveRunMojo extends AbstractMojo {
     @Parameter(property = "meecrowave.jsonb-order-strategy")
     private String jsonbOrderStrategy;
 
+    @Parameter(property = "meecrowave.scanning-exclude")
+    private String scanningIncludes;
+
+    @Parameter(property = "meecrowave.scanning-include")
+    private String scanningExcludes;
+
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         if (skip) {
@@ -293,7 +299,8 @@ public class MeecrowaveRunMojo extends AbstractMojo {
         for (final String js : customizers) {
             try {
                 final SimpleBindings bindings = new SimpleBindings();
-                bindings.put("catalinaBase", base);
+                bindings.put("meecrowaveBase", base);
+                bindings.put("project", project);
                 engine.eval(new StringReader(js), bindings);
             } catch (final ScriptException e) {
                 throw new IllegalStateException(e.getMessage(), e);

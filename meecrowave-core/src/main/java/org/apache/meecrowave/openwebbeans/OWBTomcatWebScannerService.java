@@ -18,10 +18,12 @@
  */
 package org.apache.meecrowave.openwebbeans;
 
+import org.apache.meecrowave.Meecrowave;
 import org.apache.meecrowave.logging.tomcat.LogFacade;
 import org.apache.tomcat.JarScanFilter;
 import org.apache.webbeans.web.scanner.WebScannerService;
 
+import javax.servlet.ServletContext;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -42,6 +44,11 @@ public class OWBTomcatWebScannerService extends WebScannerService {
     private final Set<String> urls = new HashSet<>();
     private String docBase;
     private String shared;
+
+    @Override
+    public void init(final Object context) {
+        // no-op
+    }
 
     @Override
     public void scan() {
@@ -71,7 +78,7 @@ public class OWBTomcatWebScannerService extends WebScannerService {
                     shownValue = "${maven}/" + shownValue.substring(shownValue.replace(File.separatorChar, '/').lastIndexOf('/') + 1);
                 } else if (shownValue.startsWith(base)) {
                     shownValue = "${app}" + shownValue.replace(base, "");
-                } else if (sharedBase != null && shownValue.startsWith(sharedBase)) {
+                } else if (shownValue.startsWith(sharedBase)) {
                     shownValue = "${shared}" + shownValue.replace(sharedBase, "");
                 }
 
@@ -86,10 +93,6 @@ public class OWBTomcatWebScannerService extends WebScannerService {
 
     @Override
     protected void filterExcludedJars(final Set<URL> classPathUrls) {
-        if (filter == null) {
-            filter = new KnownJarsFilter();
-        }
-
         String jreBaseTmp;
         try {
             jreBaseTmp = new File(System.getProperty("java.home")).toURI().toURL().toExternalForm();
@@ -124,8 +127,15 @@ public class OWBTomcatWebScannerService extends WebScannerService {
         return filter.check(PLUGGABILITY, path.substring(filenameIdx)) ? -1 : (path.indexOf(".jar") - 1);
     }
 
-    public void setFilter(final JarScanFilter filter) {
+    // replace init
+    public void setFilter(final JarScanFilter filter, final ServletContext ctx) {
         this.filter = filter;
+
+        super.init(ctx);
+        if (this.filter == null) {
+            final Meecrowave.Builder config = Meecrowave.Builder.class.cast(ServletContext.class.cast(ctx).getAttribute("meecrowave.configuration"));
+            this.filter = new KnownJarsFilter(config);
+        }
     }
 
     @Override
