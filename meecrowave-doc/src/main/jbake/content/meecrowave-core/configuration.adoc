@@ -59,3 +59,8 @@ and delegate the processing to the first one.
 - `configurationCustomizer.x=y` will set `x` to `y` for the customizer
 
 TIP: out of the box, any `Builder` instance will read `meecrowave.properties`.
+
+== Logging
+
+Meecrowave relies by default on Log4j2 (see http://logging.apache.org/log4j/2.x/). By default it uses an internal
+configuration which is overriden by standard log4j mecanism.

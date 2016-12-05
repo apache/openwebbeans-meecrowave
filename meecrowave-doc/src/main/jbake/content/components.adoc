@@ -48,3 +48,9 @@ Meecrowave provides few integration for the monitoring:
 
 link:{context_rootpath}/meecrowave-jolokia/index.html[Jolokia (JMX)]
 
+== Going further
+
+Meecrowave scope is not the full scope of microservices (whatever it means) or at least enterprise needs
+cause several Apache projects cover part of them in a very good way.
+
+See link:companion-projects.html[Companion Projects] for more information.
