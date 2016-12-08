@@ -39,11 +39,6 @@ public class PrincipalTest {
                 .randomHttpPort()
                 .realm(new RealmBase() {
                     @Override
-                    protected String getName() {
-                        return "test";
-                    }
-
-                    @Override
                     protected String getPassword(final String username) {
                         return "foo".equals(username) ? "pwd" : null;
                     }
