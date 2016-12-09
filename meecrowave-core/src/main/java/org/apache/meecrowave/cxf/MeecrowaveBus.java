@@ -24,6 +24,7 @@ import javax.json.stream.JsonGenerator;
 import javax.servlet.ServletContext;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.ext.Provider;
 import java.util.Collection;
 import java.util.HashMap;
@@ -173,16 +174,8 @@ public class MeecrowaveBus implements Bus {
     }
 
     @Provider
-    @Produces({
-            "application/json", "*/json",
-            "*/*+json", "*/x-json",
-            "*/javascript", "*/x-javascript"
-    })
-    @Consumes({
-            "application/json", "*/json",
-            "*/*+json", "*/x-json",
-            "*/javascript", "*/x-javascript"
-    })
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
     public static class ConfiguredJsonbJaxrsProvider<T> extends JsonbJaxrsProvider<T> {
         private ConfiguredJsonbJaxrsProvider(final String encoding,
                                              final boolean nulls,
@@ -202,16 +195,8 @@ public class MeecrowaveBus implements Bus {
     }
 
     @Provider
-    @Produces({
-            "application/json", "*/json",
-            "*/*+json", "*/x-json",
-            "*/javascript", "*/x-javascript"
-    })
-    @Consumes({
-            "application/json", "*/json",
-            "*/*+json", "*/x-json",
-            "*/javascript", "*/x-javascript"
-    })
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
     public static class ConfiguredJsrProvider extends DelegateProvider<JsonStructure> { // TODO: probably wire the encoding in johnzon
         private ConfiguredJsrProvider(final String bufferStrategy, final int maxStringLen,
                                       final int maxReadBufferLen, final int maxWriteBufferLen,
