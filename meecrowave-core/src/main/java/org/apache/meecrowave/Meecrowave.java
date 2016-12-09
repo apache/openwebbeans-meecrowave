@@ -873,6 +873,12 @@ public class Meecrowave implements AutoCloseable {
         @CliOption(name = "scanning-exclude", description = "A forced exclude list of jar names (comma separated values)")
         private String scanningExcludes;
 
+        @CliOption(name = "scanning-package-include", description = "A forced include list of packages names (comma separated values)")
+        private String scanningPackageIncludes;
+
+        @CliOption(name = "scanning-package-exclude", description = "A forced exclude list of packages names (comma separated values)")
+        private String scanningPackageExcludes;
+
         @CliOption(name = "tomcat-default", description = "Should Tomcat default be set (session timeout, mime mapping etc...)")
         private boolean useTomcatDefaults = true;
 
@@ -902,6 +908,32 @@ public class Meecrowave implements AutoCloseable {
                     throw new IllegalArgumentException(e);
                 }
             }));
+        }
+
+        public String getScanningPackageIncludes() {
+            return scanningPackageIncludes;
+        }
+
+        public void setScanningPackageIncludes(final String scanningPackageIncludes) {
+            this.scanningPackageIncludes = scanningPackageIncludes;
+        }
+
+        public String getScanningPackageExcludes() {
+            return scanningPackageExcludes;
+        }
+
+        public void setScanningPackageExcludes(final String scanningPackageExcludes) {
+            this.scanningPackageExcludes = scanningPackageExcludes;
+        }
+
+        public Builder excludePackages(final String packages) {
+            this.setScanningPackageExcludes(packages);
+            return this;
+        }
+
+        public Builder includePackages(final String packages) {
+            this.setScanningPackageIncludes(packages);
+            return this;
         }
 
         public void setExtension(final Class<?> type, final Object value) {

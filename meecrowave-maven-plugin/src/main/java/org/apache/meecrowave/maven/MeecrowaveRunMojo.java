@@ -248,6 +248,12 @@ public class MeecrowaveRunMojo extends AbstractMojo {
     @Parameter(property = "meecrowave.scanning-include")
     private String scanningExcludes;
 
+    @Parameter(property = "meecrowave.scanning-package-include")
+    private String scanningPackageIncludes;
+
+    @Parameter(property = "meecrowave.scanning-package-exclude")
+    private String scanningPackageExcludes;
+
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         if (skip) {

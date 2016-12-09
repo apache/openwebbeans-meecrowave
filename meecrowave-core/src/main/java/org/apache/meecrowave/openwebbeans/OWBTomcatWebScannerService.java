@@ -22,6 +22,7 @@ import org.apache.meecrowave.Meecrowave;
 import org.apache.meecrowave.logging.tomcat.LogFacade;
 import org.apache.tomcat.JarScanFilter;
 import org.apache.webbeans.web.scanner.WebScannerService;
+import org.apache.xbean.finder.filter.Filter;
 
 import javax.servlet.ServletContext;
 import java.io.File;
@@ -132,9 +133,14 @@ public class OWBTomcatWebScannerService extends WebScannerService {
         this.filter = filter;
 
         super.init(ctx);
+        final Meecrowave.Builder config = Meecrowave.Builder.class.cast(ServletContext.class.cast(ctx).getAttribute("meecrowave.configuration"));
         if (this.filter == null) {
-            final Meecrowave.Builder config = Meecrowave.Builder.class.cast(ServletContext.class.cast(ctx).getAttribute("meecrowave.configuration"));
             this.filter = new KnownJarsFilter(config);
+        }
+
+        final Filter userFilter = this.webBeansContext.getService(Filter.class);
+        if (KnowClassesFilter.class.isInstance(userFilter)) {
+            KnowClassesFilter.class.cast(userFilter).init(config);
         }
     }
 

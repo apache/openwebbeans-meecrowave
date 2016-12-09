@@ -89,7 +89,7 @@ public class MeecrowaveTest {
         } catch (final IOException e) {
             fail(e.getMessage());
         }
-        try (final Meecrowave meecrowave = new Meecrowave(new Meecrowave.Builder().randomHttpPort()).start()) {
+        try (final Meecrowave meecrowave = new Meecrowave(new Meecrowave.Builder().randomHttpPort().includePackages("org.superbiz.app")).start()) {
             meecrowave.deployWebapp("", root);
             assertEquals("hello", slurp(new URL("http://localhost:" + meecrowave.getConfiguration().getHttpPort() + "/index.html")));
             assertEquals("simple", slurp(new URL("http://localhost:" + meecrowave.getConfiguration().getHttpPort() + "/api/test")));
@@ -105,7 +105,7 @@ public class MeecrowaveTest {
 
     @Test
     public void classpath() {
-        try (final Meecrowave meecrowave = new Meecrowave(new Meecrowave.Builder().randomHttpPort()).bake()) {
+        try (final Meecrowave meecrowave = new Meecrowave(new Meecrowave.Builder().randomHttpPort().includePackages("org.superbiz.app")).bake()) {
             assertEquals("simple", slurp(new URL("http://localhost:" + meecrowave.getConfiguration().getHttpPort() + "/api/test")));
             assertEquals("simplefiltertrue", slurp(new URL("http://localhost:" + meecrowave.getConfiguration().getHttpPort() + "/filter")));
             assertEquals(
@@ -118,7 +118,7 @@ public class MeecrowaveTest {
 
     @Test
     public void json() {
-        try (final Meecrowave meecrowave = new Meecrowave(new Meecrowave.Builder().randomHttpPort()).bake()) {
+        try (final Meecrowave meecrowave = new Meecrowave(new Meecrowave.Builder().randomHttpPort().includePackages("org.superbiz.app")).bake()) {
             assertEquals("{\"name\":\"test\"}", slurp(new URL("http://localhost:" + meecrowave.getConfiguration().getHttpPort() + "/api/test/json")));
         } catch (final IOException e) {
             fail(e.getMessage());

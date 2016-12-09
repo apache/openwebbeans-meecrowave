@@ -37,6 +37,7 @@ public class PrincipalTest {
     public void run() throws IOException {
         try (final Meecrowave container = new Meecrowave(new Meecrowave.Builder()
                 .randomHttpPort()
+                .includePackages("org.superbiz.app")
                 .realm(new RealmBase() {
                     @Override
                     protected String getPassword(final String username) {

@@ -18,17 +18,22 @@
  */
 package org.apache.meecrowave.openwebbeans;
 
+import org.apache.meecrowave.Meecrowave;
 import org.apache.xbean.finder.filter.Filter;
 
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
+
+import static java.util.Optional.ofNullable;
 
 public class KnowClassesFilter implements Filter { // one easy and efficient solution for fatjars
     private static final String[] EMPTY_ARRAY = new String[0];
 
     // this has to be configured from the root config
-    private final String[] forced = EMPTY_ARRAY;
-    private final String[] skipped = EMPTY_ARRAY;
+    private String[] forced = EMPTY_ARRAY;
+    private String[] skipped = EMPTY_ARRAY;
 
     private final Filter delegateAccept;
     private final Filter delegateSkip;
@@ -152,14 +157,31 @@ public class KnowClassesFilter implements Filter { // one easy and efficient sol
         delegateAccept = new OptimizedExclusionFilter(included);
     }
 
+    public void init(final Meecrowave.Builder config) {
+        forced = buildArray(config.getScanningPackageIncludes()).orElse(forced);
+        skipped = buildArray(config.getScanningPackageExcludes()).orElse(skipped);
+    }
+
+    private Optional<String[]> buildArray(final String config) {
+        return ofNullable(config)
+                .map(v -> Stream.of(v.split(","))
+                        .map(String::trim)
+                        .filter(i -> !i.isEmpty())
+                        .toArray(String[]::new));
+    }
+
     @Override
     public boolean accept(final String name) {
         if (forced != null && startsWith(forced, name)) {
             return true;
         }
-        if (skipped != null && startsWith(skipped, name)) {
+
+        // skip has the same logic than forced + the fact that if we have some forced packaged we skip all others
+        // this is not symmetric but often what is desired
+        if ((skipped != null && skipped.length > 0 && startsWith(skipped, name)) || (skipped != null && skipped.length == 0 && forced != null && forced.length > 0)) {
             return false;
         }
+
         return delegateAccept.accept(name) || !delegateSkip.accept(name);
     }
 

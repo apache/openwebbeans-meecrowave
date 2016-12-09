@@ -87,6 +87,8 @@ public class MeecrowaveExtension {
     private boolean java9SkipWorkarounds = false;
     private String scanningIncludes;
     private String scanningExcludes;
+    private String scanningPackageIncludes;
+    private String scanningPackageExcludes;
 
     public boolean isJava9SkipWorkarounds() {
         return java9SkipWorkarounds;
@@ -582,5 +584,21 @@ public class MeecrowaveExtension {
 
     public void setScanningExcludes(final String scanningExcludes) {
         this.scanningExcludes = scanningExcludes;
+    }
+
+    public String getScanningPackageIncludes() {
+        return scanningPackageIncludes;
+    }
+
+    public void setScanningPackageIncludes(final String scanningPackageIncludes) {
+        this.scanningPackageIncludes = scanningPackageIncludes;
+    }
+
+    public String getScanningPackageExcludes() {
+        return scanningPackageExcludes;
+    }
+
+    public void setScanningPackageExcludes(String scanningPackageExcludes) {
+        this.scanningPackageExcludes = scanningPackageExcludes;
     }
 }

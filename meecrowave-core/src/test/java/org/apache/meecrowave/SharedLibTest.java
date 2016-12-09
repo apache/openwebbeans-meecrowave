@@ -32,6 +32,7 @@ public class SharedLibTest {
     public void run() throws IOException {
         try (final Meecrowave container = new Meecrowave(new Meecrowave.Builder()
                 .randomHttpPort()
+                .includePackages("org.superbiz.app,org.apache.deltaspike")
                 .sharedLibraries("target/shared-test"))
                 .bake()) {
             assertEquals(

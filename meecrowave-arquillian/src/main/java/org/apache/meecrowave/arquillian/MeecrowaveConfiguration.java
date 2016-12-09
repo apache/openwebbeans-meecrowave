@@ -97,6 +97,8 @@ public class MeecrowaveConfiguration implements ContainerConfiguration {
     private boolean java9SkipWorkarounds = false;
     private String scanningIncludes;
     private String scanningExcludes;
+    private String scanningPackageIncludes;
+    private String scanningPackageExcludes;
 
     @Override
     public void validate() throws ConfigurationException {
@@ -579,5 +581,133 @@ public class MeecrowaveConfiguration implements ContainerConfiguration {
 
     public void setScanningExcludes(final String scanningExcludes) {
         this.scanningExcludes = scanningExcludes;
+    }
+
+    public String getJsonpBufferStrategy() {
+        return jsonpBufferStrategy;
+    }
+
+    public void setJsonpBufferStrategy(final String jsonpBufferStrategy) {
+        this.jsonpBufferStrategy = jsonpBufferStrategy;
+    }
+
+    public int getJsonpMaxStringLen() {
+        return jsonpMaxStringLen;
+    }
+
+    public void setJsonpMaxStringLen(final int jsonpMaxStringLen) {
+        this.jsonpMaxStringLen = jsonpMaxStringLen;
+    }
+
+    public int getJsonpMaxReadBufferLen() {
+        return jsonpMaxReadBufferLen;
+    }
+
+    public void setJsonpMaxReadBufferLen(final int jsonpMaxReadBufferLen) {
+        this.jsonpMaxReadBufferLen = jsonpMaxReadBufferLen;
+    }
+
+    public int getJsonpMaxWriteBufferLen() {
+        return jsonpMaxWriteBufferLen;
+    }
+
+    public void setJsonpMaxWriteBufferLen(final int jsonpMaxWriteBufferLen) {
+        this.jsonpMaxWriteBufferLen = jsonpMaxWriteBufferLen;
+    }
+
+    public boolean isJsonpSupportsComment() {
+        return jsonpSupportsComment;
+    }
+
+    public void setJsonpSupportsComment(final boolean jsonpSupportsComment) {
+        this.jsonpSupportsComment = jsonpSupportsComment;
+    }
+
+    public boolean isJsonpPrettify() {
+        return jsonpPrettify;
+    }
+
+    public void setJsonpPrettify(final boolean jsonpPrettify) {
+        this.jsonpPrettify = jsonpPrettify;
+    }
+
+    public String getJsonbEncoding() {
+        return jsonbEncoding;
+    }
+
+    public void setJsonbEncoding(final String jsonbEncoding) {
+        this.jsonbEncoding = jsonbEncoding;
+    }
+
+    public boolean isJsonbNulls() {
+        return jsonbNulls;
+    }
+
+    public void setJsonbNulls(final boolean jsonbNulls) {
+        this.jsonbNulls = jsonbNulls;
+    }
+
+    public boolean isJsonbIJson() {
+        return jsonbIJson;
+    }
+
+    public void setJsonbIJson(final boolean jsonbIJson) {
+        this.jsonbIJson = jsonbIJson;
+    }
+
+    public boolean isJsonbPrettify() {
+        return jsonbPrettify;
+    }
+
+    public void setJsonbPrettify(final boolean jsonbPrettify) {
+        this.jsonbPrettify = jsonbPrettify;
+    }
+
+    public String getJsonbBinaryStrategy() {
+        return jsonbBinaryStrategy;
+    }
+
+    public void setJsonbBinaryStrategy(final String jsonbBinaryStrategy) {
+        this.jsonbBinaryStrategy = jsonbBinaryStrategy;
+    }
+
+    public String getJsonbNamingStrategy() {
+        return jsonbNamingStrategy;
+    }
+
+    public void setJsonbNamingStrategy(final String jsonbNamingStrategy) {
+        this.jsonbNamingStrategy = jsonbNamingStrategy;
+    }
+
+    public String getJsonbOrderStrategy() {
+        return jsonbOrderStrategy;
+    }
+
+    public void setJsonbOrderStrategy(final String jsonbOrderStrategy) {
+        this.jsonbOrderStrategy = jsonbOrderStrategy;
+    }
+
+    public boolean isJava9SkipWorkarounds() {
+        return java9SkipWorkarounds;
+    }
+
+    public void setJava9SkipWorkarounds(final boolean java9SkipWorkarounds) {
+        this.java9SkipWorkarounds = java9SkipWorkarounds;
+    }
+
+    public String getScanningPackageIncludes() {
+        return scanningPackageIncludes;
+    }
+
+    public void setScanningPackageIncludes(final String scanningPackageIncludes) {
+        this.scanningPackageIncludes = scanningPackageIncludes;
+    }
+
+    public String getScanningPackageExcludes() {
+        return scanningPackageExcludes;
+    }
+
+    public void setScanningPackageExcludes(final String scanningPackageExcludes) {
+        this.scanningPackageExcludes = scanningPackageExcludes;
     }
 }
