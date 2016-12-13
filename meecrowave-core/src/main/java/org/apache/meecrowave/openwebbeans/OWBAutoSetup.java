@@ -26,6 +26,7 @@ import javax.servlet.DispatcherType;
 import javax.servlet.FilterRegistration;
 import javax.servlet.ServletContainerInitializer;
 import javax.servlet.ServletContext;
+import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletException;
 import java.util.EnumSet;
 import java.util.Set;
@@ -38,6 +39,21 @@ public class OWBAutoSetup implements ServletContainerInitializer {
             final FilterRegistration.Dynamic filter = ctx.addFilter("owb-conversation", WebConversationFilter.class);
             filter.addMappingForUrlPatterns(EnumSet.allOf(DispatcherType.class), false, "/*");
         }
-        ctx.addListener(WebBeansConfigurationListener.class);
+
+        // eager boot to let injections work in listeners
+        final EagerBootListener bootListener = new EagerBootListener();
+        bootListener.doContextInitialized(new ServletContextEvent(ctx));
+        ctx.addListener(bootListener);
+    }
+
+    public static class EagerBootListener extends WebBeansConfigurationListener {
+        @Override
+        public void contextInitialized(final ServletContextEvent event) {
+            // skip
+        }
+
+        private void doContextInitialized(final ServletContextEvent event) {
+            super.contextInitialized(event);
+        }
     }
 }
