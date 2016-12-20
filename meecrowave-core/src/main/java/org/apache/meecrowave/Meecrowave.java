@@ -68,9 +68,12 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.Writer;
+import java.lang.management.ManagementFactory;
 import java.lang.reflect.Field;
 import java.net.MalformedURLException;
 import java.net.ServerSocket;
@@ -512,6 +515,18 @@ public class Meecrowave implements AutoCloseable {
         } catch (final LifecycleException e) {
             throw new IllegalStateException(e);
         }
+        ofNullable(configuration.getPidFile()).ifPresent(pidFile -> {
+            if (!pidFile.getParentFile().isDirectory() && !pidFile.getParentFile().mkdirs()) {
+                throw new IllegalArgumentException("Can't create " + pidFile);
+            }
+            final String pid = ManagementFactory.getRuntimeMXBean().getName();
+            final int at = pid.indexOf('@');
+            try (final Writer w = new FileWriter(pidFile)) {
+                w.write(at > 0 ? pid.substring(0, at) : pid);
+            } catch (final IOException e) {
+                throw new IllegalStateException("Can't write the pid in " + pid, e);
+            }
+        });
         if (configuration.isUseShutdownHook()) {
             hook = new Thread(() -> {
                 hook = null; // prevent close to remove the hook which would throw an exception
@@ -583,6 +598,9 @@ public class Meecrowave implements AutoCloseable {
                     // no-op
                 } finally {
                     base = null;
+
+                    // not very important if we can't delete it since next restart will write another value normally
+                    ofNullable(configuration.getPidFile()).ifPresent(File::delete);
                 }
             }
         }
@@ -705,6 +723,9 @@ public class Meecrowave implements AutoCloseable {
     // accessible through builder.getExtension(type) builder being accessible through the meecrowave.configuration
     // attribute of the ServletContext.
     public static class Builder {
+        @CliOption(name = "pid-file", description = "A file path to write the process id if the server starts")
+        private File pidFile;
+
         @CliOption(name = "java9-skip-workarounds", description = "Should the java9 workarounds be skipped, default to false if on java 9")
         private boolean java9SkipWorkarounds;
 
@@ -908,6 +929,14 @@ public class Meecrowave implements AutoCloseable {
                     throw new IllegalArgumentException(e);
                 }
             }));
+        }
+
+        public File getPidFile() {
+            return pidFile;
+        }
+
+        public void setPidFile(final File pidFile) {
+            this.pidFile = pidFile;
         }
 
         public String getScanningPackageIncludes() {
