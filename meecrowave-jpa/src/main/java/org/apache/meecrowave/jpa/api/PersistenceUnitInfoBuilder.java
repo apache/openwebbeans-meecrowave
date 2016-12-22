@@ -43,6 +43,7 @@ public class PersistenceUnitInfoBuilder {
     private String unitName;
     private String providerClass;
     private DataSource dataSource;
+    private DataSource jtaDataSource;
     private List<String> mappingFiles = emptyList();
     private List<URL> jarFiles = emptyList();
     private URL rootUrl;
@@ -53,6 +54,16 @@ public class PersistenceUnitInfoBuilder {
     private Properties properties = new Properties();
     private String version = "2.0";
     private ClassLoader loader = Thread.currentThread().getContextClassLoader();
+    private PersistenceUnitTransactionType transactionType = RESOURCE_LOCAL;
+
+    public PersistenceUnitTransactionType getTransactionType() {
+        return transactionType;
+    }
+
+    public PersistenceUnitInfoBuilder setTransactionType(final PersistenceUnitTransactionType transactionType) {
+        this.transactionType = transactionType;
+        return this;
+    }
 
     public String getUnitName() {
         return unitName;
@@ -69,6 +80,15 @@ public class PersistenceUnitInfoBuilder {
 
     public PersistenceUnitInfoBuilder setProviderClass(final String providerClass) {
         this.providerClass = providerClass;
+        return this;
+    }
+
+    public DataSource getJtaDataSource() {
+        return jtaDataSource;
+    }
+
+    public PersistenceUnitInfoBuilder setJtaDataSource(final DataSource jtaDataSource) {
+        this.jtaDataSource = jtaDataSource;
         return this;
     }
 
@@ -207,12 +227,12 @@ public class PersistenceUnitInfoBuilder {
 
             @Override
             public PersistenceUnitTransactionType getTransactionType() {
-                return RESOURCE_LOCAL;
+                return transactionType;
             }
 
             @Override
             public DataSource getJtaDataSource() {
-                return null;
+                return jtaDataSource;
             }
 
             @Override

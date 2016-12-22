@@ -59,6 +59,7 @@
     <module>meecrowave-jpa</module>
     <module>meecrowave-jolokia</module>
     <module>meecrowave-doc</module>
+    <module>meecrowave-jta</module>
   </modules>
 
   <build>

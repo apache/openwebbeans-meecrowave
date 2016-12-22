@@ -48,6 +48,12 @@ Meecrowave provides few integration for the monitoring:
 
 link:{context_rootpath}/meecrowave-jolokia/index.html[Jolokia (JMX)]
 
+== Meecrowave and JTA
+
+This is an experimental integration of geronimo-transaction and meecrowave.
+
+link:{context_rootpath}/meecrowave-jta/index.html[JTA module]
+
 == Going further
 
 Meecrowave scope is not the full scope of microservices (whatever it means) or at least enterprise needs

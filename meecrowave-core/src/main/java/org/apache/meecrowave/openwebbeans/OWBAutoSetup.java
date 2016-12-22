@@ -19,17 +19,30 @@
 package org.apache.meecrowave.openwebbeans;
 
 import org.apache.meecrowave.Meecrowave;
+import org.apache.webbeans.annotation.AnyLiteral;
+import org.apache.webbeans.annotation.DefaultLiteral;
+import org.apache.webbeans.config.WebBeansContext;
 import org.apache.webbeans.servlet.WebBeansConfigurationListener;
 import org.apache.webbeans.web.context.WebConversationFilter;
 
+import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.context.spi.CreationalContext;
+import javax.enterprise.inject.spi.Bean;
+import javax.enterprise.inject.spi.InjectionPoint;
 import javax.servlet.DispatcherType;
 import javax.servlet.FilterRegistration;
 import javax.servlet.ServletContainerInitializer;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletException;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Type;
+import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.Set;
+
+import static java.util.Arrays.asList;
 
 public class OWBAutoSetup implements ServletContainerInitializer {
     @Override
@@ -41,19 +54,95 @@ public class OWBAutoSetup implements ServletContainerInitializer {
         }
 
         // eager boot to let injections work in listeners
-        final EagerBootListener bootListener = new EagerBootListener();
+        final EagerBootListener bootListener = new EagerBootListener(builder);
         bootListener.doContextInitialized(new ServletContextEvent(ctx));
         ctx.addListener(bootListener);
     }
 
     public static class EagerBootListener extends WebBeansConfigurationListener {
+        private final Meecrowave.Builder config;
+
+        private EagerBootListener(final Meecrowave.Builder builder) {
+            this.config = builder;
+        }
+
         @Override
         public void contextInitialized(final ServletContextEvent event) {
             // skip
         }
 
         private void doContextInitialized(final ServletContextEvent event) {
+            try {
+                WebBeansContext.getInstance().getBeanManagerImpl().addInternalBean(new ConfigBean(config));
+            } catch (final IllegalStateException ise) {
+                // lifecycle not supporting it
+            }
             super.contextInitialized(event);
+        }
+
+        private static class ConfigBean implements Bean<Meecrowave.Builder> {
+            private final Meecrowave.Builder value;
+            private final Set<Type> types = new HashSet<>(asList(Meecrowave.Builder.class, Object.class));
+            private final Set<Annotation> qualifiers = new HashSet<>(asList(DefaultLiteral.INSTANCE, AnyLiteral.INSTANCE));
+
+            private ConfigBean(final Meecrowave.Builder config) {
+                this.value = config;
+            }
+
+            @Override
+            public Set<InjectionPoint> getInjectionPoints() {
+                return Collections.emptySet();
+            }
+
+            @Override
+            public Class<?> getBeanClass() {
+                return Meecrowave.Builder.class;
+            }
+
+            @Override
+            public boolean isNullable() {
+                return false;
+            }
+
+            @Override
+            public Meecrowave.Builder create(final CreationalContext<Meecrowave.Builder> context) {
+                return value;
+            }
+
+            @Override
+            public void destroy(final Meecrowave.Builder instance, final CreationalContext<Meecrowave.Builder> context) {
+
+            }
+
+            @Override
+            public Set<Type> getTypes() {
+                return types;
+            }
+
+            @Override
+            public Set<Annotation> getQualifiers() {
+                return qualifiers;
+            }
+
+            @Override
+            public Class<? extends Annotation> getScope() {
+                return ApplicationScoped.class;
+            }
+
+            @Override
+            public String getName() {
+                return null;
+            }
+
+            @Override
+            public Set<Class<? extends Annotation>> getStereotypes() {
+                return Collections.emptySet();
+            }
+
+            @Override
+            public boolean isAlternative() {
+                return false;
+            }
         }
     }
 }
