@@ -16,9 +16,6 @@
  */
 package org.apache.meecrowave.jta;
 
-import org.apache.meecrowave.Meecrowave;
-import org.apache.meecrowave.runner.cli.CliOption;
-
 import javax.enterprise.inject.spi.AnnotatedMethod;
 import javax.enterprise.inject.spi.AnnotatedType;
 import javax.enterprise.inject.spi.CDI;
@@ -48,7 +45,7 @@ public abstract class InterceptorBase implements Serializable {
     private transient volatile ConcurrentMap<Method, Boolean> rollback = new ConcurrentHashMap<>();
 
     @Inject
-    private Meecrowave.Builder config;
+    private JtaConfig config;
 
     @Inject
     protected TransactionManager transactionManager;
@@ -77,7 +74,7 @@ public abstract class InterceptorBase implements Serializable {
             }
 
             Exception error = unwrap(e);
-            if (error != null && (!config.getExtension(Jta.class).isHandleExceptionOnlyForClient() || isNewTransaction(state))) {
+            if (error != null && (!config.isHandleExceptionOnlyForClient() || isNewTransaction(state))) {
                 final Method method = ic.getMethod();
                 if (rollback == null) {
                     synchronized (this) {
@@ -232,15 +229,6 @@ public abstract class InterceptorBase implements Serializable {
 
         private static boolean isNotChecked(final Exception e, final Class<?>[] exceptionTypes) {
             return RuntimeException.class.isInstance(e) && (exceptionTypes.length == 0 || !asList(exceptionTypes).contains(e.getClass()));
-        }
-    }
-
-    public static class Jta {
-        @CliOption(name = "jta-handle-exception-only-for-client", description = "should JTA exception only be managed by client")
-        private boolean handleExceptionOnlyForClient;
-
-        public boolean isHandleExceptionOnlyForClient() {
-            return handleExceptionOnlyForClient;
         }
     }
 

@@ -45,6 +45,7 @@ public class JtaExtension implements Extension {
     private TransactionContext context;
     private boolean hasManager;
     private boolean hasRegistry;
+    private final JtaConfig config = new JtaConfig();
 
     void register(@Observes final BeforeBeanDiscovery beforeBeanDiscovery, final BeanManager beanManager) {
         Stream.of(
@@ -63,7 +64,7 @@ public class JtaExtension implements Extension {
         }
     }
 
-    void addContext(@Observes final AfterBeanDiscovery afterBeanDiscovery) {
+    void addContextAndBeans(@Observes final AfterBeanDiscovery afterBeanDiscovery, final BeanManager bm) {
         context = new TransactionContext();
         afterBeanDiscovery.addContext(context);
 
@@ -77,11 +78,14 @@ public class JtaExtension implements Extension {
             hasManager = true;
             hasRegistry = true;
         }
+
+        afterBeanDiscovery.addBean(new JtaConfigBean(config));
     }
 
     void init(@Observes final AfterDeploymentValidation afterDeploymentValidation, final BeanManager bm) {
         if (!hasRegistry && hasManager) {
             afterDeploymentValidation.addDeploymentProblem(new IllegalStateException("You should produce a TransactionManager and TransactionSynchronizationRegistry"));
+            return;
         }
         final TransactionManager manager = TransactionManager.class.cast(
                 bm.getReference(bm.resolve(bm.getBeans(TransactionManager.class)), TransactionManager.class, bm.createCreationalContext(null)));
@@ -90,6 +94,15 @@ public class JtaExtension implements Extension {
                 TransactionSynchronizationRegistry.class.cast(bm.getReference(bm.resolve(bm.getBeans(TransactionSynchronizationRegistry.class)),
                         TransactionSynchronizationRegistry.class, bm.createCreationalContext(null)));
         context.init(manager, registry);
+
+        try {
+            final Class<?> builder = Thread.currentThread().getContextClassLoader().loadClass("org.apache.meecrowave.Meecrowave$Builder");
+            final JtaConfig ext = JtaConfig.class.cast(builder.getMethod("getExtension", Class.class).invoke(
+                    bm.getReference(bm.resolve(bm.getBeans(builder)), builder, bm.createCreationalContext(null)), JtaConfig.class));
+            config.handleExceptionOnlyForClient = ext.handleExceptionOnlyForClient;
+        } catch (final Exception e) {
+            config.handleExceptionOnlyForClient = Boolean.getBoolean("meecrowave.jta.handleExceptionOnlyForClient");
+        }
     }
 
     private static class JtaBean implements Bean<TransactionManager> {
@@ -123,6 +136,71 @@ public class JtaExtension implements Extension {
 
         @Override
         public void destroy(final TransactionManager instance, final CreationalContext<TransactionManager> context) {
+            // no-op
+        }
+
+        @Override
+        public Set<Type> getTypes() {
+            return types;
+        }
+
+        @Override
+        public Set<Annotation> getQualifiers() {
+            return qualifiers;
+        }
+
+        @Override
+        public Class<? extends Annotation> getScope() {
+            return ApplicationScoped.class;
+        }
+
+        @Override
+        public String getName() {
+            return null;
+        }
+
+        @Override
+        public Set<Class<? extends Annotation>> getStereotypes() {
+            return Collections.emptySet();
+        }
+
+        @Override
+        public boolean isAlternative() {
+            return false;
+        }
+    }
+
+    private static class JtaConfigBean implements Bean<JtaConfig> {
+        private final JtaConfig config;
+        private final Set<Type> types = new HashSet<>(asList(JtaConfig.class, Object.class));
+        private final Set<Annotation> qualifiers = new HashSet<>(asList(DefaultLiteral.INSTANCE, AnyLiteral.INSTANCE));
+
+        private JtaConfigBean(final JtaConfig value) {
+            this.config = value;
+        }
+
+        @Override
+        public Set<InjectionPoint> getInjectionPoints() {
+            return Collections.emptySet();
+        }
+
+        @Override
+        public Class<?> getBeanClass() {
+            return JtaConfig.class;
+        }
+
+        @Override
+        public boolean isNullable() {
+            return false;
+        }
+
+        @Override
+        public JtaConfig create(final CreationalContext<JtaConfig> context) {
+            return config;
+        }
+
+        @Override
+        public void destroy(final JtaConfig instance, final CreationalContext<JtaConfig> context) {
             // no-op
         }
 
