@@ -52,6 +52,7 @@ import static java.util.Collections.emptyList;
 // skip Tomcat MBeans, goal is really to skip mbean-descriptors.xml reading which is slow for small apps.
 public class NoDescriptorRegistry extends Registry {
     private final MBeanServer mBeanServer = new NoJmxMBeanServer();
+    private final ManagedBean defaultMBean = new PassthroughMBean();
 
     @Override
     public void registerComponent(final Object bean, final String oname, final String type) throws Exception {
@@ -80,7 +81,7 @@ public class NoDescriptorRegistry extends Registry {
 
     @Override
     public ManagedBean findManagedBean(final String name) {
-        return null;
+        return defaultMBean;
     }
 
     @Override
@@ -303,5 +304,8 @@ public class NoDescriptorRegistry extends Registry {
         public ClassLoaderRepository getClassLoaderRepository() {
             return null;
         }
+    }
+
+    private static class PassthroughMBean extends ManagedBean {
     }
 }

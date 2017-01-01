@@ -25,3 +25,40 @@ IMPORTANT: don't forget to secure this endpoint cause it let you access all the 
 Meecrowave core configuration for more details.
 
 More on https://jolokia.org/reference/html/
+
+== Running HawtIO
+
+To run http://hawt.io, the easiest is to setup jaas and run the hawt.io war:
+
+[source]
+----
+java -Djava.security.auth.login.config=login.config \
+    -jar meecrowave-runner.jar \
+    -webapp hawtio-default-offline-1.4.67.war
+----
+
+This assumes you created a `login.config`:
+
+[source]
+----
+karaf {
+  org.apache.catalina.realm.JAASMemoryLoginModule required
+	pathname="/path/to/tomcat-users.xml";
+};
+----
+
+NOTE: the JAAS login module is named `karaf` because it is the default of hawt.io (check `io.hawt.web.AuthenticationFilter.init()`).
+
+And if you use - as in previous snippet - tomcat-users.xml you need to create an admin (role) user:
+
+[source,xml]
+----
+<tomcat-users>
+  <user username="admin" password="admin" role="hawtio" roles="admin" />
+</tomcat-users>
+----
+
+NOTE: don't try to use `io.hawt.web.tomcat.TomcatUserDatabaseLoginContext` of hawt.io which does the same as `JAASMemoryLoginModule`
+excepted it doesn't handle absolute paths which enforce you to use a `catalina.base`.
+
+Using hawt.io war you don't need to run jolokia servlet by yourself, it is already done.

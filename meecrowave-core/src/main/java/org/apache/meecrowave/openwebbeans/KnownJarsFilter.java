@@ -65,6 +65,7 @@ public class KnownJarsFilter implements JarScanFilter {
         add("arquillian-test-spi");
         add("arquillian-tomee-");
         add("asciidoctorj-");
+        add("async-http-client-");
         add("asm-");
         add("avalon-framework-");
         add("axis-");
@@ -119,6 +120,8 @@ public class KnownJarsFilter implements JarScanFilter {
         add("jna-");
         add("jnr-");
         add("johnzon-");
+        add("jolokia-core-");
+        add("jolokia-jvm-");
         add("json-simple-");
         add("fusemq-leveldb-");
         add("geronimo-");
@@ -132,6 +135,7 @@ public class KnownJarsFilter implements JarScanFilter {
         add("hamcrest-");
         add("hawtbuf-");
         add("hawtdispatch-");
+        add("hawtio-");
         add("hawtjni-runtime");
         add("hibernate-");
         add("howl-");
@@ -215,7 +219,10 @@ public class KnownJarsFilter implements JarScanFilter {
         add("ops4j-");
         add("org.eclipse.");
         add("org.junit.");
+        add("org.apache.aries.blueprint.noosgi");
+        add("org.apache.aries.blueprint.web");
         add("org.osgi.core-");
+        add("org.osgi.enterprise");
         add("orient-commons-");
         add("orientdb-core-");
         add("orientdb-nativeos-");
@@ -275,6 +282,7 @@ public class KnownJarsFilter implements JarScanFilter {
         add("tomee-");
         add("tools.jar");
         add("twitter4j-");
+        add("validation-api-");
         add("velocity-");
         add("wagon-");
         add("webbeans-ee");
