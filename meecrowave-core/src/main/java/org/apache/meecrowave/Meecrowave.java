@@ -64,27 +64,6 @@ import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
-import javax.management.Attribute;
-import javax.management.AttributeList;
-import javax.management.AttributeNotFoundException;
-import javax.management.InstanceAlreadyExistsException;
-import javax.management.InstanceNotFoundException;
-import javax.management.IntrospectionException;
-import javax.management.InvalidAttributeValueException;
-import javax.management.ListenerNotFoundException;
-import javax.management.MBeanException;
-import javax.management.MBeanInfo;
-import javax.management.MBeanRegistrationException;
-import javax.management.MBeanServer;
-import javax.management.NotCompliantMBeanException;
-import javax.management.NotificationFilter;
-import javax.management.NotificationListener;
-import javax.management.ObjectInstance;
-import javax.management.ObjectName;
-import javax.management.OperationsException;
-import javax.management.QueryExp;
-import javax.management.ReflectionException;
-import javax.management.loading.ClassLoaderRepository;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 import java.io.File;
@@ -94,7 +73,6 @@ import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.ObjectInputStream;
 import java.io.OutputStream;
 import java.io.Writer;
 import java.lang.management.ManagementFactory;
@@ -108,10 +86,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Set;
 import java.util.TreeMap;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
@@ -304,9 +280,7 @@ public class Meecrowave implements AutoCloseable {
     }
 
     public Meecrowave start() {
-        if (configuration.isTomcatNoJmx()) {
-            doSkipJmx();
-        }
+        setupJmx(configuration.isTomcatNoJmx());
 
         clearCatalinaSystemProperties = System.getProperty("catalina.base") == null && System.getProperty("catalina.home") == null;
         if (configuration.isUseLog4j2JulLogManager()) {
@@ -567,13 +541,13 @@ public class Meecrowave implements AutoCloseable {
         return this;
     }
 
-    private void doSkipJmx() {
+    private void setupJmx(final boolean skip) {
         try {
             final Field registry = Registry.class.getDeclaredField("registry");
             registry.setAccessible(true);
-            registry.set(null, new NoDescriptorRegistry());
+            registry.set(null, skip ? new NoDescriptorRegistry() : new Registry());
         } catch (final Exception e) {
-            e.printStackTrace();
+            throw new IllegalStateException(e);
         }
     }
 
