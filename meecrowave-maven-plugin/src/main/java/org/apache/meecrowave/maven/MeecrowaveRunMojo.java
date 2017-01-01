@@ -88,6 +88,9 @@ public class MeecrowaveRunMojo extends AbstractMojo {
     @Parameter
     private Map<String, String> cxfServletParams;
 
+    @Parameter(property = "meecrowave.tomcatNoJmx", defaultValue = "true")
+    private boolean tomcatNoJmx;
+
     @Parameter(property = "meecrowave.quickSession", defaultValue = "true")
     private boolean quickSession;
 

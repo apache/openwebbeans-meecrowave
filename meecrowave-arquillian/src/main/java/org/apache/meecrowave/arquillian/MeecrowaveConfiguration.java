@@ -99,6 +99,7 @@ public class MeecrowaveConfiguration implements ContainerConfiguration {
     private String scanningExcludes;
     private String scanningPackageIncludes;
     private String scanningPackageExcludes;
+    private boolean tomcatNoJmx = true;
 
     @Override
     public void validate() throws ConfigurationException {
@@ -709,5 +710,13 @@ public class MeecrowaveConfiguration implements ContainerConfiguration {
 
     public void setScanningPackageExcludes(final String scanningPackageExcludes) {
         this.scanningPackageExcludes = scanningPackageExcludes;
+    }
+
+    public boolean isTomcatNoJmx() {
+        return tomcatNoJmx;
+    }
+
+    public void setTomcatNoJmx(final boolean tomcatNoJmx) {
+        this.tomcatNoJmx = tomcatNoJmx;
     }
 }

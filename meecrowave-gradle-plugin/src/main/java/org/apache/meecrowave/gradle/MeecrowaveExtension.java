@@ -89,6 +89,7 @@ public class MeecrowaveExtension {
     private String scanningExcludes;
     private String scanningPackageIncludes;
     private String scanningPackageExcludes;
+    private boolean tomcatNoJmx = true;
 
     public boolean isJava9SkipWorkarounds() {
         return java9SkipWorkarounds;
@@ -600,5 +601,13 @@ public class MeecrowaveExtension {
 
     public void setScanningPackageExcludes(String scanningPackageExcludes) {
         this.scanningPackageExcludes = scanningPackageExcludes;
+    }
+
+    public boolean isTomcatNoJmx() {
+        return tomcatNoJmx;
+    }
+
+    public void setTomcatNoJmx(final boolean tomcatNoJmx) {
+        this.tomcatNoJmx = tomcatNoJmx;
     }
 }

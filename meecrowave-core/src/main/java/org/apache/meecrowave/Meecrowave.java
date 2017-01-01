@@ -48,6 +48,7 @@ import org.apache.meecrowave.logging.tomcat.LogFacade;
 import org.apache.meecrowave.openwebbeans.OWBAutoSetup;
 import org.apache.meecrowave.runner.cli.CliOption;
 import org.apache.meecrowave.tomcat.CDIInstanceManager;
+import org.apache.meecrowave.tomcat.NoDescriptorRegistry;
 import org.apache.meecrowave.tomcat.OWBJarScanner;
 import org.apache.meecrowave.tomcat.ProvidedLoader;
 import org.apache.meecrowave.tomcat.TomcatAutoInitializer;
@@ -55,6 +56,7 @@ import org.apache.tomcat.JarScanFilter;
 import org.apache.tomcat.util.descriptor.web.LoginConfig;
 import org.apache.tomcat.util.descriptor.web.SecurityCollection;
 import org.apache.tomcat.util.descriptor.web.SecurityConstraint;
+import org.apache.tomcat.util.modeler.Registry;
 import org.apache.tomcat.util.net.SSLHostConfig;
 import org.apache.xbean.finder.ResourceFinder;
 import org.apache.xbean.recipe.ObjectRecipe;
@@ -62,6 +64,27 @@ import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
+import javax.management.Attribute;
+import javax.management.AttributeList;
+import javax.management.AttributeNotFoundException;
+import javax.management.InstanceAlreadyExistsException;
+import javax.management.InstanceNotFoundException;
+import javax.management.IntrospectionException;
+import javax.management.InvalidAttributeValueException;
+import javax.management.ListenerNotFoundException;
+import javax.management.MBeanException;
+import javax.management.MBeanInfo;
+import javax.management.MBeanRegistrationException;
+import javax.management.MBeanServer;
+import javax.management.NotCompliantMBeanException;
+import javax.management.NotificationFilter;
+import javax.management.NotificationListener;
+import javax.management.ObjectInstance;
+import javax.management.ObjectName;
+import javax.management.OperationsException;
+import javax.management.QueryExp;
+import javax.management.ReflectionException;
+import javax.management.loading.ClassLoaderRepository;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 import java.io.File;
@@ -71,6 +94,7 @@ import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.ObjectInputStream;
 import java.io.OutputStream;
 import java.io.Writer;
 import java.lang.management.ManagementFactory;
@@ -84,8 +108,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
@@ -278,6 +304,10 @@ public class Meecrowave implements AutoCloseable {
     }
 
     public Meecrowave start() {
+        if (configuration.isTomcatNoJmx()) {
+            doSkipJmx();
+        }
+
         clearCatalinaSystemProperties = System.getProperty("catalina.base") == null && System.getProperty("catalina.home") == null;
         if (configuration.isUseLog4j2JulLogManager()) {
             System.setProperty("java.util.logging.manager", "org.apache.logging.log4j.jul.LogManager");
@@ -535,6 +565,16 @@ public class Meecrowave implements AutoCloseable {
             Runtime.getRuntime().addShutdownHook(hook);
         }
         return this;
+    }
+
+    private void doSkipJmx() {
+        try {
+            final Field registry = Registry.class.getDeclaredField("registry");
+            registry.setAccessible(true);
+            registry.set(null, new NoDescriptorRegistry());
+        } catch (final Exception e) {
+            e.printStackTrace();
+        }
     }
 
     private SSLHostConfig buildSslHostConfig() {
@@ -907,6 +947,9 @@ public class Meecrowave implements AutoCloseable {
                 "should meecrowave wrap the loader to define another loader identity but still use the same classes and resources.")
         private boolean tomcatWrapLoader = false;
 
+        @CliOption(name = "tomcat-skip-jmx", description = "(Experimental) Should Tomcat MBeans be skipped.")
+        private boolean tomcatNoJmx = true;
+
         @CliOption(name = "shared-librairies", description = "A folder containing shared libraries.")
         private String sharedLibraries;
 
@@ -929,6 +972,14 @@ public class Meecrowave implements AutoCloseable {
                     throw new IllegalArgumentException(e);
                 }
             }));
+        }
+
+        public boolean isTomcatNoJmx() {
+            return tomcatNoJmx;
+        }
+
+        public void setTomcatNoJmx(final boolean tomcatNoJmx) {
+            this.tomcatNoJmx = tomcatNoJmx;
         }
 
         public File getPidFile() {

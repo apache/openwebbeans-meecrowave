@@ -86,6 +86,12 @@ public class KnowClassesFilter implements Filter { // one easy and efficient sol
         excluded.add("org.apache.commons.dbcp2");
         excluded.add("org.apache.commons.digester");
         excluded.add("org.apache.commons.io");
+        excluded.add("org.apache.commons.jcs.access");
+        excluded.add("org.apache.commons.jcs.admin");
+        excluded.add("org.apache.commons.jcs.auxilary");
+        excluded.add("org.apache.commons.jcs.engine");
+        excluded.add("org.apache.commons.jcs.io");
+        excluded.add("org.apache.commons.jcs.utils");
         excluded.add("org.apache.commons.lang");
         excluded.add("org.apache.commons.lang3");
         excluded.add("org.apache.commons.logging");

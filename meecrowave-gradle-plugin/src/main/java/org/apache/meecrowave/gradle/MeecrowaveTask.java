@@ -103,9 +103,14 @@ public class MeecrowaveTask extends DefaultTask {
     @Input
     @Optional
     private boolean useTomcatDefaults = true;
+
     @Input
     @Optional
     private boolean skipHttp;
+
+    @Input
+    @Optional
+    private boolean tomcatNoJmx = true;
 
     @Input
     @Optional
@@ -1098,5 +1103,13 @@ public class MeecrowaveTask extends DefaultTask {
 
     public void setScanningPackageExcludes(final String scanningPackageExcludes) {
         this.scanningPackageExcludes = scanningPackageExcludes;
+    }
+
+    public boolean isTomcatNoJmx() {
+        return tomcatNoJmx;
+    }
+
+    public void setTomcatNoJmx(final boolean tomcatNoJmx) {
+        this.tomcatNoJmx = tomcatNoJmx;
     }
 }
