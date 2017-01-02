@@ -21,6 +21,7 @@ package org.apache.meecrowave.doc.generator;
 import org.apache.meecrowave.arquillian.MeecrowaveConfiguration;
 
 import java.lang.reflect.Field;
+import java.util.Comparator;
 import java.util.stream.Stream;
 
 import static java.util.Optional.ofNullable;
@@ -36,7 +37,7 @@ public class ArquillianConfiguration extends BaseGenerator {
                 "  <container qualifier=\"tomee-embedded\" default=\"true\">\n" +
                 "    <configuration>\n" +
                 Stream.of(MeecrowaveConfiguration.class.getDeclaredFields())
-                        .sorted((o1, o2) -> o1.getName().compareTo(o2.getName()))
+                        .sorted(Comparator.comparing(Field::getName))
                         .map(opt -> "      <property name=\"" + opt.getName() + "\">" + valueFor(opt) + "</property>")
                         .collect(joining("\n")) +
                 "\n    </configuration>\n" +

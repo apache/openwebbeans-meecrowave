@@ -21,6 +21,8 @@ package org.apache.meecrowave.doc.generator;
 import org.apache.meecrowave.Meecrowave;
 import org.apache.meecrowave.runner.cli.CliOption;
 
+import java.lang.reflect.Field;
+import java.util.Comparator;
 import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.joining;
@@ -31,7 +33,7 @@ public class CliConfiguration extends BaseGenerator {
         return super.tableConfig() + "|===\n|Name|Description\n" +
                 Stream.of(Meecrowave.Builder.class.getDeclaredFields())
                         .filter(f -> f.isAnnotationPresent(CliOption.class))
-                        .sorted((o1, o2) -> o1.getName().compareTo(o2.getName()))
+                        .sorted(Comparator.comparing(Field::getName))
                         .map(f -> f.getAnnotation(CliOption.class))
                         .map(opt -> "|--" + opt.name() + "|" + opt.description())
                         .collect(joining("\n")) + "\n|===\n";

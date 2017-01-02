@@ -29,6 +29,7 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.stream.Stream;
 
 import static java.util.Optional.ofNullable;
@@ -40,8 +41,8 @@ public class MavenConfiguration extends BaseGenerator {
     protected String generate() {
         return super.tableConfig() + "|===\n|Name|Default|Property\n" +
                 loadConfiguration()
-                        .sorted((o1, o2) -> o1.name.compareTo(o2.name))
-                        .map(opt -> "|--" + opt.name + "|" + ofNullable(opt.defaultValue).orElse("-") + '|' + opt.property)
+                        .sorted(Comparator.comparing(o -> o.name))
+                        .map(opt -> "|" + opt.name + "|" + ofNullable(opt.defaultValue).orElse("-") + '|' + opt.property)
                         .collect(joining("\n")) + "\n|===\n";
     }
 
