@@ -4,7 +4,7 @@
       <div class="branding">
           <h1 class="doc-title">
               <span aria-hidden="true" class="${content.getOrDefault('meecrowavetitleicon', 'icon_documents_alt')} icon"></span>
-              <a href="<%if (content.rootpath) {%>${content.rootpath}<% } else { %><% }%>/index.html">
+              <a href="/meecrowave/index.html">
                 Meecrowave
               </a>
           </h1>
@@ -26,7 +26,7 @@
 <%if (content.containsKey('meecrowavepdf')) {%>
 <div class='btn-toolbar pull-right' style="z-index: 2000;">
   <div class='btn-group'>
-      <a class="btn" href="<%if (content.rootpath) {%>${content.rootpath}<% } else { %><% }%>${content.uri.replace('html', 'pdf')}"><i class="fa fa-file-pdf-o"></i> Download as PDF</a>
+      <a class="btn" href="/meecrowave/${content.uri.replace('html', 'pdf')}"><i class="fa fa-file-pdf-o"></i> Download as PDF</a>
   </div>
 </div>
 <% } %>
@@ -45,11 +45,11 @@
     <div class="doc-sidebar">
         <nav id="doc-nav">
             <ul id="doc-menu" class="nav doc-menu hidden-xs affix-top" data-spy="affix">
-                <li><a href="<%if (content.rootpath) {%>${content.rootpath}<% } else { %><% }%>/index.html">Home</a></li>
-                <li><a href="<%if (content.rootpath) {%>${content.rootpath}<% } else { %><% }%>/start.html">Quick Start</a></li>
-                <li><a href="<%if (content.rootpath) {%>${content.rootpath}<% } else { %><% }%>/components.html">Components</a></li>
-                <li><a href="<%if (content.rootpath) {%>${content.rootpath}<% } else { %><% }%>/download.html">Download</a></li>
-                <li><a href="<%if (content.rootpath) {%>${content.rootpath}<% } else { %><% }%>/community.html">Community</a></li>
+                <li><a href="/meecrowave/index.html">Home</a></li>
+                <li><a href="/meecrowave/start.html">Quick Start</a></li>
+                <li><a href="/meecrowave/components.html">Components</a></li>
+                <li><a href="/meecrowave/download.html">Download</a></li>
+                <li><a href="/meecrowave/community.html">Community</a></li>
             </ul><!--//doc-menu-->
         </nav>
     </div>

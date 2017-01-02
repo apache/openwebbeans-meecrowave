@@ -10,16 +10,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="">
     <meta name="author" content="">
-    <link rel="shortcut icon" href="<%if (content.rootpath) {%>${content.rootpath}<% } else { %><% }%>favicon.ico">
+    <link rel="shortcut icon" href="/meecrowave/favicon.ico">
     <link href='http://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800' rel='stylesheet' type='text/css'>
     <!-- Global CSS -->
-    <link rel="stylesheet" href="<%if (content.rootpath) {%>${content.rootpath}<% } else { %><% }%>assets/plugins/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/meecrowave/assets/plugins/bootstrap/css/bootstrap.min.css">
     <!-- Plugins CSS -->
-    <link rel="stylesheet" href="<%if (content.rootpath) {%>${content.rootpath}<% } else { %><% }%>assets/plugins/font-awesome/css/font-awesome.min.css">
-    <link rel="stylesheet" href="<%if (content.rootpath) {%>${content.rootpath}<% } else { %><% }%>assets/plugins/elegant_font/css/style.css">
+    <link rel="stylesheet" href="/meecrowave/assets/plugins/font-awesome/css/font-awesome.min.css">
+    <link rel="stylesheet" href="/meecrowave/assets/plugins/elegant_font/css/style.css">
 
     <!-- Theme CSS -->
-    <link id="theme-style" rel="stylesheet" href="<%if (content.rootpath) {%>${content.rootpath}<% } else { %><% }%>assets/css/styles.css">
+    <link id="theme-style" rel="stylesheet" href="/meecrowave/assets/css/styles.css">
     <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
     <!--[if lt IE 9]>
       <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>

@@ -16,10 +16,10 @@
 
 
     <!-- Main Javascript -->
-    <script type="text/javascript" src="<%if (content.rootpath) {%>${content.rootpath}<% } else { %><% }%>assets/plugins/jquery-1.12.3.min.js"></script>
-    <script type="text/javascript" src="<%if (content.rootpath) {%>${content.rootpath}<% } else { %><% }%>assets/plugins/bootstrap/js/bootstrap.min.js"></script>
-    <script type="text/javascript" src="<%if (content.rootpath) {%>${content.rootpath}<% } else { %><% }%>assets/plugins/jquery-match-height/jquery.matchHeight-min.js"></script>
-    <script type="text/javascript" src="<%if (content.rootpath) {%>${content.rootpath}<% } else { %><% }%>assets/js/main.js"></script>
+    <script type="text/javascript" src="/meecrowave/assets/plugins/jquery-1.12.3.min.js"></script>
+    <script type="text/javascript" src="/meecrowave/assets/plugins/bootstrap/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="/meecrowave/assets/plugins/jquery-match-height/jquery.matchHeight-min.js"></script>
+    <script type="text/javascript" src="/meecrowave/assets/js/main.js"></script>
 
 </body>
 </html>

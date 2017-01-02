@@ -6,7 +6,7 @@
                       <h1 class="logo">
                           <span aria-hidden="true" class="icon_documents_alt icon"></span>
                           <a href="/meecrowave/index.html">
-                            <span class="text-highlight">Micro</span><span class="text-bold">wave</span>
+                            <span class="text-highlight">Meecro</span><span class="text-bold">wave</span>
                           </a>
                       </h1>
                   </div><!--//branding-->
