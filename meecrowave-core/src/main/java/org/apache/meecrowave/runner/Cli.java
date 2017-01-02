@@ -62,11 +62,11 @@ public class Cli {
                 .collect(toMap(identity(), o -> Stream.of(o.getClass().getDeclaredFields()).filter(f -> f.isAnnotationPresent(CliOption.class)).collect(toList())));
         fields.forEach(f -> {
             final CliOption opt = f.getAnnotation(CliOption.class);
-            options.addOption(null, opt.name(), f.getType() != boolean.class, opt.description());
+            options.addOption(null, opt.name(), true /*even for booleans otherwise no way to set false for true by default ones*/, opt.description());
         });
         propertiesOptions.values().forEach(all -> all.forEach(f -> {
             final CliOption opt = f.getAnnotation(CliOption.class);
-            options.addOption(null, opt.name(), f.getType() != boolean.class, opt.description());
+            options.addOption(null, opt.name(), true, opt.description());
         }));
 
         final CommandLineParser parser = new PosixParser();
