@@ -90,6 +90,7 @@ public class KnownJarsFilter implements JarScanFilter {
         add("commons-dbcp-all-1.3-");
         add("commons-digester-");
         add("commons-discovery-");
+        add("commons-fileupload-");
         add("commons-httpclient-");
         add("commons-io-");
         add("commons-jcs-core-");
@@ -122,6 +123,7 @@ public class KnownJarsFilter implements JarScanFilter {
         add("johnzon-");
         add("jolokia-core-");
         add("jolokia-jvm-");
+        add("jolokia-serv");
         add("json-simple-");
         add("fusemq-leveldb-");
         add("geronimo-");

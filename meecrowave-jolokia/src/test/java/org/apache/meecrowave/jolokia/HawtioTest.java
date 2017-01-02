@@ -19,7 +19,6 @@
 package org.apache.meecrowave.jolokia;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.meecrowave.Meecrowave;
 import org.apache.meecrowave.junit.MeecrowaveRule;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -30,20 +29,15 @@ import java.nio.charset.StandardCharsets;
 
 import static org.junit.Assert.assertTrue;
 
-public class JolokiaInitializerTest {
+public class HawtioTest {
     @ClassRule
-    public static final MeecrowaveRule RULE = new MeecrowaveRule(new Meecrowave.Builder() {{
-        this.setExtension(HawtioInitializer.HawtioConfiguration.class, new HawtioInitializer.HawtioConfiguration() {{
-            setActive(false);
-        }});
-    }}, "");
+    public static final MeecrowaveRule RULE = new MeecrowaveRule();
 
     @Test
     public void run() throws IOException {
         final String actual = IOUtils.toString(
-                new URL("http://localhost:" + RULE.getConfiguration().getHttpPort() + "/jolokia/read/java.lang:type=Memory/HeapMemoryUsage"),
+                new URL("http://localhost:" + RULE.getConfiguration().getHttpPort() + "/hawtio/"),
                 StandardCharsets.UTF_8);
-        assertTrue(actual, actual.contains("\"status\":200"));
-        assertTrue(actual, actual.contains("\"mbean\":\"java.lang:type=Memory\""));
+        assertTrue(actual, actual.contains("<title>hawtio</title>"));
     }
 }

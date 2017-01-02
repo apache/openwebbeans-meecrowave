@@ -19,7 +19,9 @@
 package org.apache.meecrowave.jolokia;
 
 import org.apache.meecrowave.Meecrowave;
-import org.jolokia.server.core.http.AgentServlet;
+import org.apache.meecrowave.runner.Cli;
+import org.apache.meecrowave.runner.cli.CliOption;
+import org.jolokia.http.AgentServlet;
 
 import javax.servlet.ServletContainerInitializer;
 import javax.servlet.ServletContext;
@@ -32,13 +34,48 @@ import static java.util.Optional.ofNullable;
 public class JolokiaInitializer implements ServletContainerInitializer {
     @Override
     public void onStartup(final Set<Class<?>> set, final ServletContext servletContext) throws ServletException {
-        final Meecrowave.Builder builder = Meecrowave.Builder.class.cast(servletContext.getAttribute("meecrowave.configuration"));
+        final Meecrowave.Builder config = Meecrowave.Builder.class.cast(servletContext.getAttribute("meecrowave.configuration"));
+        final JolokiaConfiguration configuration = config.getExtension(JolokiaConfiguration.class);
+        if (!configuration.isActive()) {
+            return;
+        }
+        try { // if hawtio is setup skip it
+            servletContext.getClassLoader().loadClass("io.hawt.web.UserServlet");
+            if (config.getExtension(HawtioInitializer.HawtioConfiguration.class).isActive()) {
+                return;
+            }
+        } catch (final ClassNotFoundException e) {
+            // that's what we want
+        }
+
         final ServletRegistration.Dynamic jolokia = servletContext.addServlet("jolokia", AgentServlet.class);
         jolokia.setLoadOnStartup(1);
-        final String mapping = ofNullable(builder.getProperties())
-                .map(p -> p.getProperty("jolokia.web.mapping"))
-                .orElse("/jolokia/*");
+        final String mapping = ofNullable(configuration.getMapping()).orElse("/jolokia/*");
         jolokia.addMapping(mapping);
         servletContext.log("Installed Jolokia on " + mapping);
+    }
+
+    public static class JolokiaConfiguration implements Cli.Options {
+        @CliOption(name = "jolokia-mapping", description = "Jolokia endpoint")
+        private String mapping;
+
+        @CliOption(name = "jolokia-active", description = "Should Jolokia be deployed (only if hawt.io is not)")
+        private boolean active = true;
+
+        public boolean isActive() {
+            return active;
+        }
+
+        public void setActive(final boolean active) {
+            this.active = active;
+        }
+
+        public String getMapping() {
+            return mapping;
+        }
+
+        public void setMapping(final String mapping) {
+            this.mapping = mapping;
+        }
     }
 }

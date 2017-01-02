@@ -18,6 +18,10 @@ Coordinates:
 </dependency>
 ----
 
+== Jolokia only
+
+If Hawt.io is not setup (not there or inactive) the module will set up jolokia alone.
+
 It will deploy the jolokia servlet on `/jolokia/*` or the property `jolokia.web.mapping` set
 on the `Meecrowave.Builder`.
 
@@ -26,7 +30,46 @@ Meecrowave core configuration for more details.
 
 More on https://jolokia.org/reference/html/
 
-== Running HawtIO
+== Hawt.io
+
+By default hawt.io will be deployed and activated on `/hawtio/` endpoint.
+
+To activate it you need to add these dependencies:
+
+[source,xml]
+----
+<dependency>
+  <groupId>io.hawt</groupId>
+  <artifactId>hawtio-springboot</artifactId>
+  <version>1.4.67</version>
+  <optional>true</optional>
+  <exclusions>
+    <exclusion>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-web</artifactId>
+    </exclusion>
+  </exclusions>
+</dependency>
+<dependency>
+  <groupId>org.apache.logging.log4j</groupId>
+  <artifactId>log4j-slf4j-impl</artifactId>
+  <version>${log4j2.version}</version>
+  <optional>true</optional>
+</dependency>
+----
+
+NOTE: we don't need spring boot but we reuse hawt.io spring boot module which packages web resources in a jar.
+
+By default it will setup the security to use the Servlet security which means you can use meecrowave options:
+
+[source]
+----
+./meecrowave-runner --users=admin=admin --roles=admin=admin
+----
+
+And log with admin/admin user.
+
+== Running HawtIO war
 
 To run http://hawt.io, the easiest is to setup jaas and run the hawt.io war:
 
