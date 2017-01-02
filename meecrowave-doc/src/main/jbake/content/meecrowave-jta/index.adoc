@@ -4,7 +4,7 @@
 :jbake-status: published
 :jbake-meecrowavepdf:
 :jbake-meecrowavetitleicon: icon icon_puzzle_alt
-:jbake-meecrowavecolor: body-pink
+:jbake-meecrowavecolor: body-green
 :icons: font
 
 Coordinates:
