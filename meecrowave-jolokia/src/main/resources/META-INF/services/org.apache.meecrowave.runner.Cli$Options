@@ -1,0 +1,2 @@
+org.apache.meecrowave.jolokia.HawtioInitializer$HawtioConfiguration
+org.apache.meecrowave.jolokia.JolokiaInitializer$JolokiaConfiguration
