@@ -20,7 +20,7 @@
     <script type="text/javascript" src="/meecrowave/assets/plugins/bootstrap/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="/meecrowave/assets/plugins/jquery-match-height/jquery.matchHeight-min.js"></script>
     <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.9.0/highlight.min.js"></script>
-    <script type="text/javascript" src="/meecrowave/assets/js/main.js"></script>
+    <script type="text/javascript" src="/meecrowave/assets/js/main.js?version=1"></script>
 
 </body>
 </html>

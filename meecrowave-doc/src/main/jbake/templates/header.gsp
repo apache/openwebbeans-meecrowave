@@ -16,7 +16,7 @@
     <link rel="stylesheet" href="/meecrowave/assets/plugins/bootstrap/css/bootstrap.min.css">
     <!-- Plugins CSS -->
     <link rel="stylesheet" href="/meecrowave/assets/plugins/font-awesome/css/font-awesome.min.css">
-    <link rel="stylesheet" href="/meecrowave/assets/plugins/elegant_font/css/style.css">
+    <link rel="stylesheet" href="/meecrowave/assets/plugins/elegant_font/css/style.css?version=1">
     <!-- highlighting -->
     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.9.0/styles/idea.min.css">
 
