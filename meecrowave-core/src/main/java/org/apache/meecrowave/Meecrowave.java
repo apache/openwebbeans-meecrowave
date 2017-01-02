@@ -177,9 +177,9 @@ public class Meecrowave implements AutoCloseable {
             throw new IllegalArgumentException("Already deployed: '" + meta.context + "'");
         }
         // always nice to see the deployment with something else than internals
-        new LogFacade(Meecrowave.class.getName())
-                .info("--------------- " + configuration.getActiveProtocol() + "://"
-                        + tomcat.getHost().getName() + ':' + configuration.getActivePort() + meta.context);
+        final String base = tomcat.getService().findConnectors().length > 0 ?
+                (configuration.getActiveProtocol() + "://" + tomcat.getHost().getName() + ':' + configuration.getActivePort()) : "";
+        new LogFacade(Meecrowave.class.getName()).info("--------------- " + base + meta.context);
 
 
         final File dir = ofNullable(meta.docBase).orElseGet(() -> {
