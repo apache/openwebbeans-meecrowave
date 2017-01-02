@@ -79,7 +79,8 @@ public class JBake {
                     final CompositeConfiguration config = new CompositeConfiguration();
                     config.addConfiguration(new MapConfiguration(new HashMap<String, Object>() {{
                         put("asciidoctor.attributes", new ArrayList<String>() {{
-                            add("source-highlighter=coderay");
+                            add("source-highlighter=highlightjs");
+                            add("highlightjs-theme=idea");
                             add("context_rootpath=/meecrowave");
                         }});
                     }}));

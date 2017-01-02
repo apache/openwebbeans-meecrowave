@@ -45,5 +45,5 @@ $(document).ready(function() {
         $(this).ekkoLightbox();
     });    
 
-
+    hljs.initHighlightingOnLoad();
 });

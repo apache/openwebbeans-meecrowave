@@ -49,16 +49,6 @@ a:hover {
 a:focus {
   text-decoration: none;
 }
-code {
-  background: #222;
-  color: #fff;
-  font-size: 14px;
-  font-weight: bold;
-  font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
-  padding: 2px 8px;
-  padding-top: 4px;
-  display: inline-block;
-}
 .btn,
 a.btn {
   -webkit-transition: all 0.4s ease-in-out;
@@ -1266,3 +1256,8 @@ select {
 /* Small devices (tablets, 768px and up) */
 /* Medium devices (desktops, 992px and up) */
 /* Large devices (large desktops, 1200px and up) */
+
+
+pre {
+    padding: 0;
+}
