@@ -18,6 +18,7 @@
  */
 package org.apache.meecrowave.maven;
 
+import org.apache.logging.log4j.LogManager;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -257,6 +258,9 @@ public class MeecrowaveRunMojo extends AbstractMojo {
     @Parameter(property = "meecrowave.scanning-package-exclude")
     private String scanningPackageExcludes;
 
+    @Parameter(property = "meecrowave.force-log4j2-shutdown", defaultValue = "true")
+    private boolean forceLog4j2Shutdown;
+
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         if (skip) {
@@ -286,6 +290,9 @@ public class MeecrowaveRunMojo extends AbstractMojo {
                 new Scanner(System.in).next();
             }
         } finally {
+            if (forceLog4j2Shutdown) {
+                LogManager.shutdown();
+            }
             if (appLoader != loader) {
                 try {
                     URLClassLoader.class.cast(appLoader).close();
