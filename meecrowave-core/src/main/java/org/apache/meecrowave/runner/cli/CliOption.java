@@ -29,4 +29,5 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 public @interface CliOption {
     String name();
     String description();
+    String[] alias() default {};
 }

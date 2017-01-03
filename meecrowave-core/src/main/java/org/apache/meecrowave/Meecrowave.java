@@ -924,7 +924,7 @@ public class Meecrowave implements AutoCloseable {
         @CliOption(name = "tomcat-skip-jmx", description = "(Experimental) Should Tomcat MBeans be skipped.")
         private boolean tomcatNoJmx = true;
 
-        @CliOption(name = "shared-librairies", description = "A folder containing shared libraries.")
+        @CliOption(name = "shared-libraries", description = "A folder containing shared libraries.", alias = "shared-librairies")
         private String sharedLibraries;
 
         @CliOption(name = "log4j2-jul-bridge", description = "Should JUL logs be redirected to Log4j2 - only works before JUL usage.")
@@ -1608,7 +1608,10 @@ public class Meecrowave implements AutoCloseable {
                     return;
                 }
                 final String name = field.getName();
-                ofNullable(config.getProperty(annotation.name())).ifPresent(val -> {
+                Stream.of(Stream.of(annotation.name()), Stream.of(annotation.alias()))
+                        .flatMap(a -> a)
+                        .map(config::getProperty)
+                        .findFirst().ifPresent(val -> {
                     final Object toSet;
                     if (field.getType() == String.class) {
                         toSet = val;
@@ -1696,9 +1699,12 @@ public class Meecrowave implements AutoCloseable {
                         .filter(f -> f.isAnnotationPresent(CliOption.class))
                         .forEach(f -> {
                             final CliOption annotation = f.getAnnotation(CliOption.class);
-                            final String value = properties.getProperty(annotation.name());
+                            String value = properties.getProperty(annotation.name());
                             if (value == null) {
-                                return;
+                                value = Stream.of(annotation.alias()).map(properties::getProperty).findFirst().orElse(null);
+                                if (value == null) {
+                                    return;
+                                }
                             }
 
                             if (!f.isAccessible()) {

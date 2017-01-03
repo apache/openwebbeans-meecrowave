@@ -34,6 +34,7 @@ import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.ServiceLoader;
 import java.util.stream.Stream;
@@ -62,11 +63,15 @@ public class Cli {
                 .collect(toMap(identity(), o -> Stream.of(o.getClass().getDeclaredFields()).filter(f -> f.isAnnotationPresent(CliOption.class)).collect(toList())));
         fields.forEach(f -> {
             final CliOption opt = f.getAnnotation(CliOption.class);
-            options.addOption(null, opt.name(), true /*even for booleans otherwise no way to set false for true by default ones*/, opt.description());
+            final String description = opt.description();
+            options.addOption(null, opt.name(), true /*even for booleans otherwise no way to set false for true by default ones*/, description);
+            Stream.of(opt.alias()).forEach(a -> options.addOption(null, a, true, description));
         });
         propertiesOptions.values().forEach(all -> all.forEach(f -> {
             final CliOption opt = f.getAnnotation(CliOption.class);
-            options.addOption(null, opt.name(), true, opt.description());
+            final String description = opt.description();
+            options.addOption(null, opt.name(), true, description);
+            Stream.of(opt.alias()).forEach(a -> options.addOption(null, a, true, description));
         }));
 
         final CommandLineParser parser = new PosixParser();
@@ -111,8 +116,12 @@ public class Cli {
     private static void bind(final CommandLine line, final List<Field> fields, final Object config) {
         fields.forEach(f -> {
             final CliOption opt = f.getAnnotation(CliOption.class);
-            final String name = opt.name();
-            if (line.hasOption(name)) {
+            final Optional<String> first = Stream.of(Stream.of(opt.name()), Stream.of(opt.alias()))
+                    .flatMap(a -> a)
+                    .filter(line::hasOption)
+                    .findFirst();
+            if (first.isPresent()) {
+                final String name = first.get();
                 ofNullable(f.getType() == boolean.class ?
                         ofNullable(line.getOptionValue(name)).map(Boolean::parseBoolean).orElse(true) :
                         toValue(name, line.getOptionValues(name), f.getType()))
