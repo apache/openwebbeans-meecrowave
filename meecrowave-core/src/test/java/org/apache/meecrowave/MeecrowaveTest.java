@@ -73,17 +73,7 @@ public class MeecrowaveTest {
                 fail();
             }
         });
-        Stream.of("OtherEndpoint", "OtherFilter").forEach(name -> { // from classpath but not classloader to test in webapp deployment
-            final String target = "org/superbiz/app/" + name + ".class";
-            File targetFile = new File(root, "WEB-INF/classes/" + target);
-            FileUtils.mkDir(targetFile.getParentFile());
-            try (final InputStream from = Thread.currentThread().getContextClassLoader().getResourceAsStream("org/superbiz/app-res/" + name + ".class");
-                 final OutputStream to = new FileOutputStream(targetFile)) {
-                IO.copy(from, to);
-            } catch (final IOException e) {
-                fail();
-            }
-        });
+        Classes.dump(new File(root, "WEB-INF/classes/"));
         try (final Writer indexHtml = new FileWriter(new File(root, "index.html"))) {
             indexHtml.write("hello");
         } catch (final IOException e) {
