@@ -31,6 +31,7 @@ import java.io.OutputStream;
 import static org.junit.Assert.fail;
 
 // some in memory files to avoid to load them from the classpath and have tests working by luck (classpath leak actually)
+// see meecrowave-core/src/test/third-party for sources
 public class Classes {
     private static final byte[] OTHER_FILTER = new byte[]{
             -54,
