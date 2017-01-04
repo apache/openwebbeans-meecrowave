@@ -66,7 +66,7 @@
     <dependency> <!-- spring boot module has web resources embedded, reusing that part -->
       <groupId>io.hawt</groupId>
       <artifactId>hawtio-springboot</artifactId>
-      <version>1.4.67</version>
+      <version>1.4.68</version>
       <optional>true</optional>
       <exclusions>
         <exclusion>
