@@ -21,18 +21,29 @@ package org.apache.meecrowave.openwebbeans;
 import org.apache.meecrowave.Meecrowave;
 import org.apache.meecrowave.logging.tomcat.LogFacade;
 import org.apache.tomcat.JarScanFilter;
+import org.apache.webbeans.corespi.scanner.xbean.CdiArchive;
+import org.apache.webbeans.spi.BeanArchiveService;
+import org.apache.webbeans.util.WebBeansUtil;
 import org.apache.webbeans.web.scanner.WebScannerService;
+import org.apache.xbean.finder.AnnotationFinder;
 import org.apache.xbean.finder.filter.Filter;
 
 import javax.servlet.ServletContext;
 import java.io.File;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import static java.util.Optional.of;
 import static java.util.Optional.ofNullable;
+import static java.util.stream.Collectors.toSet;
 import static org.apache.tomcat.JarScanType.PLUGGABILITY;
 
 public class OWBTomcatWebScannerService extends WebScannerService {
@@ -57,6 +68,7 @@ public class OWBTomcatWebScannerService extends WebScannerService {
             return;
         }
         super.scan();
+        scanGroovy(WebBeansUtil.getCurrentClassLoader());
         if (!urls.isEmpty()) {
             logger.info("OpenWebBeans scanning:");
             final String m2 = new File(System.getProperty("user.home", "."), ".m2/repository").getAbsolutePath();
@@ -90,6 +102,70 @@ public class OWBTomcatWebScannerService extends WebScannerService {
         filter = null;
         docBase = null;
         shared = null;
+    }
+
+    private void scanGroovy(final ClassLoader currentClassLoader) {
+        if (currentClassLoader == null || !currentClassLoader.getClass().getName().equals("groovy.lang.GroovyClassLoader")) {
+            return;
+        }
+        try {
+            final Class<?>[] getLoadedClasses = Class[].class.cast(
+                    currentClassLoader.getClass()
+                            .getMethod("getLoadedClasses")
+                            .invoke(currentClassLoader));
+            addClassesToDefault(getLoadedClasses);
+        } catch (final Exception e) {
+            new LogFacade(OWBTomcatWebScannerService.class.getName()).warn(e.getMessage());
+        }
+    }
+
+    private void addClassesToDefault(final Class<?>[] all) throws Exception {
+        if (all == null || all.length == 0) {
+            return;
+        }
+
+        final Field linking = AnnotationFinder.class.getDeclaredField("linking");
+        final Method readClassDef = AnnotationFinder.class.getDeclaredMethod("readClassDef", Class.class);
+        if (!readClassDef.isAccessible()) {
+            readClassDef.setAccessible(true);
+        }
+        if (!linking.isAccessible()) {
+            linking.setAccessible(true);
+        }
+
+        final URI uri = URI.create("jar:file://!/"); // we'll never find it during scanning and it avoids to create a custom handler
+        final URL url = uri.toURL();
+        final String key = uri.toASCIIString();
+        CdiArchive.FoundClasses foundClasses = archive.classesByUrl().get(key);
+        if (foundClasses == null) {
+            final BeanArchiveService beanArchiveService = webBeansContext.getBeanArchiveService();
+            foundClasses = CdiArchive.FoundClasses.class.cast(
+                    CdiArchive.FoundClasses.class.getConstructor(CdiArchive.class, URL.class, Collection.class, BeanArchiveService.BeanArchiveInformation.class)
+                            .newInstance(null, url, new HashSet<>(), beanArchiveService.getBeanArchiveInformation(url)));
+            archive.classesByUrl().put(key, foundClasses);
+        }
+
+        foundClasses.getClassNames().addAll(Stream.of(all).map(Class::getName).collect(toSet()));
+
+        try {
+            linking.set(finder, true);
+
+            Stream.of(all).forEach(c -> { // populate classInfos map to support annotated mode which relies on ClassInfo
+                try {
+                    readClassDef.invoke(finder, c);
+                } catch (final IllegalAccessException e) {
+                    throw new IllegalStateException(e);
+                } catch (final InvocationTargetException e) {
+                    throw new IllegalStateException(e.getCause());
+                }
+            });
+        } finally {
+            try {
+                linking.set(finder, false);
+            } catch (final IllegalAccessException e) {
+                // no-op
+            }
+        }
     }
 
     @Override

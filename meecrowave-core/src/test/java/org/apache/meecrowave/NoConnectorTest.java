@@ -45,7 +45,7 @@ public class NoConnectorTest {
                     .get());
             IntStream.of(config.getHttpPort(), config.getHttpsPort()).forEach(port -> {
                 try (final Socket socket = new Socket("localhost", port)) {
-                    fail("port " + config.getHttpsPort() + " is opened");
+                    fail("port " + port + " is opened");
                 } catch (final IOException e) {
                     // ok
                 }

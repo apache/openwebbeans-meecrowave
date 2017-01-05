@@ -46,6 +46,7 @@ public class KnownJarsFilter implements JarScanFilter {
         add("akka-actor-");
         add("akka-cluster-");
         add("akka-remote-");
+        add("ant-");
         add("antlr-");
         add("aopalliance-");
         add("args4j-");
@@ -73,6 +74,7 @@ public class KnownJarsFilter implements JarScanFilter {
         add("batchee-jbatch");
         add("bcprov-");
         add("bootstrap.jar");
+        add("bsf-");
         add("bval-core");
         add("bval-jsr");
         add("c3p0-");
@@ -128,6 +130,7 @@ public class KnownJarsFilter implements JarScanFilter {
         add("fusemq-leveldb-");
         add("geronimo-");
         add("google-");
+        add("gpars-");
         add("gragent.jar");
         add("groovy-");
         add("gson-");
@@ -149,6 +152,7 @@ public class KnownJarsFilter implements JarScanFilter {
         add("idb-");
         add("idea_rt.jar");
         add("istack-commons-runtime-");
+        add("ivy-");
         add("jackson-annotations-");
         add("jackson-core-");
         add("jackson-databind-");
@@ -186,6 +190,7 @@ public class KnownJarsFilter implements JarScanFilter {
         add("jsoup-");
         add("jsonb-api");
         add("jsp-api");
+        add("jsr166");
         add("jsr299-");
         add("jsr311-");
         add("jsse.jar");
@@ -207,6 +212,7 @@ public class KnownJarsFilter implements JarScanFilter {
         add("mimepull-");
         add("mina-");
         add("mqtt-client-");
+        add("multiverse-core-");
         add("myfaces-api");
         add("myfaces-impl");
         add("mysql-connector-java-");
@@ -235,6 +241,7 @@ public class KnownJarsFilter implements JarScanFilter {
         add("plugin.jar");
         add("poi-");
         add("quartz-2");
+        add("qdox-");
         add("quartz-openejb-");
         add("resources.jar");
         add("rmock-");
@@ -303,11 +310,13 @@ public class KnownJarsFilter implements JarScanFilter {
         add("xml-apis-");
         add("xml-resolver-");
         add("xmlbeans-");
+        add("xmlpull-");
         add("xmlrpc-");
         add("xmlschema-");
         add("xmlsec-");
         add("xmltooling-");
         add("xmlunit-");
+        add("xstream-");
         add("ziplock-");
         add("zipfs.jar");
     }};

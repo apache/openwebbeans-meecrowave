@@ -46,3 +46,43 @@ And you can check it works doing:
 ----
 curl http://localhost:8080/kitchen
 ----
+
+== You're in a hurry? Use groovy!
+
+Create a file called `hello.groovy`:
+
+[source,groovy]
+----
+@Grab('org.apache.meecrowave:meecrowave-core:0.3.0')
+
+import org.apache.meecrowave.Meecrowave
+
+import javax.ws.rs.GET
+import javax.ws.rs.Path
+import javax.enterprise.context.ApplicationScoped
+
+@Path("hello")
+@ApplicationScoped
+class Hello {
+    @GET
+    hi() {
+        "hi"
+    }
+}
+
+new Meecrowave().bake().await()
+----
+
+then
+
+[source,groovy]
+----
+groovy hello.groovy
+----
+
+Finally you can test it:
+
+[source]
+----
+curl http://localhost:8080/hello
+----
