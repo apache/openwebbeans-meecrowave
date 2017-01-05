@@ -68,6 +68,7 @@
     <module>meecrowave-jolokia</module>
     <module>meecrowave-doc</module>
     <module>meecrowave-jta</module>
+    <module>integration-tests</module>
   </modules>
 
   <build>
