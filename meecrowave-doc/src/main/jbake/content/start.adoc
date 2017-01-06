@@ -49,9 +49,11 @@ curl http://localhost:8080/kitchen
 
 == You're in a hurry? Use groovy!
 
+IMPORTANT: this feature will be part of 0.3.0 only.
+
 Create a file called `hello.groovy`:
 
-[source,groovy]
+[source,java]
 ----
 @Grab('org.apache.meecrowave:meecrowave-core:0.3.0')
 
@@ -75,14 +77,14 @@ new Meecrowave().bake().await()
 
 then
 
-[source,groovy]
+[source,bash]
 ----
 groovy hello.groovy
 ----
 
 Finally you can test it:
 
-[source]
+[source,bash]
 ----
 curl http://localhost:8080/hello
 ----
