@@ -1,0 +1,65 @@
+= Meecrowave OAuth2
+:jbake-date: 2017-01-08
+:jbake-type: page
+:jbake-status: published
+:jbake-meecrowavepdf:
+:jbake-meecrowavetitleicon: icon icon_puzzle_alt
+:jbake-meecrowavecolor: body-green
+:icons: font
+
+Coordinates:
+
+[source,xml]
+----
+<dependency>
+  <groupId>org.apache.meecrowave</groupId>
+  <artifactId>meecrowave-oauth2</artifactId>
+  <version>${meecrowave.version}</version>
+</dependency>
+----
+
+A small OAuth2 server based on CXF implementation.
+
+See http://cxf.apache.org/docs/jax-rs-oauth2.html for more details.
+
+Here is the current configuration (mainly based on CXF one):
+
+include::../../../../../target/generated-doc/OAuth2.adoc[]
+
+These options are available through the CLI or through properties as usually with Meecrowave configuration.
+
+Note that meecrowave also provides a bundle which is an executable jar to run an OAuth2 server.
+
+Here is a sample usage of that bundle:
+
+[source,bash]
+----
+java -jar meecrowave-oauth2-0.3.0-SNAPSHOT-bundle.jar --users test=test --roles test=test
+----
+
+Then just test your token endpoint:
+
+[source,bash]
+----
+curl -XPOST http://localhost:8080/oauth2/token -d username=test -d password=test -d grant_type=password
+----
+
+And you should get something like:
+
+[source,javascript]
+----
+{
+  "access_token":"5e2f211d4b4ccaa36a11d0876597f01e",
+  "token_type":"Bearer",
+  "expires_in":3600,
+  "scope":"refreshToken",
+  "refresh_token":"7ae5dc2e25925e5514b7e2e632cfa6a"
+}
+----
+
+IMPORTANT: these example use inline users but you should configure a realm for a real usage.
+
+
+NOTE: this module is interesting if you plan to base your application development
+on Meecrowave because it shows how to use CLI configuration and wire it in your application
+but also how to use a 3rd party library (CXF there) and build a fatjar.

@@ -88,7 +88,7 @@ public class KnowClassesFilter implements Filter { // one easy and efficient sol
         excluded.add("org.apache.commons.io");
         excluded.add("org.apache.commons.jcs.access");
         excluded.add("org.apache.commons.jcs.admin");
-        excluded.add("org.apache.commons.jcs.auxilary");
+        excluded.add("org.apache.commons.jcs.auxiliary");
         excluded.add("org.apache.commons.jcs.engine");
         excluded.add("org.apache.commons.jcs.io");
         excluded.add("org.apache.commons.jcs.utils");
@@ -101,6 +101,7 @@ public class KnowClassesFilter implements Filter { // one easy and efficient sol
         excluded.add("org.apache.geronimo.javamail");
         excluded.add("org.apache.geronimo.mail");
         excluded.add("org.apache.geronimo.osgi");
+        excluded.add("org.apache.geronimo.specs");
         excluded.add("org.apache.http");
         excluded.add("org.apache.jcp");
         excluded.add("org.apache.johnzon");
@@ -113,6 +114,7 @@ public class KnowClassesFilter implements Filter { // one easy and efficient sol
         excluded.add("org.apache.naming");
         excluded.add("org.apache.neethi");
         excluded.add("org.apache.openejb");
+        excluded.add("org.apache.openjpa");
         excluded.add("org.apache.oro");
         excluded.add("org.apache.tomcat");
         excluded.add("org.apache.tomee");
@@ -131,6 +133,7 @@ public class KnowClassesFilter implements Filter { // one easy and efficient sol
         excluded.add("org.eclipse.jdt.core");
         excluded.add("org.eclipse.jdt.internal");
         excluded.add("org.fusesource.hawtbuf");
+        excluded.add("org.h2");
         excluded.add("org.hamcrest");
         excluded.add("org.hsqldb");
         excluded.add("org.jasypt");
@@ -158,6 +161,7 @@ public class KnowClassesFilter implements Filter { // one easy and efficient sol
         included.add("org.apache.myfaces.cdi");
         // included.add("org.apache.myfaces.application.cdi");
         included.add("org.apache.myfaces.flow.cdi");
+        included.add("org.apache.meecrowave.oauth2");
 
         delegateSkip = new OptimizedExclusionFilter(excluded);
         delegateAccept = new OptimizedExclusionFilter(included);
