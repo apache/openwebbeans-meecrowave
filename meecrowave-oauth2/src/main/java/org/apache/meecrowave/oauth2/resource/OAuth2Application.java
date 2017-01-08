@@ -18,6 +18,7 @@
  */
 package org.apache.meecrowave.oauth2.resource;
 
+import org.apache.cxf.rs.security.oauth2.common.Client;
 import org.apache.cxf.rs.security.oauth2.provider.OAuthJSONProvider;
 
 import javax.enterprise.context.Dependent;
@@ -37,5 +38,9 @@ public class OAuth2Application extends Application {
     public Set<Class<?>> getClasses() {
         return classes != null ? classes : (classes = new HashSet<>(asList(
                 OAuth2TokenService.class, OAuthJSONProvider.class)));
+    }
+
+    interface Defaults {
+        Client DEFAULT_CLIENT = new Client("__default", "", true);
     }
 }

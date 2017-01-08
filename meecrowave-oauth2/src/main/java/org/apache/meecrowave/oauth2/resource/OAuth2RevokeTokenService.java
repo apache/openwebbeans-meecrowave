@@ -19,7 +19,7 @@
 package org.apache.meecrowave.oauth2.resource;
 
 import org.apache.cxf.rs.security.oauth2.common.Client;
-import org.apache.cxf.rs.security.oauth2.services.AccessTokenService;
+import org.apache.cxf.rs.security.oauth2.services.TokenRevocationService;
 import org.apache.meecrowave.oauth2.configuration.OAuth2Configurer;
 
 import javax.annotation.PostConstruct;
@@ -36,9 +36,9 @@ import java.util.List;
 import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
-@Path("token")
+@Path("revoke")
 @RequestScoped
-public class OAuth2TokenService extends AccessTokenService implements OAuth2Application.Defaults {
+public class OAuth2RevokeTokenService extends TokenRevocationService implements OAuth2Application.Defaults {
     @Inject
     private OAuth2Configurer configurer;
 
@@ -48,10 +48,11 @@ public class OAuth2TokenService extends AccessTokenService implements OAuth2Appl
     }
 
     @POST
+    @Override
     @Consumes(APPLICATION_FORM_URLENCODED)
     @Produces(APPLICATION_JSON)
-    public Response handleTokenRequest(final MultivaluedMap<String, String> params) {
-        return super.handleTokenRequest(params);
+    public Response handleTokenRevocation(final MultivaluedMap<String, String> params) {
+        return super.handleTokenRevocation(params);
     }
 
     @Override // don't fail without a client

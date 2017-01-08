@@ -39,6 +39,7 @@ import org.apache.cxf.rs.security.oauth2.provider.DefaultEncryptingOAuthDataProv
 import org.apache.cxf.rs.security.oauth2.provider.JCacheOAuthDataProvider;
 import org.apache.cxf.rs.security.oauth2.provider.JPAOAuthDataProvider;
 import org.apache.cxf.rs.security.oauth2.provider.OAuthDataProvider;
+import org.apache.cxf.rs.security.oauth2.services.AbstractTokenService;
 import org.apache.cxf.rs.security.oauth2.utils.OAuthConstants;
 import org.apache.meecrowave.Meecrowave;
 import org.apache.meecrowave.oauth2.data.RefreshTokenEnabledProvider;
@@ -69,7 +70,7 @@ import static java.util.Optional.ofNullable;
 import static org.apache.cxf.rs.security.oauth2.common.AuthenticationMethod.PASSWORD;
 
 @ApplicationScoped
-public class OAuth2Configurer implements Consumer<OAuth2TokenService> {
+public class OAuth2Configurer implements Consumer<AbstractTokenService> {
     @Inject
     private Meecrowave.Builder builder;
 
@@ -79,7 +80,8 @@ public class OAuth2Configurer implements Consumer<OAuth2TokenService> {
     @Inject
     private HttpServletRequest request;
 
-    private Consumer<OAuth2TokenService> configurer;
+    private Consumer<OAuth2TokenService> tokenServiceConsumer;
+    private Consumer<AbstractTokenService> abstractTokenServiceConsumer;
     private OAuth2Options configuration;
 
     @PostConstruct // TODO: still some missing configuration for jwt etc to add/wire from OAuth2Options
@@ -199,19 +201,26 @@ public class OAuth2Configurer implements Consumer<OAuth2TokenService> {
                     handler.setPartialMatchScopeValidation(configuration.isPartialMatchScopeValidation());
                 });
 
-        configurer = s -> { // this is used @RequestScoped so ensure it is not slow for no reason
+        abstractTokenServiceConsumer = s -> { // this is used @RequestScoped so ensure it is not slow for no reason
             s.setCanSupportPublicClients(configuration.isCanSupportPublicClients());
             s.setBlockUnsecureRequests(configuration.isBlockUnsecureRequests());
             s.setWriteCustomErrors(configuration.isWriteCustomErrors());
             s.setWriteOptionalParameters(configuration.isWriteOptionalParameters());
             s.setDataProvider(dataProvider);
+        };
+        tokenServiceConsumer = s -> { // this is used @RequestScoped so ensure it is not slow for no reason
+            abstractTokenServiceConsumer.accept(s);
             s.setGrantHandlers(handlers);
         };
     }
 
     @Override
+    public void accept(final AbstractTokenService service) {
+        abstractTokenServiceConsumer.accept(service);
+    }
+
     public void accept(final OAuth2TokenService service) {
-        configurer.accept(service);
+        tokenServiceConsumer.accept(service);
     }
 
     public OAuth2Options getConfiguration() {
