@@ -21,9 +21,9 @@ package org.apache.meecrowave.runner;
 import org.apache.catalina.connector.Connector;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.ParseException;
-import org.apache.commons.cli.PosixParser;
 import org.apache.meecrowave.Meecrowave;
 import org.apache.meecrowave.runner.cli.CliOption;
 import org.apache.xbean.recipe.ObjectRecipe;
@@ -53,9 +53,9 @@ public class Cli {
 
     public static void main(final String[] args) {
         final org.apache.commons.cli.Options options = new org.apache.commons.cli.Options();
-        options.addOption("help", false, "Show help");
-        options.addOption("context", true, "The context to use to deploy the webapp");
-        options.addOption("webapp", true, "Location of the webapp, if not set the classpath will be deployed");
+        options.addOption(null, "help", false, "Show help");
+        options.addOption(null, "context", true, "The context to use to deploy the webapp");
+        options.addOption(null, "webapp", true, "Location of the webapp, if not set the classpath will be deployed");
         final List<Field> fields = Stream.of(Meecrowave.Builder.class.getDeclaredFields())
                 .filter(f -> f.isAnnotationPresent(CliOption.class))
                 .collect(toList());
@@ -74,7 +74,7 @@ public class Cli {
             Stream.of(opt.alias()).forEach(a -> options.addOption(null, a, true, description));
         }));
 
-        final CommandLineParser parser = new PosixParser();
+        final CommandLineParser parser = new DefaultParser();
         final CommandLine line;
         try {
             line = parser.parse(options, args, true);
@@ -225,7 +225,7 @@ public class Cli {
     }
 
     private static void help(final org.apache.commons.cli.Options options) {
-        new HelpFormatter().printHelp("java -jar meecrowave.jar", options);
+        new HelpFormatter().printHelp("java -jar meecrowave-runner.jar", options);
     }
 
     public interface Options {

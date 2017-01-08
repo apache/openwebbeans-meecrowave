@@ -63,11 +63,11 @@ public class CliTest {
             @Override
             public void run() {
                 Cli.main(new String[]{
-                        "--context=app",
-                        "--stop=" + stop,
-                        "--http=" + http,
-                        "--tmp-dir=target/CliTest/simple",
-                        "--my-config=val"
+                        "--context", "app",
+                        "--stop", Integer.toString(stop),
+                        "--http", Integer.toString(http),
+                        "--tmp-dir", "target/CliTest/simple",
+                        "--my-config", "val"
                 });
             }
         };
