@@ -49,7 +49,7 @@ curl http://localhost:8080/kitchen
 
 == You're in a hurry? Use groovy!
 
-IMPORTANT: this feature will be part of 0.3.0 only.
+IMPORTANT: this feature is supported starting from version 0.3.0 only.
 
 Create a file called `hello.groovy`:
 

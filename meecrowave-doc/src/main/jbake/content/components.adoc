@@ -54,6 +54,13 @@ This is an experimental integration of geronimo-transaction and meecrowave.
 
 link:{context_rootpath}/meecrowave-jta/index.html[JTA module]
 
+== Meecrowave and OAuth2
+
+This is an experimental module integrating CXF OAuth2 server in Meecrowave
+through an embeddable dependency or a directly executable har.
+
+link:{context_rootpath}/meecrowave-oauth2/index.html[OAuth2 module]
+
 == Going further
 
 Meecrowave scope is not the full scope of microservices (whatever it means) or at least enterprise needs

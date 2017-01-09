@@ -7,6 +7,8 @@
 :jbake-meecrowavecolor: body-green
 :icons: font
 
+Starting with version 0.3.0.
+
 Coordinates:
 
 [source,xml]
@@ -24,7 +26,7 @@ See http://cxf.apache.org/docs/jax-rs-oauth2.html for more details.
 
 Here is the current configuration (mainly based on CXF one):
 
-include::../../../../../target/generated-doc/OAuth2.adoc[]
+include::../../../../../target/generated-doc/OAuth2Configuration.adoc[]
 
 These options are available through the CLI or through properties as usually with Meecrowave configuration.
 
