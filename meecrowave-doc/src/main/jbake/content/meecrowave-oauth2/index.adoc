@@ -65,3 +65,22 @@ IMPORTANT: these example use inline users but you should configure a realm for a
 NOTE: this module is interesting if you plan to base your application development
 on Meecrowave because it shows how to use CLI configuration and wire it in your application
 but also how to use a 3rd party library (CXF there) and build a fatjar.
+
+== Authorization code case
+
+Authorization code flow is a bit more complicated but services (endpoints) can be activated (see configuration - `--oauth2-authorization-code-support`).
+
+You will need to configure CXF to point to the keystore/key to crypt/sign the token in session.
+It is properties based. All CXF properties (`rs.security.*`) are supported but prefixed with `oauth2.cxf.` to avoid
+to mix it with another configuration starting with `rs.*`.
+
+For instance you can use:
+
+[source,properties]
+----
+oauth2.cxf.rs.security.keystore.type = jks
+oauth2.cxf.rs.security.keystore.file = /opt/keystores/oauth2.jks
+oauth2.cxf.rs.security.keystore.password = password
+oauth2.cxf.rs.security.keystore.alias = alice
+oauth2.cxf.rs.security.key.password = pwd
+----
