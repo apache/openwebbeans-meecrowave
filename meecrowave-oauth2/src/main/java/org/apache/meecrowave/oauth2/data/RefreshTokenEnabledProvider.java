@@ -23,6 +23,9 @@ import org.apache.cxf.rs.security.oauth2.common.Client;
 import org.apache.cxf.rs.security.oauth2.common.OAuthPermission;
 import org.apache.cxf.rs.security.oauth2.common.ServerAccessToken;
 import org.apache.cxf.rs.security.oauth2.common.UserSubject;
+import org.apache.cxf.rs.security.oauth2.grants.code.AuthorizationCodeDataProvider;
+import org.apache.cxf.rs.security.oauth2.grants.code.AuthorizationCodeRegistration;
+import org.apache.cxf.rs.security.oauth2.grants.code.ServerAuthorizationCodeGrant;
 import org.apache.cxf.rs.security.oauth2.provider.AbstractOAuthDataProvider;
 import org.apache.cxf.rs.security.oauth2.provider.OAuthDataProvider;
 import org.apache.cxf.rs.security.oauth2.provider.OAuthServiceException;
@@ -34,7 +37,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class RefreshTokenEnabledProvider implements OAuthDataProvider {
+public class RefreshTokenEnabledProvider implements OAuthDataProvider, AuthorizationCodeDataProvider {
     private final OAuthDataProvider delegate;
 
     public RefreshTokenEnabledProvider(final OAuthDataProvider delegate) {
@@ -105,5 +108,31 @@ public class RefreshTokenEnabledProvider implements OAuthDataProvider {
     @Override
     public List<OAuthPermission> convertScopeToPermissions(final Client client, final List<String> requestedScopes) {
         return delegate.convertScopeToPermissions(client, requestedScopes);
+    }
+
+    public OAuthDataProvider getDelegate() {
+        return delegate;
+    }
+
+    private AuthorizationCodeDataProvider getCodeDelegate() {
+        if (!AuthorizationCodeDataProvider.class.isInstance(delegate)) {
+            throw new UnsupportedOperationException("Not a AuthorizationCodeDataProvider");
+        }
+        return AuthorizationCodeDataProvider.class.cast(delegate);
+    }
+
+    @Override
+    public ServerAuthorizationCodeGrant createCodeGrant(final AuthorizationCodeRegistration reg) throws OAuthServiceException {
+        return getCodeDelegate().createCodeGrant(reg);
+    }
+
+    @Override
+    public ServerAuthorizationCodeGrant removeCodeGrant(final String code) throws OAuthServiceException {
+        return getCodeDelegate().removeCodeGrant(code);
+    }
+
+    @Override
+    public List<ServerAuthorizationCodeGrant> getCodeGrants(final Client c, final UserSubject subject) throws OAuthServiceException {
+        return getCodeDelegate().getCodeGrants(c, subject);
     }
 }

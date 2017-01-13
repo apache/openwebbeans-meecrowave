@@ -20,24 +20,41 @@ package org.apache.meecrowave.oauth2.resource;
 
 import org.apache.cxf.rs.security.oauth2.common.Client;
 import org.apache.cxf.rs.security.oauth2.provider.OAuthJSONProvider;
+import org.apache.meecrowave.Meecrowave;
+import org.apache.meecrowave.oauth2.configuration.OAuth2Options;
 
 import javax.enterprise.context.Dependent;
+import javax.inject.Inject;
 import javax.ws.rs.ApplicationPath;
 import javax.ws.rs.core.Application;
 import java.util.HashSet;
 import java.util.Set;
 
 import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
 
 @Dependent
 @ApplicationPath("oauth2")
 public class OAuth2Application extends Application {
+    @Inject
+    private Meecrowave.Builder builder;
+
     private Set<Class<?>> classes;
 
     @Override
     public Set<Class<?>> getClasses() {
-        return classes != null ? classes : (classes = new HashSet<>(asList(
-                OAuth2TokenService.class, OAuthJSONProvider.class)));
+        return classes != null ? classes : (classes = doGetClasses());
+    }
+
+    private Set<Class<?>> doGetClasses() {
+        final Set<Class<?>> classes = new HashSet<>(singletonList(OAuthJSONProvider.class));
+        if (builder.getExtension(OAuth2Options.class).isAuthorizationCodeSupport()) {
+            classes.add(OAuth2AuthorizationCodeGrantService.class);
+        }
+        if (builder.getExtension(OAuth2Options.class).isTokenSupport()) {
+            classes.addAll(asList(OAuth2TokenService.class, OAuth2RevokeTokenService.class));
+        }
+        return classes;
     }
 
     interface Defaults {

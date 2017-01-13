@@ -21,6 +21,13 @@ package org.apache.meecrowave.oauth2.configuration;
 import org.apache.catalina.realm.GenericPrincipal;
 import org.apache.cxf.Bus;
 import org.apache.cxf.interceptor.security.AuthenticationException;
+import org.apache.cxf.jaxrs.ext.MessageContext;
+import org.apache.cxf.message.Message;
+import org.apache.cxf.phase.PhaseInterceptorChain;
+import org.apache.cxf.rs.security.jose.jwe.JweDecryptionProvider;
+import org.apache.cxf.rs.security.jose.jws.JwsSignatureVerifier;
+import org.apache.cxf.rs.security.jose.jws.JwsUtils;
+import org.apache.cxf.rs.security.oauth2.common.OAuthRedirectionState;
 import org.apache.cxf.rs.security.oauth2.common.UserSubject;
 import org.apache.cxf.rs.security.oauth2.grants.AbstractGrantHandler;
 import org.apache.cxf.rs.security.oauth2.grants.clientcred.ClientCredentialsGrantHandler;
@@ -38,8 +45,10 @@ import org.apache.cxf.rs.security.oauth2.provider.DefaultEHCacheOAuthDataProvide
 import org.apache.cxf.rs.security.oauth2.provider.DefaultEncryptingOAuthDataProvider;
 import org.apache.cxf.rs.security.oauth2.provider.JCacheOAuthDataProvider;
 import org.apache.cxf.rs.security.oauth2.provider.JPAOAuthDataProvider;
+import org.apache.cxf.rs.security.oauth2.provider.JoseSessionTokenProvider;
 import org.apache.cxf.rs.security.oauth2.provider.OAuthDataProvider;
 import org.apache.cxf.rs.security.oauth2.services.AbstractTokenService;
+import org.apache.cxf.rs.security.oauth2.services.RedirectionBasedGrantService;
 import org.apache.cxf.rs.security.oauth2.utils.OAuthConstants;
 import org.apache.meecrowave.Meecrowave;
 import org.apache.meecrowave.oauth2.data.RefreshTokenEnabledProvider;
@@ -54,6 +63,8 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.io.StringReader;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.security.Principal;
 import java.util.ArrayList;
@@ -65,12 +76,14 @@ import java.util.Properties;
 import java.util.function.Consumer;
 
 import static java.util.Arrays.asList;
+import static java.util.Collections.emptySet;
 import static java.util.Locale.ENGLISH;
 import static java.util.Optional.ofNullable;
+import static java.util.stream.Collectors.toMap;
 import static org.apache.cxf.rs.security.oauth2.common.AuthenticationMethod.PASSWORD;
 
 @ApplicationScoped
-public class OAuth2Configurer implements Consumer<AbstractTokenService> {
+public class OAuth2Configurer {
     @Inject
     private Meecrowave.Builder builder;
 
@@ -81,6 +94,7 @@ public class OAuth2Configurer implements Consumer<AbstractTokenService> {
     private HttpServletRequest request;
 
     private Consumer<OAuth2TokenService> tokenServiceConsumer;
+    private Consumer<RedirectionBasedGrantService> redirectionBasedGrantServiceConsumer;
     private Consumer<AbstractTokenService> abstractTokenServiceConsumer;
     private OAuth2Options configuration;
 
@@ -91,10 +105,12 @@ public class OAuth2Configurer implements Consumer<AbstractTokenService> {
         AbstractOAuthDataProvider provider;
         switch (configuration.getProvider().toLowerCase(ENGLISH)) {
             case "jpa": {
-                final JPAOAuthDataProvider jpaProvider = new JPAOAuthDataProvider();
-                jpaProvider.setEntityManagerFactory(JPAAdapter.createEntityManagerFactory(configuration));
-                provider = jpaProvider;
-                break;
+                if (!configuration.isAuthorizationCodeSupport()) { // else use code impl
+                    final JPAOAuthDataProvider jpaProvider = new JPAOAuthDataProvider();
+                    jpaProvider.setEntityManagerFactory(JPAAdapter.createEntityManagerFactory(configuration));
+                    provider = jpaProvider;
+                    break;
+                }
             }
             case "jpa-code": {
                 final JPACodeDataProvider jpaProvider = new JPACodeDataProvider();
@@ -103,12 +119,14 @@ public class OAuth2Configurer implements Consumer<AbstractTokenService> {
                 break;
             }
             case "jcache":
-                try {
-                    provider = new JCacheOAuthDataProvider(configuration.getJcacheConfigUri(), bus, configuration.isJcacheStoreJwtKeyOnly());
-                } catch (final Exception e) {
-                    throw new IllegalStateException(e);
+                if (!configuration.isAuthorizationCodeSupport()) { // else use code impl
+                    try {
+                        provider = new JCacheOAuthDataProvider(configuration.getJcacheConfigUri(), bus, configuration.isJcacheStoreJwtKeyOnly());
+                    } catch (final Exception e) {
+                        throw new IllegalStateException(e);
+                    }
+                    break;
                 }
-                break;
             case "jcache-code":
                 try {
                     provider = new JCacheCodeDataProvider(configuration.getJcacheConfigUri(), bus);
@@ -120,9 +138,11 @@ public class OAuth2Configurer implements Consumer<AbstractTokenService> {
                 provider = new DefaultEHCacheOAuthDataProvider(configuration.getJcacheConfigUri(), bus);
                 break;
             case "encrypted":
-                provider = new DefaultEncryptingOAuthDataProvider(
-                        new SecretKeySpec(configuration.getEncryptedKey().getBytes(StandardCharsets.UTF_8), configuration.getEncryptedAlgo()));
-                break;
+                if (!configuration.isAuthorizationCodeSupport()) { // else use code impl
+                    provider = new DefaultEncryptingOAuthDataProvider(
+                            new SecretKeySpec(configuration.getEncryptedKey().getBytes(StandardCharsets.UTF_8), configuration.getEncryptedAlgo()));
+                    break;
+                }
             case "encrypted-code":
                 provider = new DefaultEncryptingCodeDataProvider(
                         new SecretKeySpec(configuration.getEncryptedKey().getBytes(StandardCharsets.UTF_8), configuration.getEncryptedAlgo()));
@@ -136,31 +156,30 @@ public class OAuth2Configurer implements Consumer<AbstractTokenService> {
         refreshTokenGrantHandler.setUseAllClientScopes(configuration.isUseAllClientScopes());
         refreshTokenGrantHandler.setPartialMatchScopeValidation(configuration.isPartialMatchScopeValidation());
 
+        final ResourceOwnerLoginHandler loginHandler = configuration.isJaas() ? new JAASResourceOwnerLoginHandler() : (name, password) -> {
+            try {
+                request.login(name, password);
+                try {
+                    final Principal pcp = request.getUserPrincipal();
+                    final UserSubject userSubject = new UserSubject(
+                            name,
+                            GenericPrincipal.class.isInstance(pcp) ?
+                                    new ArrayList<>(asList(GenericPrincipal.class.cast(pcp).getRoles())) : Collections.emptyList());
+                    userSubject.setAuthenticationMethod(PASSWORD);
+                    return userSubject;
+                } finally {
+                    request.logout();
+                }
+            } catch (final ServletException e) {
+                throw new AuthenticationException(e.getMessage());
+            }
+        };
+
         final List<AccessTokenGrantHandler> handlers = new ArrayList<>();
         handlers.add(refreshTokenGrantHandler);
         handlers.add(new ClientCredentialsGrantHandler());
         handlers.add(new ResourceOwnerGrantHandler() {{
-            setLoginHandler(configuration.isJaas() ? new JAASResourceOwnerLoginHandler() : new ResourceOwnerLoginHandler() {
-                @Override
-                public UserSubject createSubject(final String name, final String password) {
-                    try {
-                        request.login(name, password);
-                        try {
-                            final Principal pcp = request.getUserPrincipal();
-                            final UserSubject userSubject = new UserSubject(
-                                    name,
-                                    GenericPrincipal.class.isInstance(pcp) ?
-                                            new ArrayList<>(asList(GenericPrincipal.class.cast(pcp).getRoles())) : Collections.emptyList());
-                            userSubject.setAuthenticationMethod(PASSWORD);
-                            return userSubject;
-                        } finally {
-                            request.logout();
-                        }
-                    } catch (final ServletException e) {
-                        throw new AuthenticationException(e.getMessage());
-                    }
-                }
-            });
+            setLoginHandler(loginHandler);
         }});
         handlers.add(new AuthorizationCodeGrantHandler());
         handlers.add(new JwtBearerGrantHandler());
@@ -212,15 +231,85 @@ public class OAuth2Configurer implements Consumer<AbstractTokenService> {
             abstractTokenServiceConsumer.accept(s);
             s.setGrantHandlers(handlers);
         };
+
+        final List<String> noConsentScopes = ofNullable(configuration.getScopesRequiringNoConsent())
+                .map(s -> asList(s.split(",")))
+                .orElse(null);
+
+        // we prefix them oauth2.cxf. but otherwise it is the plain cxf config
+        final Map<String, String> contextualProperties = ofNullable(builder.getProperties()).map(Properties::stringPropertyNames).orElse(emptySet()).stream()
+                .filter(s -> s.startsWith("oauth2.cxf.rs.security."))
+                .collect(toMap(s -> s.substring("oauth2.cxf.".length()), s -> builder.getProperties().getProperty(s)));
+
+        final JoseSessionTokenProvider sessionAuthenticityTokenProvider = new JoseSessionTokenProvider() {
+            // getSessionState() is buggy in cxf 3.1.9 so we fix it there
+            private final Method convertStateStringToState;
+
+            {
+                try {
+                    convertStateStringToState = JoseSessionTokenProvider.class.getDeclaredMethod("convertStateStringToState", String.class);
+                    if (!convertStateStringToState.isAccessible()) {
+                        convertStateStringToState.setAccessible(true);
+                    }
+                } catch (final NoSuchMethodException e) {
+                    throw new IllegalStateException(e);
+                }
+            }
+
+            @Override
+            public OAuthRedirectionState getSessionState(final MessageContext messageContext, final String sessionToken,
+                                                         final UserSubject subject) {
+                final JweDecryptionProvider jwe = getInitializedDecryptionProvider();
+                final JwsSignatureVerifier jws = getInitializedSigVerifier();
+                String stateString = jwe.decrypt(sessionToken).getContentText();
+                if (jws != null) {
+                    stateString = JwsUtils.verify(jws, stateString).getDecodedJwsPayload();
+                }
+                try {
+                    return OAuthRedirectionState.class.cast(convertStateStringToState.invoke(this, stateString));
+                } catch (IllegalAccessException e) {
+                    throw new IllegalStateException(e);
+                } catch (InvocationTargetException e) {
+                    final Throwable cause = e.getCause();
+                    if (RuntimeException.class.isInstance(cause)) {
+                        throw RuntimeException.class.cast(cause);
+                    }
+                    throw new IllegalStateException(cause);
+                }
+
+            }
+        };
+        sessionAuthenticityTokenProvider.setMaxDefaultSessionInterval(configuration.getMaxDefaultSessionInterval());
+        // TODO: other configs
+
+        redirectionBasedGrantServiceConsumer = s -> {
+            s.setDataProvider(dataProvider);
+            s.setBlockUnsecureRequests(configuration.isBlockUnsecureRequests());
+            s.setWriteOptionalParameters(configuration.isWriteOptionalParameters());
+            s.setUseAllClientScopes(configuration.isUseAllClientScopes());
+            s.setPartialMatchScopeValidation(configuration.isPartialMatchScopeValidation());
+            s.setUseRegisteredRedirectUriIfPossible(configuration.isUseRegisteredRedirectUriIfPossible());
+            s.setMaxDefaultSessionInterval(configuration.getMaxDefaultSessionInterval());
+            s.setMatchRedirectUriWithApplicationUri(configuration.isMatchRedirectUriWithApplicationUri());
+            s.setScopesRequiringNoConsent(noConsentScopes);
+            s.setSessionAuthenticityTokenProvider(sessionAuthenticityTokenProvider);
+
+            // TODO: make it even more contextual, client based?
+            final Message currentMessage = PhaseInterceptorChain.getCurrentMessage();
+            contextualProperties.forEach(currentMessage::put);
+        };
     }
 
-    @Override
     public void accept(final AbstractTokenService service) {
         abstractTokenServiceConsumer.accept(service);
     }
 
     public void accept(final OAuth2TokenService service) {
         tokenServiceConsumer.accept(service);
+    }
+
+    public void accept(final RedirectionBasedGrantService service) {
+        redirectionBasedGrantServiceConsumer.accept(service);
     }
 
     public OAuth2Options getConfiguration() {

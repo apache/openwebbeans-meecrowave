@@ -127,6 +127,33 @@ public class OAuth2Options implements Cli.Options {
     @CliOption(name = "oauth2-encrypted-algorithm", description = "The algorithm for the key for the encrypted provider")
     private String encryptedAlgo;
 
+    @CliOption(name = "oauth2-token-support", description = "Are token flows supported")
+    private boolean tokenSupport = true;
+
+    @CliOption(name = "oauth2-authorization-code-support", description = "Is authorization code flow supported")
+    private boolean authorizationCodeSupport;
+
+    @CliOption(name = "oauth2-redirection-use-registered-redirect-uri-if-possible", description = "For authorization code flow, should the registered uri be used")
+    private boolean useRegisteredRedirectUriIfPossible = true;
+
+    /*
+    private SessionAuthenticityTokenProvider sessionAuthenticityTokenProvider;
+    private SubjectCreator subjectCreator;
+    private ResourceOwnerNameProvider resourceOwnerNameProvider;
+    private AuthorizationRequestFilter authorizationFilter;
+    */
+
+    @CliOption(name = "oauth2-redirection-max-default-session-interval", description = "For authorization code flow, how long a session can be")
+    private int maxDefaultSessionInterval;
+
+    @CliOption(
+            name = "oauth2-redirection-match-redirect-uri-with-application-uri",
+            description = "For authorization code flow, should redirect uri be matched with application one")
+    private boolean matchRedirectUriWithApplicationUri;
+
+    @CliOption(name = "oauth2-redirection-scopes-requiring-no-consent", description = "For authorization code flow, the scopes using no consent")
+    private String scopesRequiringNoConsent;
+
     public String getEncryptedAlgo() {
         return encryptedAlgo;
     }
@@ -405,5 +432,53 @@ public class OAuth2Options implements Cli.Options {
 
     public void setUseAllClientScopes(final boolean useAllClientScopes) {
         this.useAllClientScopes = useAllClientScopes;
+    }
+
+    public boolean isAuthorizationCodeSupport() {
+        return authorizationCodeSupport;
+    }
+
+    public void setAuthorizationCodeSupport(final boolean authorizationCodeSupport) {
+        this.authorizationCodeSupport = authorizationCodeSupport;
+    }
+
+    public boolean isUseRegisteredRedirectUriIfPossible() {
+        return useRegisteredRedirectUriIfPossible;
+    }
+
+    public void setUseRegisteredRedirectUriIfPossible(final boolean useRegisteredRedirectUriIfPossible) {
+        this.useRegisteredRedirectUriIfPossible = useRegisteredRedirectUriIfPossible;
+    }
+
+    public int getMaxDefaultSessionInterval() {
+        return maxDefaultSessionInterval;
+    }
+
+    public void setMaxDefaultSessionInterval(final int maxDefaultSessionInterval) {
+        this.maxDefaultSessionInterval = maxDefaultSessionInterval;
+    }
+
+    public boolean isMatchRedirectUriWithApplicationUri() {
+        return matchRedirectUriWithApplicationUri;
+    }
+
+    public void setMatchRedirectUriWithApplicationUri(final boolean matchRedirectUriWithApplicationUri) {
+        this.matchRedirectUriWithApplicationUri = matchRedirectUriWithApplicationUri;
+    }
+
+    public String getScopesRequiringNoConsent() {
+        return scopesRequiringNoConsent;
+    }
+
+    public void setScopesRequiringNoConsent(final String scopesRequiringNoConsent) {
+        this.scopesRequiringNoConsent = scopesRequiringNoConsent;
+    }
+
+    public boolean isTokenSupport() {
+        return tokenSupport;
+    }
+
+    public void setTokenSupport(final boolean tokenSupport) {
+        this.tokenSupport = tokenSupport;
     }
 }
