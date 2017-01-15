@@ -157,7 +157,7 @@ public class OAuth2Test {
                     .queryParam(OAuthConstants.RESPONSE_TYPE, OAuthConstants.CODE_RESPONSE_TYPE)
                     .queryParam(OAuthConstants.CLIENT_ID, "c1")
                     .queryParam(OAuthConstants.CLIENT_SECRET, "cpwd")
-                    .queryParam("redirect_uri", "http://localhost:" + httpPort + "/redirected")
+                    .queryParam(OAuthConstants.REDIRECT_URI, "http://localhost:" + httpPort + "/redirected")
                     .request(APPLICATION_JSON_TYPE)
                     .header("authorization", "Basic " + printBase64Binary("test:pwd".getBytes(StandardCharsets.UTF_8)))
                     .get();
@@ -178,6 +178,23 @@ public class OAuth2Test {
                     .get();
             assertEquals(Response.Status.SEE_OTHER.getStatusCode(), decision.getStatus());
             assertTrue(decision.getLocation().toASCIIString(), decision.getLocation().toASCIIString().startsWith("http://localhost:" + httpPort + "/redirected?code="));
+
+            final ClientAccessToken token = target
+                    .path("oauth2/token")
+                    .request(APPLICATION_JSON_TYPE)
+                    .post(entity(
+                            new Form()
+                                    .param(OAuthConstants.GRANT_TYPE, OAuthConstants.AUTHORIZATION_CODE_GRANT)
+                                    .param(OAuthConstants.CODE_RESPONSE_TYPE, decision.getLocation().getRawQuery().substring("code=".length()))
+                                    .param(OAuthConstants.REDIRECT_URI, "http://localhost:" + httpPort + "/redirected")
+                                    .param(OAuthConstants.CLIENT_ID, "c1")
+                                    .param(OAuthConstants.CLIENT_SECRET, "cpwd"), APPLICATION_FORM_URLENCODED_TYPE), ClientAccessToken.class);
+            assertNotNull(token);
+            assertEquals("Bearer", token.getTokenType());
+            assertNotNull(token.getTokenKey());
+            assertEquals(3600, token.getExpiresIn());
+            assertNotEquals(0, token.getIssuedAt());
+            assertNotNull(token.getRefreshToken());
         } finally {
             client.close();
         }
