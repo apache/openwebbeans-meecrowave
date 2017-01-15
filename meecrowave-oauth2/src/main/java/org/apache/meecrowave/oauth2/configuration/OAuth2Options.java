@@ -82,6 +82,21 @@ public class OAuth2Options implements Cli.Options {
     @CliOption(name = "oauth2-jcache-config", description = "JCache configuration uri for the cache manager (jcache or provider)")
     private String jcacheConfigUri = "default-oauth2.jcs";
 
+    @CliOption(name = "oauth2-jcache-store-value", description = "Should JCache store value or not")
+    private boolean jcacheStoreValue = true;
+
+    @CliOption(name = "oauth2-jcache-statistics", description = "Should JCache statistics be enabled")
+    private boolean jcacheStatistics = false;
+
+    @CliOption(name = "oauth2-jcache-jmx", description = "Should JCache JMX MBeans be enabled")
+    private boolean jcacheJmx = false;
+
+    @CliOption(name = "oauth2-jcache-loader", description = "The loader bean or class name")
+    private String jcacheLoader;
+
+    @CliOption(name = "oauth2-jcache-writer", description = "The writer bean or class name")
+    private String jcacheWriter;
+
     @CliOption(name = "oauth2-jcache-store-jwt-token-key-only", description = "Should JCache store jwt token key only (jcache provider)")
     private boolean jcacheStoreJwtKeyOnly;
 
@@ -480,5 +495,45 @@ public class OAuth2Options implements Cli.Options {
 
     public void setTokenSupport(final boolean tokenSupport) {
         this.tokenSupport = tokenSupport;
+    }
+
+    public boolean isJcacheStoreValue() {
+        return jcacheStoreValue;
+    }
+
+    public void setJcacheStoreValue(final boolean jcacheStoreValue) {
+        this.jcacheStoreValue = jcacheStoreValue;
+    }
+
+    public String getJcacheLoader() {
+        return jcacheLoader;
+    }
+
+    public void setJcacheLoader(final String jcacheLoader) {
+        this.jcacheLoader = jcacheLoader;
+    }
+
+    public String getJcacheWriter() {
+        return jcacheWriter;
+    }
+
+    public void setJcacheWriter(final String jcacheWriter) {
+        this.jcacheWriter = jcacheWriter;
+    }
+
+    public boolean isJcacheStatistics() {
+        return jcacheStatistics;
+    }
+
+    public void setJcacheStatistics(final boolean jcacheStatistics) {
+        this.jcacheStatistics = jcacheStatistics;
+    }
+
+    public boolean isJcacheJmx() {
+        return jcacheJmx;
+    }
+
+    public void setJcacheJmx(final boolean jcacheJmx) {
+        this.jcacheJmx = jcacheJmx;
     }
 }

@@ -19,13 +19,14 @@
 package org.apache.meecrowave.oauth2.provider;
 
 import org.apache.cxf.Bus;
+import org.apache.cxf.rs.security.oauth2.provider.JCacheOAuthDataProvider;
 import org.apache.meecrowave.oauth2.configuration.OAuth2Options;
 
 import javax.enterprise.inject.Vetoed;
 
 @Vetoed
-public class JCacheCodeDataProvider extends org.apache.cxf.rs.security.oauth2.grants.code.JCacheCodeDataProvider {
-    public JCacheCodeDataProvider(final OAuth2Options configuration, final Bus bus) throws Exception {
-        super(configuration.getJcacheConfigUri(), bus);
+public class JCacheDataProvider extends JCacheOAuthDataProvider {
+    public JCacheDataProvider(final OAuth2Options configuration, final Bus bus) throws Exception {
+        super(configuration.getJcacheConfigUri(), bus, configuration.isJcacheStoreJwtKeyOnly());
     }
 }
