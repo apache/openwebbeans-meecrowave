@@ -43,6 +43,7 @@ import org.apache.cxf.rs.security.oauth2.provider.AbstractOAuthDataProvider;
 import org.apache.cxf.rs.security.oauth2.provider.AccessTokenGrantHandler;
 import org.apache.cxf.rs.security.oauth2.provider.DefaultEHCacheOAuthDataProvider;
 import org.apache.cxf.rs.security.oauth2.provider.DefaultEncryptingOAuthDataProvider;
+import org.apache.cxf.rs.security.oauth2.provider.JCacheOAuthDataProvider;
 import org.apache.cxf.rs.security.oauth2.provider.JPAOAuthDataProvider;
 import org.apache.cxf.rs.security.oauth2.provider.JoseSessionTokenProvider;
 import org.apache.cxf.rs.security.oauth2.provider.OAuthDataProvider;
@@ -52,7 +53,6 @@ import org.apache.cxf.rs.security.oauth2.utils.OAuthConstants;
 import org.apache.meecrowave.Meecrowave;
 import org.apache.meecrowave.oauth2.data.RefreshTokenEnabledProvider;
 import org.apache.meecrowave.oauth2.provider.JCacheCodeDataProvider;
-import org.apache.meecrowave.oauth2.provider.JCacheDataProvider;
 import org.apache.meecrowave.oauth2.resource.OAuth2TokenService;
 
 import javax.annotation.PostConstruct;
@@ -125,7 +125,7 @@ public class OAuth2Configurer {
                 if (!configuration.isAuthorizationCodeSupport()) { // else use code impl
                     jCacheConfigurer.doSetup(configuration);
                     try {
-                        provider = new JCacheDataProvider(configuration, bus);
+                        provider = new JCacheOAuthDataProvider(configuration.getJcacheConfigUri(), bus, configuration.isJcacheStoreJwtKeyOnly());
                     } catch (final Exception e) {
                         throw new IllegalStateException(e);
                     }
