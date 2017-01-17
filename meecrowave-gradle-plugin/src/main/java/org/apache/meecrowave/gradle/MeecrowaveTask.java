@@ -114,6 +114,10 @@ public class MeecrowaveTask extends DefaultTask {
 
     @Input
     @Optional
+    private boolean injectServletContainerInitializer = true;
+
+    @Input
+    @Optional
     private boolean ssl;
 
     @Input
@@ -1111,5 +1115,13 @@ public class MeecrowaveTask extends DefaultTask {
 
     public void setTomcatNoJmx(final boolean tomcatNoJmx) {
         this.tomcatNoJmx = tomcatNoJmx;
+    }
+
+    public boolean isInjectServletContainerInitializer() {
+        return injectServletContainerInitializer;
+    }
+
+    public void setInjectServletContainerInitializer(final boolean injectServletContainerInitializer) {
+        this.injectServletContainerInitializer = injectServletContainerInitializer;
     }
 }

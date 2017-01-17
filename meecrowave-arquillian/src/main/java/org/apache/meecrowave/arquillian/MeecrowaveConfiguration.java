@@ -100,6 +100,7 @@ public class MeecrowaveConfiguration implements ContainerConfiguration {
     private String scanningPackageIncludes;
     private String scanningPackageExcludes;
     private boolean tomcatNoJmx = true;
+    private boolean injectServletContainerInitializer = true;
 
     @Override
     public void validate() throws ConfigurationException {
@@ -718,5 +719,13 @@ public class MeecrowaveConfiguration implements ContainerConfiguration {
 
     public void setTomcatNoJmx(final boolean tomcatNoJmx) {
         this.tomcatNoJmx = tomcatNoJmx;
+    }
+
+    public boolean isInjectServletContainerInitializer() {
+        return injectServletContainerInitializer;
+    }
+
+    public void setInjectServletContainerInitializer(final boolean injectServletContainerInitializer) {
+        this.injectServletContainerInitializer = injectServletContainerInitializer;
     }
 }

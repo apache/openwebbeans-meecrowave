@@ -64,6 +64,12 @@ import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
+import javax.enterprise.context.spi.CreationalContext;
+import javax.enterprise.inject.spi.AnnotatedType;
+import javax.enterprise.inject.spi.BeanManager;
+import javax.enterprise.inject.spi.CDI;
+import javax.enterprise.inject.spi.InjectionTarget;
+import javax.servlet.ServletContainerInitializer;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 import java.io.File;
@@ -86,9 +92,13 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Properties;
+import java.util.Set;
 import java.util.TreeMap;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
@@ -155,6 +165,12 @@ public class Meecrowave implements AutoCloseable {
     // shortcut
     public Meecrowave deployClasspath() {
         return deployClasspath("");
+    }
+
+    // shortcut
+    public Meecrowave bake(final Consumer<Context> customizer) {
+        start();
+        return deployClasspath(new DeploymentMeta("", null, customizer));
     }
 
     // shortcut (used by plugins)
@@ -230,10 +246,47 @@ public class Meecrowave implements AutoCloseable {
         });
         ctx.addLifecycleListener(new Tomcat.FixContextListener()); // after having configured the security!!!
 
+        final AtomicReference<Runnable> releaseSCI = new AtomicReference<>();
         ctx.addServletContainerInitializer((c, ctx1) -> {
             new OWBAutoSetup().onStartup(c, ctx1);
             new CxfCdiAutoSetup().onStartup(c, ctx1);
             new TomcatAutoInitializer().onStartup(c, ctx1);
+
+            if (configuration.isInjectServletContainerInitializer()) {
+                final Field f;
+                try { // now cdi is on, we can inject cdi beans in ServletContainerInitializer
+                    f = StandardContext.class.getDeclaredField("initializers");
+                    if (!f.isAccessible()) {
+                        f.setAccessible(true);
+                    }
+                } catch (final Exception e) {
+                    throw new IllegalStateException("Bad tomcat version", e);
+                }
+
+                final List<AutoCloseable> cc;
+                try {
+                    cc = ((Map<ServletContainerInitializer, Set<Class<?>>>) f.get(ctx)).keySet().stream()
+                            .filter(i -> !i.getClass().getName().startsWith(Meecrowave.class.getName()))
+                            .map(i -> {
+                                try {
+                                    return this.inject(i);
+                                } catch (final IllegalArgumentException iae) {
+                                    return null;
+                                }
+                            })
+                            .filter(Objects::nonNull)
+                            .collect(toList());
+                } catch (final IllegalAccessException e) {
+                    throw new IllegalStateException("Can't read initializers", e);
+                }
+                releaseSCI.set(() -> cc.forEach(closeable -> {
+                    try {
+                        closeable.close();
+                    } catch (final Exception e) {
+                        throw new IllegalStateException(e);
+                    }
+                }));
+            }
         }, emptySet());
 
         if (configuration.isUseTomcatDefaults()) {
@@ -258,6 +311,7 @@ public class Meecrowave implements AutoCloseable {
 
         tomcat.getHost().addChild(ctx);
         contexts.put(meta.context, () -> {
+            ofNullable(releaseSCI.get()).ifPresent(Runnable::run);
             try {
                 tomcat.getHost().removeChild(ctx);
             } finally {
@@ -569,6 +623,15 @@ public class Meecrowave implements AutoCloseable {
 
     protected void beforeStop() {
         // no-op
+    }
+
+    public <T> AutoCloseable inject(final T instance) {
+        final BeanManager bm = CDI.current().getBeanManager();
+        final AnnotatedType<?> annotatedType = bm.createAnnotatedType(instance.getClass());
+        final InjectionTarget injectionTarget = bm.createInjectionTarget(annotatedType);
+        final CreationalContext<Object> creationalContext = bm.createCreationalContext(null);
+        injectionTarget.inject(instance, creationalContext);
+        return creationalContext::release;
     }
 
     @Override
@@ -929,6 +992,9 @@ public class Meecrowave implements AutoCloseable {
 
         @CliOption(name = "log4j2-jul-bridge", description = "Should JUL logs be redirected to Log4j2 - only works before JUL usage.")
         private boolean useLog4j2JulLogManager = System.getProperty("java.util.logging.manager") == null;
+
+        @CliOption(name = "servlet-container-initializer-injection", description = "Should ServletContainerInitialize support injections.")
+        private boolean injectServletContainerInitializer = true;
 
         private final Map<Class<?>, Object> extensions = new HashMap<>();
 
@@ -1728,6 +1794,14 @@ public class Meecrowave implements AutoCloseable {
                 type = type.getSuperclass();
             } while (type != Object.class);
             return instance;
+        }
+
+        public boolean isInjectServletContainerInitializer() {
+            return injectServletContainerInitializer;
+        }
+
+        public void setInjectServletContainerInitializer(final boolean injectServletContainerInitializer) {
+            this.injectServletContainerInitializer = injectServletContainerInitializer;
         }
     }
 

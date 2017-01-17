@@ -176,6 +176,9 @@ public class MeecrowaveRunMojo extends AbstractMojo {
     @Parameter(property = "meecrowave.logging-global-setup", defaultValue = "true")
     private boolean loggingGlobalSetup;
 
+    @Parameter(property = "meecrowave.servlet-container-initializer-injections", defaultValue = "true")
+    private boolean injectServletContainerInitializer;
+
     @Parameter(property = "meecrowave.shutdown-hook", defaultValue = "true")
     private boolean useShutdownHook;
 
