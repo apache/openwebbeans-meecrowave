@@ -47,6 +47,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 
+import static java.util.Collections.singletonList;
+import static java.util.Collections.singletonMap;
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toList;
 import static org.apache.maven.plugins.annotations.ResolutionScope.RUNTIME_PLUS_SYSTEM;
@@ -204,9 +206,6 @@ public class MeecrowaveRunMojo extends AbstractMojo {
     @Parameter(property = "meecrowave.shared-libraries")
     private String sharedLibraries;
 
-    @Parameter(property = "meecrowave.webapp")
-    private File webapp;
-
     @Parameter(property = "meecrowave.log4j2-jul-bridge", defaultValue = "true")
     private boolean useLog4j2JulLogManager;
 
@@ -264,6 +263,15 @@ public class MeecrowaveRunMojo extends AbstractMojo {
     @Parameter(property = "meecrowave.force-log4j2-shutdown", defaultValue = "true")
     private boolean forceLog4j2Shutdown;
 
+    @Parameter(property = "meecrowave.webapp", defaultValue = "${project.basedir}/src/main/webapp")
+    private File webapp;
+
+    @Parameter(property = "meecrowave.force-classpath-deployment", defaultValue = "true")
+    private boolean useClasspathDeployment;
+
+    @Parameter
+    private String jsContextCustomizer;
+
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         if (skip) {
@@ -280,15 +288,21 @@ public class MeecrowaveRunMojo extends AbstractMojo {
             try (final Meecrowave meecrowave = new Meecrowave(builder) {
                 @Override
                 protected void beforeStart() {
-                    scriptCustomization(jsCustomizers, "js", base.getAbsolutePath());
+                    scriptCustomization(jsCustomizers, "js", singletonMap("meecrowaveBase", base.getAbsolutePath()));
                 }
             }) {
                 meecrowave.start();
                 final String fixedContext = ofNullable(context).orElse("");
-                if (webapp == null) {
-                    meecrowave.deployClasspath(fixedContext);
+                final Meecrowave.DeploymentMeta deploymentMeta = new Meecrowave.DeploymentMeta(
+                        fixedContext,
+                        webapp != null && webapp.isDirectory() ? webapp : null,
+                        jsContextCustomizer == null ?
+                                null : ctx -> scriptCustomization(
+                                singletonList(jsContextCustomizer), "js", singletonMap("context", ctx)));
+                if (useClasspathDeployment) {
+                    meecrowave.deployClasspath(deploymentMeta);
                 } else {
-                    meecrowave.deployWebapp(fixedContext, webapp);
+                    meecrowave.deployWebapp(deploymentMeta);
                 }
                 new Scanner(System.in).next();
             }
@@ -307,7 +321,7 @@ public class MeecrowaveRunMojo extends AbstractMojo {
         }
     }
 
-    private void scriptCustomization(final List<String> customizers, final String ext, final String base) {
+    private void scriptCustomization(final List<String> customizers, final String ext, final Map<String, Object> customBindings) {
         if (customizers == null || customizers.isEmpty()) {
             return;
         }
@@ -318,9 +332,9 @@ public class MeecrowaveRunMojo extends AbstractMojo {
         for (final String js : customizers) {
             try {
                 final SimpleBindings bindings = new SimpleBindings();
-                bindings.put("meecrowaveBase", base);
                 bindings.put("project", project);
                 engine.eval(new StringReader(js), bindings);
+                bindings.putAll(customBindings);
             } catch (final ScriptException e) {
                 throw new IllegalStateException(e.getMessage(), e);
             }
