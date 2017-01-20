@@ -56,6 +56,7 @@ public class Cli {
         options.addOption(null, "help", false, "Show help");
         options.addOption(null, "context", true, "The context to use to deploy the webapp");
         options.addOption(null, "webapp", true, "Location of the webapp, if not set the classpath will be deployed");
+        options.addOption(null, "docbase", true, "Location of the docbase for a classpath deployment");
         final List<Field> fields = Stream.of(Meecrowave.Builder.class.getDeclaredFields())
                 .filter(f -> f.isAnnotationPresent(CliOption.class))
                 .collect(toList());
@@ -92,10 +93,10 @@ public class Cli {
             final String ctx = line.getOptionValue("context", "");
             final String fixedCtx = !ctx.isEmpty() && !ctx.startsWith("/") ? '/' + ctx : ctx;
             final String war = line.getOptionValue("webapp");
+            meecrowave.start();
             if (war == null) {
-                meecrowave.bake(fixedCtx);
+                meecrowave.deployClasspath(new Meecrowave.DeploymentMeta(ctx, ofNullable(line.getOptionValue("docbase")).map(File::new).orElse(null), null));
             } else {
-                meecrowave.start();
                 meecrowave.deployWebapp(fixedCtx, new File(war));
             }
             meecrowave.getTomcat().getServer().await();
