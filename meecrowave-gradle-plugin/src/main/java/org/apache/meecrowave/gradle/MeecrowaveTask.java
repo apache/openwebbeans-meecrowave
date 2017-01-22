@@ -324,6 +324,10 @@ public class MeecrowaveTask extends DefaultTask {
     @Optional
     private String scanningPackageExcludes;
 
+    @Input
+    @Optional
+    private String tomcatAccessLogPattern;
+
     @TaskAction
     public void bake() {
         fixConfig();
@@ -1123,5 +1127,13 @@ public class MeecrowaveTask extends DefaultTask {
 
     public void setInjectServletContainerInitializer(final boolean injectServletContainerInitializer) {
         this.injectServletContainerInitializer = injectServletContainerInitializer;
+    }
+
+    public String getTomcatAccessLogPattern() {
+        return tomcatAccessLogPattern;
+    }
+
+    public void setTomcatAccessLogPattern(final String tomcatAccessLogPattern) {
+        this.tomcatAccessLogPattern = tomcatAccessLogPattern;
     }
 }

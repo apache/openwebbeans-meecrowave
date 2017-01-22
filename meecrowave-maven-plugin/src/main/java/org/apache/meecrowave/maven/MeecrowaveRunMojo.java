@@ -133,6 +133,9 @@ public class MeecrowaveRunMojo extends AbstractMojo {
     @Parameter(property = "meecrowave.webXml")
     private String webXml;
 
+    @Parameter(property = "meecrowave.tomcatAccessLogPattern")
+    private String tomcatAccessLogPattern;
+
     @Parameter
     private Meecrowave.LoginConfigBuilder loginConfig;
 

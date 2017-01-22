@@ -101,6 +101,7 @@ public class MeecrowaveConfiguration implements ContainerConfiguration {
     private String scanningPackageExcludes;
     private boolean tomcatNoJmx = true;
     private boolean injectServletContainerInitializer = true;
+    private String tomcatAccessLogPattern;
 
     @Override
     public void validate() throws ConfigurationException {
@@ -727,5 +728,13 @@ public class MeecrowaveConfiguration implements ContainerConfiguration {
 
     public void setInjectServletContainerInitializer(final boolean injectServletContainerInitializer) {
         this.injectServletContainerInitializer = injectServletContainerInitializer;
+    }
+
+    public String getTomcatAccessLogPattern() {
+        return tomcatAccessLogPattern;
+    }
+
+    public void setTomcatAccessLogPattern(final String tomcatAccessLogPattern) {
+        this.tomcatAccessLogPattern = tomcatAccessLogPattern;
     }
 }

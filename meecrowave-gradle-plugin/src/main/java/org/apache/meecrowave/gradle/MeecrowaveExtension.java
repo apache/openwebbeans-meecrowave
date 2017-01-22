@@ -91,6 +91,7 @@ public class MeecrowaveExtension {
     private String scanningPackageExcludes;
     private boolean tomcatNoJmx = true;
     private boolean injectServletContainerInitializer = true;
+    private String tomcatAccessLogPattern;
 
     public boolean isJava9SkipWorkarounds() {
         return java9SkipWorkarounds;
@@ -618,5 +619,13 @@ public class MeecrowaveExtension {
 
     public void setInjectServletContainerInitializer(final boolean injectServletContainerInitializer) {
         this.injectServletContainerInitializer = injectServletContainerInitializer;
+    }
+
+    public String getTomcatAccessLogPattern() {
+        return tomcatAccessLogPattern;
+    }
+
+    public void setTomcatAccessLogPattern(final String tomcatAccessLogPattern) {
+        this.tomcatAccessLogPattern = tomcatAccessLogPattern;
     }
 }

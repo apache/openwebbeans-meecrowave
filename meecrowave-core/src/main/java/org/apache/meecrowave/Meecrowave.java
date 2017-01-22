@@ -48,6 +48,7 @@ import org.apache.meecrowave.logging.tomcat.LogFacade;
 import org.apache.meecrowave.openwebbeans.OWBAutoSetup;
 import org.apache.meecrowave.runner.cli.CliOption;
 import org.apache.meecrowave.tomcat.CDIInstanceManager;
+import org.apache.meecrowave.tomcat.LoggingAccessLogPattern;
 import org.apache.meecrowave.tomcat.NoDescriptorRegistry;
 import org.apache.meecrowave.tomcat.OWBJarScanner;
 import org.apache.meecrowave.tomcat.ProvidedLoader;
@@ -488,6 +489,8 @@ public class Meecrowave implements AutoCloseable {
             }
             tomcat.setHost(host);
         }
+
+        ofNullable(configuration.getTomcatAccessLogPattern()).ifPresent(pattern -> tomcat.getHost().getPipeline().addValve(new LoggingAccessLogPattern(pattern)));
 
         if (configuration.realm != null) {
             tomcat.getEngine().setRealm(configuration.realm);
@@ -996,6 +999,11 @@ public class Meecrowave implements AutoCloseable {
         @CliOption(name = "servlet-container-initializer-injection", description = "Should ServletContainerInitialize support injections.")
         private boolean injectServletContainerInitializer = true;
 
+        @CliOption(
+                name = "tomcat-access-log-pattern",
+                description = "Activates and configure the access log valve. Value example: '%h %l %u %t \"%r\" %s %b \"%{Referer}i\" \"%{User-Agent}i\"'")
+        private String tomcatAccessLogPattern;
+
         private final Map<Class<?>, Object> extensions = new HashMap<>();
 
         public Builder() { // load defaults
@@ -1012,6 +1020,14 @@ public class Meecrowave implements AutoCloseable {
                     throw new IllegalArgumentException(e);
                 }
             }));
+        }
+
+        public String getTomcatAccessLogPattern() {
+            return tomcatAccessLogPattern;
+        }
+
+        public void setTomcatAccessLogPattern(final String tomcatAccessLogPattern) {
+            this.tomcatAccessLogPattern = tomcatAccessLogPattern;
         }
 
         public boolean isTomcatNoJmx() {
