@@ -199,19 +199,17 @@ public class Meecrowave implements AutoCloseable {
         new LogFacade(Meecrowave.class.getName()).info("--------------- " + base + meta.context);
 
 
-        final File dir = ofNullable(meta.docBase).orElse(null);
-
         final OWBJarScanner scanner = new OWBJarScanner();
         final StandardContext ctx = new StandardContext();
         ctx.setPath(meta.context);
         ctx.setName(meta.context);
         ctx.setJarScanner(scanner);
         ctx.setInstanceManager(new CDIInstanceManager());
-        ofNullable(dir).ifPresent(d -> {
+        ofNullable(meta.docBase).ifPresent(d -> {
             try {
-                ctx.setDocBase(d.getCanonicalPath());
+                ctx.setDocBase(meta.docBase.getCanonicalPath());
             } catch (final IOException e) {
-                ctx.setDocBase(d.getAbsolutePath());
+                ctx.setDocBase(meta.docBase.getAbsolutePath());
             }
         });
         ofNullable(configuration.tomcatFilter).ifPresent(filter -> {
@@ -221,7 +219,7 @@ public class Meecrowave implements AutoCloseable {
                 throw new IllegalArgumentException(e);
             }
         });
-        ctx.addLifecycleListener(new MeecrowaveContextConfig(configuration, dir != null));
+        ctx.addLifecycleListener(new MeecrowaveContextConfig(configuration, meta.docBase != null));
         ctx.addLifecycleListener(event -> {
             switch (event.getType()) {
                 case Lifecycle.AFTER_START_EVENT:
@@ -311,14 +309,7 @@ public class Meecrowave implements AutoCloseable {
         tomcat.getHost().addChild(ctx);
         contexts.put(meta.context, () -> {
             ofNullable(releaseSCI.get()).ifPresent(Runnable::run);
-            try {
-                tomcat.getHost().removeChild(ctx);
-            } finally {
-                if (dir != null && dir != meta.docBase) {
-                    IO.delete(dir);
-                }
-            }
-
+            tomcat.getHost().removeChild(ctx);
         });
         return this;
     }
