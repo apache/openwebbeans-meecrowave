@@ -199,11 +199,7 @@ public class Meecrowave implements AutoCloseable {
         new LogFacade(Meecrowave.class.getName()).info("--------------- " + base + meta.context);
 
 
-        final File dir = ofNullable(meta.docBase).orElseGet(() -> {
-            final File d = new File(ownedTempDir, "classpath/fake-" + meta.context.replace("/", ""));
-            IO.mkdirs(d);
-            return d;
-        });
+        final File dir = ofNullable(meta.docBase).orElse(null);
 
         final OWBJarScanner scanner = new OWBJarScanner();
         final StandardContext ctx = new StandardContext();
@@ -211,11 +207,13 @@ public class Meecrowave implements AutoCloseable {
         ctx.setName(meta.context);
         ctx.setJarScanner(scanner);
         ctx.setInstanceManager(new CDIInstanceManager());
-        try {
-            ctx.setDocBase(dir.getCanonicalPath());
-        } catch (final IOException e) {
-            ctx.setDocBase(dir.getAbsolutePath());
-        }
+        ofNullable(dir).ifPresent(d -> {
+            try {
+                ctx.setDocBase(d.getCanonicalPath());
+            } catch (final IOException e) {
+                ctx.setDocBase(d.getAbsolutePath());
+            }
+        });
         ofNullable(configuration.tomcatFilter).ifPresent(filter -> {
             try {
                 scanner.setJarScanFilter(JarScanFilter.class.cast(Thread.currentThread().getContextClassLoader().loadClass(filter).newInstance()));
@@ -223,7 +221,7 @@ public class Meecrowave implements AutoCloseable {
                 throw new IllegalArgumentException(e);
             }
         });
-        ctx.addLifecycleListener(new MeecrowaveContextConfig(configuration));
+        ctx.addLifecycleListener(new MeecrowaveContextConfig(configuration, dir != null));
         ctx.addLifecycleListener(event -> {
             switch (event.getType()) {
                 case Lifecycle.AFTER_START_EVENT:
@@ -316,7 +314,7 @@ public class Meecrowave implements AutoCloseable {
             try {
                 tomcat.getHost().removeChild(ctx);
             } finally {
-                if (dir != meta.docBase) {
+                if (dir != null && dir != meta.docBase) {
                     IO.delete(dir);
                 }
             }

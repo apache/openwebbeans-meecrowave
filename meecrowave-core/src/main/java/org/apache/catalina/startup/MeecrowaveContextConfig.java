@@ -55,10 +55,20 @@ public class MeecrowaveContextConfig extends ContextConfig {
 
     private final Meecrowave.Builder configuration;
     private final Map<String, Collection<Class<?>>> webClasses = new HashMap<>();
+    private final boolean fixDocBase;
     private OwbAnnotationFinder finder;
 
-    public MeecrowaveContextConfig(final Meecrowave.Builder configuration) {
+    public MeecrowaveContextConfig(final Meecrowave.Builder configuration, final boolean fixDocBase) {
         this.configuration = configuration;
+        this.fixDocBase = fixDocBase;
+    }
+
+    @Override
+    protected void fixDocBase() throws IOException {
+        if (!fixDocBase) {
+            return;
+        }
+        super.fixDocBase();
     }
 
     @Override
