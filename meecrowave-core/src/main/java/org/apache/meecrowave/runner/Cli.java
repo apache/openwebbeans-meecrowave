@@ -37,6 +37,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.ServiceLoader;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -106,15 +107,15 @@ public class Cli {
     private static Meecrowave.Builder buildConfig(final CommandLine line, final List<Field> fields,
                                                   final Map<Object, List<Field>> propertiesOptions) {
         final Meecrowave.Builder config = new Meecrowave.Builder();
-        bind(line, fields, config);
+        bind(config, line, fields, config);
         propertiesOptions.forEach((o, f) -> {
-            bind(line, f, o);
+            bind(config, line, f, o);
             config.setExtension(o.getClass(), o);
         });
         return config;
     }
 
-    private static void bind(final CommandLine line, final List<Field> fields, final Object config) {
+    private static void bind(final Meecrowave.Builder builder, final CommandLine line, final List<Field> fields, final Object config) {
         fields.forEach(f -> {
             final CliOption opt = f.getAnnotation(CliOption.class);
             final Optional<String> first = Stream.of(Stream.of(opt.name()), Stream.of(opt.alias()))
@@ -125,7 +126,7 @@ public class Cli {
                 final String name = first.get();
                 ofNullable(f.getType() == boolean.class ?
                         ofNullable(line.getOptionValue(name)).map(Boolean::parseBoolean).orElse(true) :
-                        toValue(name, line.getOptionValues(name), f.getType()))
+                        toValue(builder, name, line.getOptionValues(name), f.getType()))
                         .ifPresent(v -> {
                             if (!f.isAccessible()) {
                                 f.setAccessible(true);
@@ -140,10 +141,15 @@ public class Cli {
         });
     }
 
-    private static Object toValue(final String name, final String[] optionValues, final Class<?> type) {
+    private static Object toValue(final Meecrowave.Builder builder, final String name, final String[] optionValues, final Class<?> type) {
         if (optionValues == null || optionValues.length == 0) {
             return null;
         }
+
+        // decode options while it is strings
+        IntStream.range(0, optionValues.length)
+                .forEach(i -> optionValues[i] = builder.getExtension(Meecrowave.ValueTransformers.class).apply(optionValues[i]));
+
         if (String.class == type) {
             return optionValues[0];
         }

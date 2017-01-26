@@ -64,3 +64,32 @@ TIP: out of the box, any `Builder` instance will read `meecrowave.properties`.
 
 Meecrowave relies by default on Log4j2 (see http://logging.apache.org/log4j/2.x/). By default it uses an internal
 configuration which is overriden by standard log4j mecanism.
+
+== Passwords/Secrets
+
+For the configuration requiring to be ciphered you can implement `org.apache.meecrowave.service.ValueTransformer`:
+
+[source]
+----
+public class MyTransformer implements ValueTransformer {
+    @Override
+    public String name() {
+        return "mine";
+    }
+
+    @Override
+    public String apply(final String encodedPassword) {
+        return ....;
+    }
+}
+----
+
+NOTE: this code being executed before the container starts you can't use CDI there.
+
+To register your implementation just put the fully qualified name of your transformer in `META-INF/services/org.apache.meecrowave.service.ValueTransformer`.
+
+Then to use it set the value to `decode:mine:encodedvalue`. General pattern is: `decode:<transformer name>:<value before decryption>`.
+
+Note that by default the same ciphering algorithm than in TomEE is available (Static3DES).
+
+This syntax is usable on the command line and in `meecrowave.properties`.

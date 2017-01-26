@@ -33,6 +33,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Writer;
 import java.net.URL;
+import java.util.Properties;
 import java.util.stream.Stream;
 
 import static org.junit.Assert.assertEquals;
@@ -56,6 +57,22 @@ public class MeecrowaveTest {
         assertEquals(9632, config.aLastPortValue);
         assertEquals("any value", config.passthrough);
         assertTrue(config.bool);
+    }
+
+    @Test
+    public void valueTransformationMainConfig() {
+        assertEquals(1234, new Meecrowave.Builder() {{
+            loadFromProperties(new Properties() {{
+                setProperty("http", "decode:Static3DES:+yYyC7Lb5+k=");
+            }});
+        }}.getHttpPort());
+    }
+
+    @Test
+    public void valueTransformationExtension() {
+        assertEquals(1234, new Meecrowave.Builder()
+                .property("my-prefix-port", "decode:Static3DES:+yYyC7Lb5+k=")
+                .bind(new MyConfig()).port);
     }
 
     @Test

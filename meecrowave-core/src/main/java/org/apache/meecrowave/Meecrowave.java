@@ -47,6 +47,7 @@ import org.apache.meecrowave.logging.tomcat.Log4j2Log;
 import org.apache.meecrowave.logging.tomcat.LogFacade;
 import org.apache.meecrowave.openwebbeans.OWBAutoSetup;
 import org.apache.meecrowave.runner.cli.CliOption;
+import org.apache.meecrowave.service.ValueTransformer;
 import org.apache.meecrowave.tomcat.CDIInstanceManager;
 import org.apache.meecrowave.tomcat.LoggingAccessLogPattern;
 import org.apache.meecrowave.tomcat.NoDescriptorRegistry;
@@ -65,6 +66,8 @@ import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
+import javax.crypto.Cipher;
+import javax.crypto.spec.SecretKeySpec;
 import javax.enterprise.context.spi.CreationalContext;
 import javax.enterprise.inject.spi.AnnotatedType;
 import javax.enterprise.inject.spi.BeanManager;
@@ -90,6 +93,7 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -97,10 +101,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
+import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 import static java.util.Collections.emptyList;
@@ -996,6 +1002,7 @@ public class Meecrowave implements AutoCloseable {
         private final Map<Class<?>, Object> extensions = new HashMap<>();
 
         public Builder() { // load defaults
+            extensions.put(ValueTransformers.class, new ValueTransformers());
             loadFrom("meecrowave.properties");
         }
 
@@ -1662,12 +1669,14 @@ public class Meecrowave implements AutoCloseable {
                     return property == null ? config.getProperty(key) : null;
                 }
             });
+
+            final ValueTransformers transformers = getExtension(ValueTransformers.class);
             for (final String key : config.stringPropertyNames()) {
                 final String val = config.getProperty(key);
                 if (val == null || val.trim().isEmpty()) {
                     continue;
                 }
-                final String newVal = strSubstitutor.replace(config.getProperty(key));
+                final String newVal = transformers.apply(strSubstitutor.replace(config.getProperty(key)));
                 if (!val.equals(newVal)) {
                     config.setProperty(key, newVal);
                 }
@@ -1676,13 +1685,14 @@ public class Meecrowave implements AutoCloseable {
             for (final Field field : Builder.class.getDeclaredFields()) {
                 final CliOption annotation = field.getAnnotation(CliOption.class);
                 if (annotation == null) {
-                    return;
+                    continue;
                 }
                 final String name = field.getName();
                 Stream.of(Stream.of(annotation.name()), Stream.of(annotation.alias()))
                         .flatMap(a -> a)
                         .map(config::getProperty)
-                        .findFirst().ifPresent(val -> {
+                        .filter(Objects::nonNull)
+                        .findAny().ifPresent(val -> {
                     final Object toSet;
                     if (field.getType() == String.class) {
                         toSet = val;
@@ -1764,6 +1774,7 @@ public class Meecrowave implements AutoCloseable {
         }
 
         public <T> T bind(final T instance) {
+            final ValueTransformers transformers = getExtension(ValueTransformers.class);
             Class<? extends Object> type = instance.getClass();
             do {
                 Stream.of(type.getDeclaredFields())
@@ -1777,6 +1788,8 @@ public class Meecrowave implements AutoCloseable {
                                     return;
                                 }
                             }
+
+                            value = transformers.apply(value);
 
                             if (!f.isAccessible()) {
                                 f.setAccessible(true);
@@ -1807,6 +1820,56 @@ public class Meecrowave implements AutoCloseable {
 
         public void setInjectServletContainerInitializer(final boolean injectServletContainerInitializer) {
             this.injectServletContainerInitializer = injectServletContainerInitializer;
+        }
+    }
+
+    public static class ValueTransformers implements Function<String, String> {
+        private final Map<String, ValueTransformer> transformers = new HashMap<>();
+
+        @Override
+        public String apply(final String value) {
+            if (value.startsWith("decode:")) {
+                if (transformers.isEmpty()) { // lazy loading
+                    transformers.put("Static3DES", new ValueTransformer() { // compatibility with tomee
+                        private final SecretKeySpec key = new SecretKeySpec(new byte[]{
+                                (byte) 0x76, (byte) 0x6F, (byte) 0xBA, (byte) 0x39, (byte) 0x31,
+                                (byte) 0x2F, (byte) 0x0D, (byte) 0x4A, (byte) 0xA3, (byte) 0x90,
+                                (byte) 0x55, (byte) 0xFE, (byte) 0x55, (byte) 0x65, (byte) 0x61,
+                                (byte) 0x13, (byte) 0x34, (byte) 0x82, (byte) 0x12, (byte) 0x17,
+                                (byte) 0xAC, (byte) 0x77, (byte) 0x39, (byte) 0x19}, "DESede");
+
+                        @Override
+                        public String name() {
+                            return "Static3DES";
+                        }
+
+                        @Override
+                        public String apply(final String encodedPassword) {
+                            Objects.requireNonNull(encodedPassword, "value can't be null");
+                            try {
+                                final byte[] cipherText = Base64.getDecoder().decode(encodedPassword);
+                                final Cipher cipher = Cipher.getInstance("DESede");
+                                cipher.init(Cipher.DECRYPT_MODE, key);
+                                return new String(cipher.doFinal(cipherText), StandardCharsets.UTF_8);
+                            } catch (final Exception e) {
+                                throw new IllegalArgumentException(e);
+                            }
+                        }
+                    });
+                    for (final ValueTransformer t : ServiceLoader.load(ValueTransformer.class)) {
+                        transformers.put(t.name(), t);
+                    }
+                }
+
+                final String substring = value.substring("decode:".length());
+                final int sep = substring.indexOf(':');
+                if (sep < 0) {
+                    throw new IllegalArgumentException("No transformer algorithm for " + value);
+                }
+                final String algo = substring.substring(0, sep);
+                return Objects.requireNonNull(transformers.get(algo), "No ValueTransformer for value '" + value + "'").apply(substring.substring(sep + 1));
+            }
+            return value;
         }
     }
 
