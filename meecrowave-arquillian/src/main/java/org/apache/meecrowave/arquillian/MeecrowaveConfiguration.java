@@ -103,6 +103,9 @@ public class MeecrowaveConfiguration implements ContainerConfiguration {
     private boolean injectServletContainerInitializer = true;
     private String tomcatAccessLogPattern;
 
+    // configurable cause when set to Local arquillian bypass some protocol configuration cause of container default
+    private String arquillianProtocol = "Servlet 3.1";
+
     @Override
     public void validate() throws ConfigurationException {
         // no-op
@@ -736,5 +739,13 @@ public class MeecrowaveConfiguration implements ContainerConfiguration {
 
     public void setTomcatAccessLogPattern(final String tomcatAccessLogPattern) {
         this.tomcatAccessLogPattern = tomcatAccessLogPattern;
+    }
+
+    public String getArquillianProtocol() {
+        return arquillianProtocol;
+    }
+
+    public void setArquillianProtocol(final String arquillianProtocol) {
+        this.arquillianProtocol = arquillianProtocol;
     }
 }

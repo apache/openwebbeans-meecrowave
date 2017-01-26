@@ -38,6 +38,7 @@ import static java.util.Optional.ofNullable;
 public class MeecrowaveContainer implements DeployableContainer<MeecrowaveConfiguration> {
     private Meecrowave.Builder configuration;
     private Meecrowave container;
+    private ProtocolDescription defaultProtocol;
 
     @Override
     public Class<MeecrowaveConfiguration> getConfigurationClass() {
@@ -47,6 +48,7 @@ public class MeecrowaveContainer implements DeployableContainer<MeecrowaveConfig
     @Override
     public void setup(final MeecrowaveConfiguration configuration) {
         this.configuration = configuration.toMeecrowaveConfiguration();
+        this.defaultProtocol = new ProtocolDescription(configuration.getArquillianProtocol());
     }
 
     @Override
@@ -62,7 +64,7 @@ public class MeecrowaveContainer implements DeployableContainer<MeecrowaveConfig
 
     @Override
     public ProtocolDescription getDefaultProtocol() {
-        return new ProtocolDescription("Servlet 3.1");
+        return defaultProtocol;
     }
 
     @Override
