@@ -33,6 +33,7 @@ import static org.junit.Assert.assertTrue;
 public class JolokiaInitializerTest {
     @ClassRule
     public static final MeecrowaveRule RULE = new MeecrowaveRule(new Meecrowave.Builder() {{
+        randomHttpPort();
         this.setExtension(HawtioInitializer.HawtioConfiguration.class, new HawtioInitializer.HawtioConfiguration() {{
             setActive(false);
         }});
