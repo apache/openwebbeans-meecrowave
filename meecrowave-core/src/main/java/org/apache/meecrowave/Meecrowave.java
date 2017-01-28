@@ -206,7 +206,29 @@ public class Meecrowave implements AutoCloseable {
 
 
         final OWBJarScanner scanner = new OWBJarScanner();
-        final StandardContext ctx = new StandardContext();
+        final StandardContext ctx = new StandardContext() {
+            @Override
+            public void setApplicationEventListeners(final Object[] listeners) {
+                if (listeners == null) {
+                    super.setApplicationEventListeners(null);
+                    return;
+                }
+
+                // ensure owb is first and cxf is last otherwise surprises,
+                // if we don't -> no @RequestScoped in request listeners :(
+                for (int i = 1; i < listeners.length; i++) {
+                    if (OWBAutoSetup.EagerBootListener.class.isInstance(listeners[i])) {
+                        final Object first = listeners[0];
+                        listeners[0] = listeners[i];
+                        listeners[i] = first;
+                        break;
+                    }
+                }
+
+                // and finally let it go after our re-ordering
+                super.setApplicationEventListeners(listeners);
+            }
+        };
         ctx.setPath(meta.context);
         ctx.setName(meta.context);
         ctx.setJarScanner(scanner);
