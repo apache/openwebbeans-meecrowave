@@ -50,10 +50,10 @@
 
     <junit.version>4.12</junit.version>
     <tomcat.version>9.0.0.M17</tomcat.version>
-    <openwebbeans.version>1.7.1</openwebbeans.version>
+    <openwebbeans.version>1.7.2</openwebbeans.version>
     <cxf.version>3.1.10</cxf.version>
     <johnzon.version>1.0.0</johnzon.version>
-    <log4j2.version>2.7</log4j2.version>
+    <log4j2.version>2.8</log4j2.version>
     <deltaspike.version>1.7.2</deltaspike.version>
     <jaxb.version>2.2.11</jaxb.version>
     <openjpa.version>2.4.2</openjpa.version>
