@@ -172,6 +172,9 @@ public class MeecrowaveRunMojo extends AbstractMojo {
     @Parameter(property = "meecrowave.skip")
     private boolean skip;
 
+    @Parameter(property = "meecrowave.jaxrs-beanvalidation", defaultValue = "true")
+    private boolean jaxrsAutoActivateBeanValidation;
+
     @Parameter(property = "meecrowave.jaxrs-default-providers")
     private String jaxrsDefaultProviders;
 

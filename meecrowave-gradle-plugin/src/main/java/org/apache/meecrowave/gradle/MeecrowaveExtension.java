@@ -92,6 +92,7 @@ public class MeecrowaveExtension {
     private boolean tomcatNoJmx = true;
     private boolean injectServletContainerInitializer = true;
     private String tomcatAccessLogPattern;
+    private boolean jaxrsAutoActivateBeanValidation = true;
 
     public boolean isJava9SkipWorkarounds() {
         return java9SkipWorkarounds;
@@ -627,5 +628,13 @@ public class MeecrowaveExtension {
 
     public void setTomcatAccessLogPattern(final String tomcatAccessLogPattern) {
         this.tomcatAccessLogPattern = tomcatAccessLogPattern;
+    }
+
+    public boolean isJaxrsAutoActivateBeanValidation() {
+        return jaxrsAutoActivateBeanValidation;
+    }
+
+    public void setJaxrsAutoActivateBeanValidation(final boolean jaxrsAutoActivateBeanValidation) {
+        this.jaxrsAutoActivateBeanValidation = jaxrsAutoActivateBeanValidation;
     }
 }

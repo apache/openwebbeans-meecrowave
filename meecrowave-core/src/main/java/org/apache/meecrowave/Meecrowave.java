@@ -925,6 +925,9 @@ public class Meecrowave implements AutoCloseable {
         @CliOption(name = "jaxrs-default-providers", description = "If jaxrsProviderSetup is true the list of default providers to load (or defaulting to johnson jsonb and jsonp ones)")
         private String jaxrsDefaultProviders;
 
+        @CliOption(name = "jaxrs-beanvalidation", description = "Should bean validation be activated on JAX-RS endpoint if present in the classpath.")
+        private boolean jaxrsAutoActivateBeanValidation = true;
+
         @CliOption(name = "jaxrs-log-provider", description = "Should JAX-RS providers be logged")
         private boolean jaxrsLogProviders = false;
 
@@ -1281,6 +1284,14 @@ public class Meecrowave implements AutoCloseable {
 
         public void setLoggingGlobalSetup(final boolean loggingGlobalSetup) {
             this.loggingGlobalSetup = loggingGlobalSetup;
+        }
+
+        public boolean isJaxrsAutoActivateBeanValidation() {
+            return jaxrsAutoActivateBeanValidation;
+        }
+
+        public void setJaxrsAutoActivateBeanValidation(final boolean jaxrsAutoActivateBeanValidation) {
+            this.jaxrsAutoActivateBeanValidation = jaxrsAutoActivateBeanValidation;
         }
 
         public boolean isJaxrsProviderSetup() {

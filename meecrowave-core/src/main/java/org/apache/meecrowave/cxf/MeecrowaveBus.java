@@ -33,9 +33,9 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static java.util.Arrays.asList;
 import static java.util.Optional.of;
 import static java.util.Optional.ofNullable;
+import static java.util.stream.Collectors.toList;
 
 @Named("cxf")
 @ApplicationScoped
@@ -71,7 +71,7 @@ public class MeecrowaveBus implements Bus {
                                         }
                                     })
                                     .collect(Collectors.<Object>toList()))
-                            .orElseGet(() -> asList(
+                            .orElseGet(() -> Stream.<Object>of(
                                     new ConfiguredJsonbJaxrsProvider(
                                             builder.getJsonbEncoding(), builder.isJsonbNulls(),
                                             builder.isJsonbIJson(), builder.isJsonbPrettify(),
@@ -80,7 +80,18 @@ public class MeecrowaveBus implements Bus {
                                     new ConfiguredJsrProvider(
                                             builder.getJsonpBufferStrategy(), builder.getJsonpMaxStringLen(),
                                             builder.getJsonpMaxReadBufferLen(), builder.getJsonpMaxWriteBufferLen(),
-                                            builder.isJsonpSupportsComment(), builder.isJsonpPrettify())));
+                                            builder.isJsonpSupportsComment(), builder.isJsonpPrettify()))
+                                    .collect(toList()));
+
+            if (builder.isJaxrsAutoActivateBeanValidation()) {
+                try { // we don't need the jaxrsbeanvalidationfeature since bean validation cdi extension handles it normally
+                    final ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
+                    contextClassLoader.loadClass("javax.validation.Validation");
+                    providers.add(contextClassLoader.loadClass("org.apache.cxf.jaxrs.validation.ValidationExceptionMapper").newInstance());
+                } catch (final Exception | NoClassDefFoundError e) {
+                    // no-op
+                }
+            }
 
             // client
             if (getProperty("org.apache.cxf.jaxrs.bus.providers") == null) {

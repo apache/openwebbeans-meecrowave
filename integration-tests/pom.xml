@@ -34,5 +34,6 @@
 
   <modules>
     <module>app-groovy</module>
+    <module>beanvalidation</module>
   </modules>
 </project>

@@ -328,6 +328,10 @@ public class MeecrowaveTask extends DefaultTask {
     @Optional
     private String tomcatAccessLogPattern;
 
+    @Input
+    @Optional
+    private boolean jaxrsAutoActivateBeanValidation = true;
+
     @TaskAction
     public void bake() {
         fixConfig();
@@ -1135,5 +1139,13 @@ public class MeecrowaveTask extends DefaultTask {
 
     public void setTomcatAccessLogPattern(final String tomcatAccessLogPattern) {
         this.tomcatAccessLogPattern = tomcatAccessLogPattern;
+    }
+
+    public boolean isJaxrsAutoActivateBeanValidation() {
+        return jaxrsAutoActivateBeanValidation;
+    }
+
+    public void setJaxrsAutoActivateBeanValidation(final boolean jaxrsAutoActivateBeanValidation) {
+        this.jaxrsAutoActivateBeanValidation = jaxrsAutoActivateBeanValidation;
     }
 }
