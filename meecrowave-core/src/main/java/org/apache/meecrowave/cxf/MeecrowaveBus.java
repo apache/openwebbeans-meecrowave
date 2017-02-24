@@ -61,9 +61,11 @@ public class MeecrowaveBus implements Bus {
             final List<Object> providers =
                     ofNullable(builder.getJaxrsDefaultProviders())
                             .map(s -> Stream.of(s.split(" *, *"))
+                                    .map(String::trim)
+                                    .filter(p -> !p.isEmpty())
                                     .map(name -> {
                                         try {
-                                            return Thread.currentThread().getContextClassLoader().loadClass(s).newInstance();
+                                            return Thread.currentThread().getContextClassLoader().loadClass(name).newInstance();
                                         } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
                                             throw new IllegalArgumentException(name + " can't be created");
                                         }
