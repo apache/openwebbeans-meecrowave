@@ -74,11 +74,6 @@ public class Downloads {
                 .map(Downloads::fillDownloadable)
                 .filter(Objects::nonNull)
                 .sorted((o1, o2) -> {
-                    final int nameComp = o1.name.compareTo(o2.name);
-                    if (nameComp != 0) {
-                        return nameComp;
-                    }
-
                     final int versionComp = o2.version.compareTo(o1.version);
                     if (versionComp != 0) {
                         if (o2.version.startsWith(o1.version) && o2.version.contains("-M")) { // milestone
@@ -88,6 +83,12 @@ public class Downloads {
                             return 1;
                         }
                         return versionComp;
+                    }
+
+
+                    final int nameComp = o1.name.compareTo(o2.name);
+                    if (nameComp != 0) {
+                        return nameComp;
                     }
 
                     final long dateComp = LocalDateTime.parse(o2.date, RFC_1123_DATE_TIME).toInstant(ZoneOffset.UTC).toEpochMilli()
