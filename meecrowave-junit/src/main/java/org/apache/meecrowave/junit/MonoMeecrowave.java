@@ -48,7 +48,7 @@ public class MonoMeecrowave {
                 public void evaluate() throws Throwable {
                     BASE.startIfNeeded();
                     configInjection(test.getClass(), test);
-                    final CreationalContext<?> creationalContext = Injector.inject(true);
+                    final CreationalContext<?> creationalContext = Injector.inject(test);
                     try {
                         base.evaluate();
                     } finally {
