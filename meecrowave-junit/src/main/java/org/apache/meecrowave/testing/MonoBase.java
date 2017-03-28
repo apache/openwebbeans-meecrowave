@@ -31,8 +31,6 @@ public class MonoBase {
 
     public Meecrowave.Builder doBoot() {
         final Meecrowave.Builder configuration = new Meecrowave.Builder().randomHttpPort().noShutdownHook(/*the rule does*/);
-        StreamSupport.stream(ServiceLoader.load(Meecrowave.ConfigurationCustomizer.class).spliterator(), false)
-                .forEach(c -> c.accept(configuration));
         CONFIGURATION.compareAndSet(null, configuration);
 
         final Meecrowave meecrowave = new Meecrowave(CONFIGURATION.get());

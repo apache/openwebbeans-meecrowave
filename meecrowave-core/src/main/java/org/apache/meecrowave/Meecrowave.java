@@ -108,6 +108,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptySet;
@@ -1028,6 +1029,8 @@ public class Meecrowave implements AutoCloseable {
 
         public Builder() { // load defaults
             extensions.put(ValueTransformers.class, new ValueTransformers());
+            StreamSupport.stream(ServiceLoader.load(Meecrowave.ConfigurationCustomizer.class).spliterator(), false)
+                    .forEach(c -> c.accept(this));
             loadFrom("meecrowave.properties");
         }
 
