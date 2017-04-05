@@ -584,6 +584,10 @@ public class Meecrowave implements AutoCloseable {
             }
         }
 
+        StreamSupport.stream(ServiceLoader.load(Meecrowave.InstanceCustomizer.class).spliterator(), false)
+                .forEach(c -> c.accept(tomcat));
+        configuration.instanceCustomizers.forEach(c -> c.accept(tomcat));
+
         beforeStart();
 
         try {
@@ -1026,6 +1030,7 @@ public class Meecrowave implements AutoCloseable {
         private String tomcatAccessLogPattern;
 
         private final Map<Class<?>, Object> extensions = new HashMap<>();
+        private final Collection<Consumer<Tomcat>> instanceCustomizers = new ArrayList<>();
 
         public Builder() { // load defaults
             extensions.put(ValueTransformers.class, new ValueTransformers());
@@ -1676,6 +1681,15 @@ public class Meecrowave implements AutoCloseable {
             this.tomcatWrapLoader = tomcatWrapLoader;
         }
 
+        public void addInstanceCustomizer(final Consumer<Tomcat> customizer) {
+            instanceCustomizers.add(customizer);
+        }
+
+        public Builder instanceCustomizer(final Consumer<Tomcat> customizer) {
+            addInstanceCustomizer(customizer);
+            return this;
+        }
+
         public void addCustomizer(final Consumer<Builder> configurationCustomizer) {
             configurationCustomizer.accept(this);
         }
@@ -2189,6 +2203,9 @@ public class Meecrowave implements AutoCloseable {
 
     // just to type it and allow some extensions to use a ServiceLoader
     public interface ConfigurationCustomizer extends Consumer<Meecrowave.Builder> {
+    }
+
+    public interface InstanceCustomizer extends Consumer<Tomcat> {
     }
 
     private static final class MeecrowaveContainerLoader extends URLClassLoader {

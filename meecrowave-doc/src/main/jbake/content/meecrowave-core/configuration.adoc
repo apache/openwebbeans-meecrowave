@@ -93,3 +93,12 @@ Then to use it set the value to `decode:mine:encodedvalue`. General pattern is: 
 Note that by default the same ciphering algorithm than in TomEE is available (Static3DES).
 
 This syntax is usable on the command line and in `meecrowave.properties`.
+
+== Programmatic customization
+
+`org.apache.meecrowave.Meecrowave$ConfigurationCustomizer` can be used to customize the configuration
+programmatically before startup. It will take the `Builder` as parameter and you can change it at that moment.
+
+`org.apache.meecrowave.Meecrowave$InstanceCustomizer` can be used to customize the configuration
+programmatically before startup. It will take the `Tomcat` as parameter and you can change it at that moment. This
+is very useful to automatically add valves and things like that.
