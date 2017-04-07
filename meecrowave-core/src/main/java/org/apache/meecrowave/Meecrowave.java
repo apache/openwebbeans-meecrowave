@@ -828,8 +828,9 @@ public class Meecrowave implements AutoCloseable {
         @CliOption(name = "pid-file", description = "A file path to write the process id if the server starts")
         private File pidFile;
 
+        @Deprecated // waiting final release to see if we really need it, got broken in between
         @CliOption(name = "java9-skip-workarounds", description = "Should the java9 workarounds be skipped, default to false if on java 9")
-        private boolean java9SkipWorkarounds;
+        private boolean java9SkipWorkarounds = true;
 
         @CliOption(name = "http", description = "HTTP port")
         private int httpPort = 8080;
