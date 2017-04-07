@@ -75,6 +75,7 @@
     <module>meecrowave-jta</module>
     <module>integration-tests</module>
     <module>meecrowave-oauth2</module>
+    <module>sample</module>
   </modules>
 
   <build>

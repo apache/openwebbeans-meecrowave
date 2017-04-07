@@ -23,12 +23,13 @@ Example:
 
 [source,java]
 ----
-new Meecrowave(new Builder()
-        .randomHttpPort()
-        .setTomcatScanning(false)
-        .setTomcatAutoSetup(false)
-        .setRealm(new JAASRealm())
-        .user("admin", "secret"))
+new Meecrowave(new Builder() {{
+        randomHttpPort();
+        setTomcatScanning(false);
+        setTomcatAutoSetup(false);
+        setRealm(new JAASRealm());
+        user("admin", "secret");
+     }})
     .bake()
     .await();
 ----

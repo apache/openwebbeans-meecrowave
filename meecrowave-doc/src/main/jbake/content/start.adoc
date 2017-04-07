@@ -88,3 +88,7 @@ Finally you can test it:
 ----
 curl http://localhost:8080/hello
 ----
+
+== Sample
+
+https://github.com/apache/meecrowave/tree/trunk/sample module is a ready to use hello world using meecrowave.

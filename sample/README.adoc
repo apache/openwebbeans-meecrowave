@@ -1,0 +1,12 @@
+= Meecrowave Sample
+
+This project shows how to use meecrowave for simple applications.
+
+Here what it provides:
+
+0. A pom.xml with the dependencies for this sample and meecrowave-maven-plugin setup so you can launch `mvn package meecrowave-run`.
+1. A sample JAX-RS application: in src/main/java/com/superbiz/sample/jaxrs
+2. A test using JAX-RS client API and the meecrowave mono rule (useful when you run multiple tests) in src/test/java/com/superbiz/sample/jaxrs
+3. in src/main/java/com/superbiz/configuration/Defaults some enrichment of the meecrowave Cli options for the application.
+
+To use it launch meecrowave main (org.apache.meecrowave.runner.Cli) with option `--app-default-name foo`.
