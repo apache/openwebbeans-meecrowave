@@ -21,6 +21,7 @@ package org.apache.meecrowave.testing;
 import org.apache.meecrowave.Meecrowave;
 
 import java.io.File;
+import java.util.Comparator;
 import java.util.ServiceLoader;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.StreamSupport;
@@ -36,9 +37,12 @@ public class MonoBase {
         final Meecrowave meecrowave = new Meecrowave(CONFIGURATION.get());
         if (CONTAINER.compareAndSet(null, meecrowave)) {
             final Configuration runnerConfig = StreamSupport.stream(ServiceLoader.load(Configuration.class).spliterator(), false)
-                    .findAny()
+                    .sorted(Comparator.comparingInt(Configuration::order))
+                    .findFirst()
                     .orElseGet(() -> new Configuration() {
                     });
+
+            runnerConfig.beforeStarts();
 
             final File war = runnerConfig.application();
             if (war == null) {
@@ -46,6 +50,9 @@ public class MonoBase {
             } else {
                 meecrowave.deployWebapp(runnerConfig.context(), runnerConfig.application());
             }
+
+            runnerConfig.afterStarts();
+
             Runtime.getRuntime().addShutdownHook(new Thread() {
                 {
                     setName("Meecrowave-mono-rue-stopping");
@@ -53,7 +60,15 @@ public class MonoBase {
 
                 @Override
                 public void run() {
-                    meecrowave.close();
+                    try {
+                        runnerConfig.beforeStops();
+                    } finally {
+                        try {
+                            meecrowave.close();
+                        } finally {
+                            runnerConfig.afterStops();
+                        }
+                    }
                 }
             });
         }
@@ -76,12 +91,32 @@ public class MonoBase {
     }
 
     public interface Configuration {
+        default int order() {
+            return 0;
+        }
+
         default String context() {
             return "";
         }
 
         default File application() {
             return null;
+        }
+
+        default void beforeStarts() {
+            // no-op
+        }
+
+        default void afterStarts() {
+            // no-op
+        }
+
+        default void beforeStops() {
+            // no-op
+        }
+
+        default void afterStops() {
+            // no-op
         }
     }
 }
