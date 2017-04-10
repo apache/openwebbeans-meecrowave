@@ -161,15 +161,14 @@ public class OAuth2Configurer {
         refreshTokenGrantHandler.setUseAllClientScopes(configuration.isUseAllClientScopes());
         refreshTokenGrantHandler.setPartialMatchScopeValidation(configuration.isPartialMatchScopeValidation());
 
-        final ResourceOwnerLoginHandler loginHandler = configuration.isJaas() ? new JAASResourceOwnerLoginHandler() : (name, password) -> {
+        final ResourceOwnerLoginHandler loginHandler = configuration.isJaas() ? new JAASResourceOwnerLoginHandler() : (client, name, password) -> {
             try {
                 request.login(name, password);
                 try {
                     final Principal pcp = request.getUserPrincipal();
-                    final UserSubject userSubject = new UserSubject(
-                            name,
-                            GenericPrincipal.class.isInstance(pcp) ?
-                                    new ArrayList<>(asList(GenericPrincipal.class.cast(pcp).getRoles())) : Collections.emptyList());
+                    final List<String> roles = GenericPrincipal.class.isInstance(pcp) ?
+                            new ArrayList<String>(asList(GenericPrincipal.class.cast(pcp).getRoles())) : Collections.<String>emptyList();
+                    final UserSubject userSubject = new UserSubject(name, roles);
                     userSubject.setAuthenticationMethod(PASSWORD);
                     return userSubject;
                 } finally {
