@@ -74,6 +74,8 @@ public class OWBTomcatWebScannerService extends WebScannerService {
             final String m2 = new File(System.getProperty("user.home", "."), ".m2/repository").getAbsolutePath();
             final String base = ofNullable(docBase).orElse("$$$");
             final String sharedBase = ofNullable(shared).orElse("$$$");
+            final String runnerBase = ofNullable(System.getProperty("meecrowave.base")).orElse("$$$");
+            final String runnerHome = ofNullable(System.getProperty("meecrowave.home")).orElse("$$$");
             urls.stream().map(u -> {
                 String shownValue = u
                         // protocol
@@ -93,6 +95,10 @@ public class OWBTomcatWebScannerService extends WebScannerService {
                     shownValue = "${app}" + shownValue.replace(base, "");
                 } else if (shownValue.startsWith(sharedBase)) {
                     shownValue = "${shared}" + shownValue.replace(sharedBase, "");
+                } else if (shownValue.startsWith(runnerBase)) {
+                    shownValue = "${base}" + shownValue.replace(runnerBase, "");
+                } else if (shownValue.startsWith(runnerHome)) {
+                    shownValue = "${home}" + shownValue.replace(runnerHome, "");
                 }
 
                 return shownValue;
