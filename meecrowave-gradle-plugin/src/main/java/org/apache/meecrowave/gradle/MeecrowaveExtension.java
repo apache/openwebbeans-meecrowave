@@ -93,6 +93,15 @@ public class MeecrowaveExtension {
     private boolean injectServletContainerInitializer = true;
     private String tomcatAccessLogPattern;
     private boolean jaxrsAutoActivateBeanValidation = true;
+    private String meecrowaveProperties = "meecrowave.properties";
+
+    public String getMeecrowaveProperties() {
+        return meecrowaveProperties;
+    }
+
+    public void setMeecrowaveProperties(final String meecrowaveProperties) {
+        this.meecrowaveProperties = meecrowaveProperties;
+    }
 
     public boolean isJava9SkipWorkarounds() {
         return java9SkipWorkarounds;

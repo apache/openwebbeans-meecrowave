@@ -332,6 +332,10 @@ public class MeecrowaveTask extends DefaultTask {
     @Optional
     private boolean jaxrsAutoActivateBeanValidation = true;
 
+    @Input
+    @Optional
+    private String meecrowaveProperties = "meecrowave.properties";
+
     @TaskAction
     public void bake() {
         fixConfig();
@@ -1147,5 +1151,13 @@ public class MeecrowaveTask extends DefaultTask {
 
     public void setJaxrsAutoActivateBeanValidation(final boolean jaxrsAutoActivateBeanValidation) {
         this.jaxrsAutoActivateBeanValidation = jaxrsAutoActivateBeanValidation;
+    }
+
+    public String getMeecrowaveProperties() {
+        return meecrowaveProperties;
+    }
+
+    public void setMeecrowaveProperties(final String meecrowaveProperties) {
+        this.meecrowaveProperties = meecrowaveProperties;
     }
 }

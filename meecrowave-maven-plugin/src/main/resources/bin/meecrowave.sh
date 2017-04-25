@@ -285,6 +285,18 @@ if [ -f "$MEECROWAVE_BASE"/conf/log4j2.xml ]; then
   MEECROWAVE_OPTS="$MEECROWAVE_OPTS -Dlog4j.configurationFile="$MEECROWAVE_BASE"/conf/log4j2.xml"
 fi
 
+if [ -f "$MEECROWAVE_BASE"/conf/meecrowave.properties ]; then
+  MEECROWAVE_ARGS="$MEECROWAVE_ARGS --meecrowave-properties="$MEECROWAVE_BASE"/conf/meecrowave.properties"
+fi
+if [ -f "$MEECROWAVE_BASE"/conf/server.xml ]; then
+  MEECROWAVE_ARGS="$MEECROWAVE_ARGS --server-xml="$MEECROWAVE_BASE"/conf/server.xml"
+fi
+
+if [ -z "$MEECROWAVE_TEMP" ]; then
+  mkdir -p "$MEECROWAVE_BASE"/temp
+  MEECROWAVE_ARGS="--tmp-dir="$MEECROWAVE_BASE"/temp"
+fi
+
 if [ "$1" = "run" ]; then
 
   shift
@@ -294,7 +306,7 @@ if [ "$1" = "run" ]; then
     -Dmeecrowave.home="\"$MEECROWAVE_HOME\"" \
     -Dmeecrowave.home="\"$MEECROWAVE_HOME\"" \
     -Djava.io.tmpdir="\"$MEECROWAVE_TMPDIR\"" \
-    ${main} "$@" start
+    ${main} "$MEECROWAVE_ARGS" "$@"
 
 elif [ "$1" = "start" ] ; then
 
@@ -345,7 +357,7 @@ elif [ "$1" = "start" ] ; then
     -Dmeecrowave.base="\"$MEECROWAVE_BASE\"" \
     -Dmeecrowave.home="\"$MEECROWAVE_HOME\"" \
     -Djava.io.tmpdir="\"$MEECROWAVE_TMPDIR\"" \
-    ${main} "$@" start \
+    ${main} "$MEECROWAVE_ARGS" "$@" \
     >> "$MEECROWAVE_OUT" 2>&1 "&"
 
   if [ ! -z "$MEECROWAVE_PID" ]; then

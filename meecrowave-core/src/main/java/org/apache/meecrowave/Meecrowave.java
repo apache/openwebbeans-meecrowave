@@ -353,6 +353,10 @@ public class Meecrowave implements AutoCloseable {
     }
 
     public Meecrowave start() {
+        if (configuration.getMeecrowaveProperties() != null && !"meecrowave.properties".equals(configuration.getMeecrowaveProperties())) {
+            configuration.loadFrom(configuration.getMeecrowaveProperties());
+        }
+
         setupJmx(configuration.isTomcatNoJmx());
 
         clearCatalinaSystemProperties = System.getProperty("catalina.base") == null && System.getProperty("catalina.home") == null;
@@ -808,7 +812,7 @@ public class Meecrowave implements AutoCloseable {
             return dirFile.getAbsolutePath();
         }
 
-        file = new File(Stream.of("target", "build", ".")
+        file = new File(Stream.of(new File(System.getProperty("meecrowave.base", "."), "temp").getAbsolutePath(), "target", "build", ".")
                 .map(File::new)
                 .filter(File::isDirectory)
                 .findFirst().get(), "meecrowave-" + System.nanoTime());
@@ -1030,6 +1034,11 @@ public class Meecrowave implements AutoCloseable {
                 description = "Activates and configure the access log valve. Value example: '%h %l %u %t \"%r\" %s %b \"%{Referer}i\" \"%{User-Agent}i\"'")
         private String tomcatAccessLogPattern;
 
+        @CliOption(
+                name = "meecrowave-properties",
+                description = "Loads a meecrowave properties, defaults to meecrowave.properties.")
+        private String meecrowaveProperties = "meecrowave.properties";
+
         private final Map<Class<?>, Object> extensions = new HashMap<>();
         private final Collection<Consumer<Tomcat>> instanceCustomizers = new ArrayList<>();
 
@@ -1037,7 +1046,7 @@ public class Meecrowave implements AutoCloseable {
             extensions.put(ValueTransformers.class, new ValueTransformers());
             StreamSupport.stream(ServiceLoader.load(Meecrowave.ConfigurationCustomizer.class).spliterator(), false)
                     .forEach(c -> c.accept(this));
-            loadFrom("meecrowave.properties");
+            loadFrom(meecrowaveProperties);
         }
 
         public <T> T getExtension(final Class<T> extension) {
@@ -1871,6 +1880,14 @@ public class Meecrowave implements AutoCloseable {
 
         public void setInjectServletContainerInitializer(final boolean injectServletContainerInitializer) {
             this.injectServletContainerInitializer = injectServletContainerInitializer;
+        }
+
+        public String getMeecrowaveProperties() {
+            return meecrowaveProperties;
+        }
+
+        public void setMeecrowaveProperties(final String meecrowaveProperties) {
+            this.meecrowaveProperties = meecrowaveProperties;
         }
     }
 

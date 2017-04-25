@@ -103,6 +103,7 @@ public class MeecrowaveConfiguration implements ContainerConfiguration {
     private boolean injectServletContainerInitializer = true;
     private String tomcatAccessLogPattern;
     private boolean jaxrsAutoActivateBeanValidation = true;
+    private String meecrowaveProperties = "meecrowave.properties";
 
     // configurable cause when set to Local arquillian bypass some protocol configuration cause of container default
     private String arquillianProtocol = "Servlet 3.1";
@@ -756,5 +757,13 @@ public class MeecrowaveConfiguration implements ContainerConfiguration {
 
     public void setJaxrsAutoActivateBeanValidation(final boolean jaxrsAutoActivateBeanValidation) {
         this.jaxrsAutoActivateBeanValidation = jaxrsAutoActivateBeanValidation;
+    }
+
+    public String getMeecrowaveProperties() {
+        return meecrowaveProperties;
+    }
+
+    public void setMeecrowaveProperties(final String meecrowaveProperties) {
+        this.meecrowaveProperties = meecrowaveProperties;
     }
 }

@@ -24,6 +24,31 @@ Here are the available options (see core configuration for the details):
 
 include::../../../../../target/generated-doc/MavenConfiguration.adoc[]
 
+== Bundling
+
+[source]
+----
+mvn meecrowave:bundle
+----
+
+This maven goal will create a zip/tar.gz (configurable) ready to launch your application.
+
+The layout if the following one:
+
+[source]
+----
+
+----
+
+conf folder supports out of the box these files (but you can add your own if needed):
+
+- log4j2.xml
+- server.xml
+- meecrowave.properties
+
+You can acess the root folder of the distribution reading the system property `meecrowave.base`.
+
+`meecrowave.properties` supports all configuration options of the cli (just remove the `--`): http://openwebbeans.apache.org/meecrowave/meecrowave-core/cli.html.
 
 == Shading
 

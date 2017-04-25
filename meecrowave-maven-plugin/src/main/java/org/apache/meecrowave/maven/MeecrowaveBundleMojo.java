@@ -154,6 +154,9 @@ public class MeecrowaveBundleMojo extends AbstractMojo {
                 "    </Root>\n" +
                 "  </Loggers>\n" +
                 "</Configuration>\n\n");
+        write(new File(distroFolder, "conf/meecrowave.properties"), "# This file contains the meecrowave default configuration\n" +
+                "# More on http://openwebbeans.apache.org/meecrowave/meecrowave-core/cli.html\n\n" +
+                "tomcat-access-log-pattern = %h %l %u %t \"%r\" %s %b \"%{Referer}i\" \"%{User-Agent}i\"");
         write(new File(distroFolder, "logs/you_can_safely_delete.txt"), DELETE_TEXT);
         project.getArtifacts().stream()
                 .filter(this::isIncluded)

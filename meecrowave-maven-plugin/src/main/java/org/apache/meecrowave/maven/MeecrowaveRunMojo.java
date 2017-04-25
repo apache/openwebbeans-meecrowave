@@ -278,6 +278,9 @@ public class MeecrowaveRunMojo extends AbstractMojo {
     @Parameter
     private String jsContextCustomizer;
 
+    @Parameter(property = "meecrowave.meecrowave-properties", defaultValue = "meecrowave.properties")
+    private String meecrowaveProperties;
+
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         if (skip) {
