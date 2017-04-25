@@ -37,7 +37,17 @@ The layout if the following one:
 
 [source]
 ----
-
+.
+├── bin
+│   └── meecrowave.sh
+├── conf
+│   ├── log4j2.xml
+│   └── meecrowave.properties
+├── lib
+│   └── *.jar
+├── logs
+│   └── meecrowave.logls l
+└── temp
 ----
 
 conf folder supports out of the box these files (but you can add your own if needed):
@@ -49,6 +59,9 @@ conf folder supports out of the box these files (but you can add your own if nee
 You can acess the root folder of the distribution reading the system property `meecrowave.base`.
 
 `meecrowave.properties` supports all configuration options of the cli (just remove the `--`): http://openwebbeans.apache.org/meecrowave/meecrowave-core/cli.html.
+
+Note: you can also split like Tomcat MEECROWAVE_BASE and MEECROWAVE_HOME if you want to extract meecrowave stack in a separate folder (from the application) to be able to update
+it independently.
 
 == Shading
 

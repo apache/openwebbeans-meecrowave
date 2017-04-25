@@ -169,6 +169,15 @@ fi
 if [ ! -z "$CLASSPATH" ] ; then
   CLASSPATH="$CLASSPATH":
 fi
+if [ "$MEECROWAVE_HOME" != "$MEECROWAVE_BASE" ]; then
+  for i in "$MEECROWAVE_BASE/lib/"*.jar ; do
+    if [ -z "$CLASSPATH" ] ; then
+      CLASSPATH="$i"
+    else
+      CLASSPATH="$i:$CLASSPATH"
+    fi
+  done
+fi
 for i in "$MEECROWAVE_HOME/lib/"*.jar ; do
   if [ -z "$CLASSPATH" ] ; then
     CLASSPATH="$i"
