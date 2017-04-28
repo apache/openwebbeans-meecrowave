@@ -51,18 +51,18 @@
     </dependency>
     <dependency>
       <groupId>org.apache.geronimo.specs</groupId>
-      <artifactId>geronimo-json_1.0_spec</artifactId>
-      <version>1.0-alpha-1</version>
+      <artifactId>geronimo-json_1.1_spec</artifactId>
+      <version>1.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.geronimo.specs</groupId>
+      <artifactId>geronimo-jsonb_1.0_spec</artifactId>
+      <version>1.0</version>
     </dependency>
     <dependency>
       <groupId>org.apache.geronimo.specs</groupId>
       <artifactId>geronimo-jaxrs_2.0_spec</artifactId>
       <version>1.0-alpha-1</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.johnzon</groupId>
-      <artifactId>jsonb-api</artifactId>
-      <version>${johnzon.version}</version>
     </dependency>
     <dependency>
       <groupId>org.apache.tomcat</groupId>
