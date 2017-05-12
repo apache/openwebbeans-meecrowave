@@ -47,50 +47,22 @@ import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 
 @Vetoed
-public class Cli {
-    private Cli() {
-        // no-op
+public class Cli implements Runnable {
+    private final String[] args;
+
+    public Cli(final String[] args) {
+        this.args = args;
     }
 
-    public static void main(final String[] args) {
-        final org.apache.commons.cli.Options options = new org.apache.commons.cli.Options();
-        options.addOption(null, "help", false, "Show help");
-        options.addOption(null, "context", true, "The context to use to deploy the webapp");
-        options.addOption(null, "webapp", true, "Location of the webapp, if not set the classpath will be deployed");
-        options.addOption(null, "docbase", true, "Location of the docbase for a classpath deployment");
-        final List<Field> fields = Stream.of(Meecrowave.Builder.class.getDeclaredFields())
-                .filter(f -> f.isAnnotationPresent(CliOption.class))
-                .collect(toList());
-        final Map<Object, List<Field>> propertiesOptions = StreamSupport.stream(ServiceLoader.load(Options.class).spliterator(), false)
-                .collect(toMap(identity(), o -> Stream.of(o.getClass().getDeclaredFields()).filter(f -> f.isAnnotationPresent(CliOption.class)).collect(toList())));
-        fields.forEach(f -> {
-            final CliOption opt = f.getAnnotation(CliOption.class);
-            final String description = opt.description();
-            options.addOption(null, opt.name(), true /*even for booleans otherwise no way to set false for true by default ones*/, description);
-            Stream.of(opt.alias()).forEach(a -> options.addOption(null, a, true, description));
-        });
-        propertiesOptions.values().forEach(all -> all.forEach(f -> {
-            final CliOption opt = f.getAnnotation(CliOption.class);
-            final String description = opt.description();
-            options.addOption(null, opt.name(), true, description);
-            Stream.of(opt.alias()).forEach(a -> options.addOption(null, a, true, description));
-        }));
-
-        final CommandLineParser parser = new DefaultParser();
-        final CommandLine line;
-        try {
-            line = parser.parse(options, args, true);
-        } catch (final ParseException exp) {
-            help(options);
+    public void run() {
+        final ParsedCommand parsedCommand = new ParsedCommand(args).invoke();
+        if (parsedCommand.isFailed()) {
             return;
         }
 
-        if (line.hasOption("help")) {
-            help(options);
-            return;
-        }
-
-        try (final Meecrowave meecrowave = new Meecrowave(buildConfig(line, fields, propertiesOptions))) {
+        final Meecrowave.Builder builder = parsedCommand.getBuilder();
+        final CommandLine line = parsedCommand.getLine();
+        try (final Meecrowave meecrowave = new Meecrowave(builder)) {
             final String ctx = line.getOptionValue("context", "");
             final String fixedCtx = !ctx.isEmpty() && !ctx.startsWith("/") ? '/' + ctx : ctx;
             final String war = line.getOptionValue("webapp");
@@ -100,19 +72,25 @@ public class Cli {
             } else {
                 meecrowave.deployWebapp(fixedCtx, new File(war));
             }
-            meecrowave.getTomcat().getServer().await();
+            doWait(meecrowave);
         }
     }
 
-    private static Meecrowave.Builder buildConfig(final CommandLine line, final List<Field> fields,
-                                                  final Map<Object, List<Field>> propertiesOptions) {
-        final Meecrowave.Builder config = new Meecrowave.Builder();
-        bind(config, line, fields, config);
-        propertiesOptions.forEach((o, f) -> {
-            bind(config, line, f, o);
-            config.setExtension(o.getClass(), o);
-        });
-        return config;
+    protected void doWait(final Meecrowave meecrowave) {
+        meecrowave.getTomcat().getServer().await();
+    }
+
+    public static void main(final String[] args) {
+        new Cli(args).run();
+    }
+
+    // utility when user wraps the command, it enables him to manage the instance but reuse most of our options
+    public static Meecrowave.Builder create(final String[] args) {
+        final ParsedCommand command = new ParsedCommand(args).invoke();
+        if (command.isFailed()) {
+            return null;
+        }
+        return command.getBuilder();
     }
 
     private static void bind(final Meecrowave.Builder builder, final CommandLine line, final List<Field> fields, final Object config) {
@@ -231,10 +209,88 @@ public class Cli {
         }
     }
 
-    private static void help(final org.apache.commons.cli.Options options) {
-        new HelpFormatter().printHelp("java -jar meecrowave-runner.jar", options);
+    public interface Options {
     }
 
-    public interface Options {
+    private static final class ParsedCommand {
+        private final String[] args;
+        private boolean failed;
+        private CommandLine line;
+        private Meecrowave.Builder builder;
+
+        private ParsedCommand(final String... args) {
+            this.args = args;
+        }
+
+        private static void help(final org.apache.commons.cli.Options options) {
+            new HelpFormatter().printHelp("java -jar meecrowave-runner.jar", options);
+        }
+
+        private static Meecrowave.Builder buildConfig(final CommandLine line, final List<Field> fields,
+                                                      final Map<Object, List<Field>> propertiesOptions) {
+            final Meecrowave.Builder config = new Meecrowave.Builder();
+            bind(config, line, fields, config);
+            propertiesOptions.forEach((o, f) -> {
+                bind(config, line, f, o);
+                config.setExtension(o.getClass(), o);
+            });
+            return config;
+        }
+
+        boolean isFailed() {
+            return failed;
+        }
+
+        public CommandLine getLine() {
+            return line;
+        }
+
+        public Meecrowave.Builder getBuilder() {
+            return builder;
+        }
+
+        public ParsedCommand invoke() {
+            final org.apache.commons.cli.Options options = new org.apache.commons.cli.Options();
+            options.addOption(null, "help", false, "Show help");
+            options.addOption(null, "context", true, "The context to use to deploy the webapp");
+            options.addOption(null, "webapp", true, "Location of the webapp, if not set the classpath will be deployed");
+            options.addOption(null, "docbase", true, "Location of the docbase for a classpath deployment");
+            final List<Field> fields = Stream.of(Meecrowave.Builder.class.getDeclaredFields())
+                    .filter(f -> f.isAnnotationPresent(CliOption.class))
+                    .collect(toList());
+            final Map<Object, List<Field>> propertiesOptions = StreamSupport.stream(ServiceLoader.load(Options.class).spliterator(), false)
+                    .collect(toMap(identity(), o -> Stream.of(o.getClass().getDeclaredFields()).filter(f -> f.isAnnotationPresent(CliOption.class)).collect(toList())));
+            fields.forEach(f -> {
+                final CliOption opt = f.getAnnotation(CliOption.class);
+                final String description = opt.description();
+                options.addOption(null, opt.name(), true /*even for booleans otherwise no way to set false for true by default ones*/, description);
+                Stream.of(opt.alias()).forEach(a -> options.addOption(null, a, true, description));
+            });
+            propertiesOptions.values().forEach(all -> all.forEach(f -> {
+                final CliOption opt = f.getAnnotation(CliOption.class);
+                final String description = opt.description();
+                options.addOption(null, opt.name(), true, description);
+                Stream.of(opt.alias()).forEach(a -> options.addOption(null, a, true, description));
+            }));
+
+            final CommandLineParser parser = new DefaultParser();
+            try {
+                line = parser.parse(options, args, true);
+            } catch (final ParseException exp) {
+                help(options);
+                failed = true;
+                return this;
+            }
+
+            if (line.hasOption("help")) {
+                help(options);
+                failed = true;
+                return this;
+            }
+
+            builder = buildConfig(line, fields, propertiesOptions);
+            failed = false;
+            return this;
+        }
     }
 }
