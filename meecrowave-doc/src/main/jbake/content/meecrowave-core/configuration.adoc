@@ -59,7 +59,8 @@ and delegate the processing to the first one.
 - `configurationCustomizer=y` will create an instance of `y` to customize the configuration
 - `configurationCustomizer.x=y` will set `x` to `y` for the customizer
 
-TIP: out of the box, any `Builder` instance will read `meecrowave.properties`.
+TIP: out of the box, any `Builder` instance will read `meecrowave.properties`. `meecrowave.properties` uses CLI
+names (without the leading `--`). See link:{context_rootpath}/meecrowave-core/cli.html[CLI] page for the list.
 
 == Logging
 

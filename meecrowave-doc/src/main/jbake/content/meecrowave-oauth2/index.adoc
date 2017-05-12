@@ -36,7 +36,7 @@ Here is a sample usage of that bundle:
 
 [source,bash]
 ----
-java -jar meecrowave-oauth2-0.3.0-SNAPSHOT-bundle.jar --users test=test --roles test=test
+java -jar meecrowave-oauth2-0.3.1-bundle.jar --users test=test --roles test=test
 ----
 
 Then just test your token endpoint:
