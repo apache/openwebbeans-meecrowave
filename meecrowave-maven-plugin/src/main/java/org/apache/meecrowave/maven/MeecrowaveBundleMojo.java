@@ -48,6 +48,7 @@ import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.stream.Stream;
 import java.util.zip.GZIPOutputStream;
 
@@ -57,7 +58,11 @@ import static org.apache.maven.plugins.annotations.ResolutionScope.RUNTIME_PLUS_
 
 @Mojo(name = "bundle", requiresDependencyResolution = RUNTIME_PLUS_SYSTEM)
 public class MeecrowaveBundleMojo extends AbstractMojo {
-    private static final String DELETE_TEXT = "Just there to not loose the folder cause it is empty, you can safely delete.";
+    private static final String ZIP = "zip";
+
+	private static final String TAR_GZ = "tar.gz";
+
+	private static final String DELETE_TEXT = "Just there to not loose the folder cause it is empty, you can safely delete.";
 
     @Parameter(property = "meecrowave.main", defaultValue = "org.apache.meecrowave.runner.Cli")
     private String main;
@@ -74,7 +79,7 @@ public class MeecrowaveBundleMojo extends AbstractMojo {
     @Parameter(property = "meecrowave.skip", defaultValue = "false")
     private boolean skip;
 
-    @Parameter(property = "meecrowave.formats", defaultValue = "zip")
+    @Parameter(property = "meecrowave.formats", defaultValue = ZIP)
     private Collection<String> formats;
 
     @Parameter(property = "meecrowave.classifier")
@@ -123,9 +128,12 @@ public class MeecrowaveBundleMojo extends AbstractMojo {
 
         // TODO: add .bat support
         try (final BufferedReader reader = new BufferedReader(new InputStreamReader(Thread.currentThread().getContextClassLoader().getResourceAsStream("bin/meecrowave.sh")))) {
-            write(new File(distroFolder, "bin/meecrowave.sh"), StrSubstitutor.replace(reader.lines().collect(joining("\n")), new HashMap<String, String>() {{
-                put("main", main);
-            }}));
+        	
+        	Map<String, String> mainMap = new HashMap();
+        	mainMap.put("main", main);
+        	
+        	write(new File(distroFolder, "bin/meecrowave.sh"), StrSubstitutor.replace(reader.lines().collect(joining("\n")), mainMap));
+            
         } catch (final IOException e) {
             throw new MojoExecutionException(e.getMessage(), e);
         }
@@ -183,7 +191,7 @@ public class MeecrowaveBundleMojo extends AbstractMojo {
             final File output = new File(buildDirectory, artifactId + "-meecrowave-distribution." + format);
 
             switch (format.toLowerCase(ENGLISH)) {
-                case "tar.gz":
+                case TAR_GZ:
                     try (final TarArchiveOutputStream tarGz =
                                  new TarArchiveOutputStream(new GZIPOutputStream(new FileOutputStream(output)))) {
                         tarGz.setLongFileMode(TarArchiveOutputStream.LONGFILE_GNU);
@@ -194,7 +202,7 @@ public class MeecrowaveBundleMojo extends AbstractMojo {
                         throw new MojoExecutionException(e.getMessage(), e);
                     }
                     break;
-                case "zip":
+                case ZIP:
                     try (final ZipArchiveOutputStream zos =
                                  new ZipArchiveOutputStream(new FileOutputStream(output))) {
                         for (final String entry : distroFolder.list()) {

@@ -116,7 +116,17 @@ import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toList;
 
 public class Meecrowave implements AutoCloseable {
-    private final Builder configuration;
+    
+	private static final String MEECROWAVE_PROPERTIES = "meecrowave.properties";
+	private static final String ORG_APACHE_LOGGING_LOG4J_JUL_LOG_MANAGER = "org.apache.logging.log4j.jul.LogManager";
+	private static final String CATALINA_HOME = "catalina.home";
+	private static final String CATALINA_BASE = "catalina.base";
+	private static final String ORG_APACHE_TOMCAT_LOGGER = "org.apache.tomcat.Logger";
+	private static final String ORG_APACHE_CXF_LOGGER = "org.apache.cxf.Logger";
+	private static final String OPENWEBBEANS_LOGGING_FACTORY = "openwebbeans.logging.factory";
+	private static final String JAVA_UTIL_LOGGING_MANAGER = "java.util.logging.manager";
+	
+	private final Builder configuration;
     protected File base;
     protected final File ownedTempDir;
     protected InternalTomcat tomcat;
@@ -127,6 +137,8 @@ public class Meecrowave implements AutoCloseable {
     private Runnable postTask;
     private boolean clearCatalinaSystemProperties;
 
+    private static final LogFacade LOGGER = new LogFacade(Meecrowave.class.getName());
+    
     public Meecrowave() {
         this(new Builder());
     }
@@ -200,11 +212,12 @@ public class Meecrowave implements AutoCloseable {
         if (contexts.containsKey(meta.context)) {
             throw new IllegalArgumentException("Already deployed: '" + meta.context + "'");
         }
+        
         // always nice to see the deployment with something else than internals
-        final String base = tomcat.getService().findConnectors().length > 0 ?
+        final String baseConnection = tomcat.getService().findConnectors().length > 0 ?
                 (configuration.getActiveProtocol() + "://" + tomcat.getHost().getName() + ':' + configuration.getActivePort()) : "";
-        new LogFacade(Meecrowave.class.getName()).info("--------------- " + base + meta.context);
-
+                
+        LOGGER.info("--------------- " + baseConnection + meta.context);
 
         final OWBJarScanner scanner = new OWBJarScanner();
         final StandardContext ctx = new StandardContext() {
@@ -236,8 +249,9 @@ public class Meecrowave implements AutoCloseable {
         ctx.setInstanceManager(new CDIInstanceManager());
         ofNullable(meta.docBase).ifPresent(d -> {
             try {
-                ctx.setDocBase(meta.docBase.getCanonicalPath());
+              	ctx.setDocBase(meta.docBase.getCanonicalPath());
             } catch (final IOException e) {
+            	LOGGER.info("getCanonicalPath() error. Try getAbsolutePath() ");
                 ctx.setDocBase(meta.docBase.getAbsolutePath());
             }
         });
@@ -255,16 +269,7 @@ public class Meecrowave implements AutoCloseable {
                     ctx.getResources().setCachingAllowed(configuration.webResourceCached);
                     break;
                 case Lifecycle.BEFORE_INIT_EVENT:
-                    ctx.getServletContext().setAttribute("meecrowave.configuration", configuration);
-                    if (configuration.loginConfig != null) {
-                        ctx.setLoginConfig(configuration.loginConfig.build());
-                    }
-                    for (final SecurityConstaintBuilder sc : configuration.securityConstraints) {
-                        ctx.addConstraint(sc.build());
-                    }
-                    if (configuration.webXml != null) {
-                        ctx.getServletContext().setAttribute(Globals.ALT_DD_ATTR, configuration.webXml);
-                    }
+                	eventBeforeInit(ctx);
                     break;
                 default:
             }
@@ -297,6 +302,7 @@ public class Meecrowave implements AutoCloseable {
                                 try {
                                     return this.inject(i);
                                 } catch (final IllegalArgumentException iae) {
+                                	LOGGER.info("this.inject(i) thow error.");
                                     return null;
                                 }
                             })
@@ -343,6 +349,19 @@ public class Meecrowave implements AutoCloseable {
         return this;
     }
 
+	private void eventBeforeInit(final StandardContext ctx) {
+		ctx.getServletContext().setAttribute("meecrowave.configuration", configuration);
+		if (configuration.loginConfig != null) {
+		    ctx.setLoginConfig(configuration.loginConfig.build());
+		}
+		for (final SecurityConstaintBuilder sc : configuration.securityConstraints) {
+		    ctx.addConstraint(sc.build());
+		}
+		if (configuration.webXml != null) {
+		    ctx.getServletContext().setAttribute(Globals.ALT_DD_ATTR, configuration.webXml);
+		}
+	}
+
     public Meecrowave bake() {
         return bake("");
     }
@@ -353,41 +372,41 @@ public class Meecrowave implements AutoCloseable {
     }
 
     public Meecrowave start() {
-        if (configuration.getMeecrowaveProperties() != null && !"meecrowave.properties".equals(configuration.getMeecrowaveProperties())) {
+        if (configuration.getMeecrowaveProperties() != null && !MEECROWAVE_PROPERTIES.equals(configuration.getMeecrowaveProperties())) {
             configuration.loadFrom(configuration.getMeecrowaveProperties());
         }
 
         setupJmx(configuration.isTomcatNoJmx());
 
-        clearCatalinaSystemProperties = System.getProperty("catalina.base") == null && System.getProperty("catalina.home") == null;
+        clearCatalinaSystemProperties = System.getProperty(CATALINA_BASE) == null && System.getProperty(CATALINA_HOME) == null;
         if (configuration.isUseLog4j2JulLogManager()) {
-            System.setProperty("java.util.logging.manager", "org.apache.logging.log4j.jul.LogManager");
+            System.setProperty(JAVA_UTIL_LOGGING_MANAGER, ORG_APACHE_LOGGING_LOG4J_JUL_LOG_MANAGER);
         }
 
         if (configuration.loggingGlobalSetup) {
             final String[] toRestore = new String[]{
-                    System.getProperty("openwebbeans.logging.factory"),
-                    System.getProperty("org.apache.cxf.Logger"),
-                    System.getProperty("org.apache.tomcat.Logger")
+                    System.getProperty(OPENWEBBEANS_LOGGING_FACTORY),
+                    System.getProperty(ORG_APACHE_CXF_LOGGER),
+                    System.getProperty(ORG_APACHE_TOMCAT_LOGGER)
             };
-            System.setProperty("openwebbeans.logging.factory", Log4j2LoggerFactory.class.getName());
-            System.setProperty("org.apache.cxf.Logger", Log4j2Logger.class.getName());
-            System.setProperty("org.apache.tomcat.Logger", Log4j2Log.class.getName());
+            System.setProperty(OPENWEBBEANS_LOGGING_FACTORY, Log4j2LoggerFactory.class.getName());
+            System.setProperty(ORG_APACHE_CXF_LOGGER, Log4j2Logger.class.getName());
+            System.setProperty(ORG_APACHE_TOMCAT_LOGGER, Log4j2Log.class.getName());
             postTask = () -> {
                 if (toRestore[0] == null) {
-                    System.clearProperty("openwebbeans.logging.factory");
+                    System.clearProperty(OPENWEBBEANS_LOGGING_FACTORY);
                 } else {
-                    System.setProperty("openwebbeans.logging.factory", toRestore[0]);
+                    System.setProperty(OPENWEBBEANS_LOGGING_FACTORY, toRestore[0]);
                 }
                 if (toRestore[1] == null) {
-                    System.clearProperty("org.apache.cxf.Logger");
+                    System.clearProperty(ORG_APACHE_CXF_LOGGER);
                 } else {
-                    System.setProperty("org.apache.cxf.Logger", toRestore[1]);
+                    System.setProperty(ORG_APACHE_CXF_LOGGER, toRestore[1]);
                 }
                 if (toRestore[2] == null) {
-                    System.clearProperty("org.apache.tomcat.Logger");
+                    System.clearProperty(ORG_APACHE_TOMCAT_LOGGER);
                 } else {
-                    System.setProperty("org.apache.tomcat.Logger", toRestore[2]);
+                    System.setProperty(ORG_APACHE_TOMCAT_LOGGER, toRestore[2]);
                 }
             };
         }
@@ -690,10 +709,10 @@ public class Meecrowave implements AutoCloseable {
                 throw new IllegalStateException(e);
             } finally {
                 if (clearCatalinaSystemProperties) {
-                    Stream.of("catalina.base", "catalina.home").forEach(System::clearProperty);
+                    Stream.of(CATALINA_BASE, CATALINA_HOME).forEach(System::clearProperty);
                 }
                 if (configuration.isUseLog4j2JulLogManager()) {
-                    System.clearProperty("java.util.logging.manager");
+                    System.clearProperty(JAVA_UTIL_LOGGING_MANAGER);
                 }
                 ofNullable(postTask).ifPresent(Runnable::run);
                 postTask = null;
@@ -797,7 +816,7 @@ public class Meecrowave implements AutoCloseable {
     }
 
     private String newBaseDir() {
-        File file;
+        
 
         final String dir = configuration.dir;
         if (dir != null) {
@@ -812,11 +831,13 @@ public class Meecrowave implements AutoCloseable {
             return dirFile.getAbsolutePath();
         }
 
-        file = new File(Stream.of(new File(System.getProperty("meecrowave.base", "."), "temp").getAbsolutePath(), "target", "build", ".")
-                .map(File::new)
+        File file = new File(Stream.of(new File(System.getProperty("meecrowave.base", "."), "temp").getAbsolutePath(), "target", "build", ".")
+        		.map(File::new)
                 .filter(File::isDirectory)
                 .findFirst().get(), "meecrowave-" + System.nanoTime());
+        
         IO.mkdirs(file);
+        
         return file.getAbsolutePath();
     }
 
@@ -1024,7 +1045,7 @@ public class Meecrowave implements AutoCloseable {
         private String sharedLibraries;
 
         @CliOption(name = "log4j2-jul-bridge", description = "Should JUL logs be redirected to Log4j2 - only works before JUL usage.")
-        private boolean useLog4j2JulLogManager = System.getProperty("java.util.logging.manager") == null;
+        private boolean useLog4j2JulLogManager = System.getProperty(JAVA_UTIL_LOGGING_MANAGER) == null;
 
         @CliOption(name = "servlet-container-initializer-injection", description = "Should ServletContainerInitialize support injections.")
         private boolean injectServletContainerInitializer = true;
@@ -1037,7 +1058,7 @@ public class Meecrowave implements AutoCloseable {
         @CliOption(
                 name = "meecrowave-properties",
                 description = "Loads a meecrowave properties, defaults to meecrowave.properties.")
-        private String meecrowaveProperties = "meecrowave.properties";
+        private String meecrowaveProperties = MEECROWAVE_PROPERTIES;
 
         private final Map<Class<?>, Object> extensions = new HashMap<>();
         private final Collection<Consumer<Tomcat>> instanceCustomizers = new ArrayList<>();
