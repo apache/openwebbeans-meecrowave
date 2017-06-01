@@ -248,32 +248,9 @@ public class Meecrowave implements AutoCloseable {
                 throw new IllegalArgumentException(e);
             }
         });
-        ctx.addLifecycleListener(new MeecrowaveContextConfig(configuration, meta.docBase != null));
-        ctx.addLifecycleListener(event -> {
-            switch (event.getType()) {
-                case Lifecycle.AFTER_START_EVENT:
-                    ctx.getResources().setCachingAllowed(configuration.webResourceCached);
-                    break;
-                case Lifecycle.BEFORE_INIT_EVENT:
-                    ctx.getServletContext().setAttribute("meecrowave.configuration", configuration);
-                    if (configuration.loginConfig != null) {
-                        ctx.setLoginConfig(configuration.loginConfig.build());
-                    }
-                    for (final SecurityConstaintBuilder sc : configuration.securityConstraints) {
-                        ctx.addConstraint(sc.build());
-                    }
-                    if (configuration.webXml != null) {
-                        ctx.getServletContext().setAttribute(Globals.ALT_DD_ATTR, configuration.webXml);
-                    }
-                    break;
-                default:
-            }
-
-        });
-        ctx.addLifecycleListener(new Tomcat.FixContextListener()); // after having configured the security!!!
 
         final AtomicReference<Runnable> releaseSCI = new AtomicReference<>();
-        ctx.addServletContainerInitializer((c, ctx1) -> {
+        final ServletContainerInitializer meecrowaveInitializer = (c, ctx1) -> {
             new OWBAutoSetup().onStartup(c, ctx1);
             new CxfCdiAutoSetup().onStartup(c, ctx1);
             new TomcatAutoInitializer().onStartup(c, ctx1);
@@ -313,7 +290,33 @@ public class Meecrowave implements AutoCloseable {
                     }
                 }));
             }
-        }, emptySet());
+        };
+
+        ctx.addLifecycleListener(new MeecrowaveContextConfig(configuration, meta.docBase != null, meecrowaveInitializer));
+        ctx.addLifecycleListener(event -> {
+            switch (event.getType()) {
+                case Lifecycle.AFTER_START_EVENT:
+                    ctx.getResources().setCachingAllowed(configuration.webResourceCached);
+                    break;
+                case Lifecycle.BEFORE_INIT_EVENT:
+                    ctx.getServletContext().setAttribute("meecrowave.configuration", configuration);
+                    if (configuration.loginConfig != null) {
+                        ctx.setLoginConfig(configuration.loginConfig.build());
+                    }
+                    for (final SecurityConstaintBuilder sc : configuration.securityConstraints) {
+                        ctx.addConstraint(sc.build());
+                    }
+                    if (configuration.webXml != null) {
+                        ctx.getServletContext().setAttribute(Globals.ALT_DD_ATTR, configuration.webXml);
+                    }
+                    break;
+                default:
+            }
+
+        });
+        ctx.addLifecycleListener(new Tomcat.FixContextListener()); // after having configured the security!!!
+
+        ctx.addServletContainerInitializer(meecrowaveInitializer, emptySet());
 
         if (configuration.isUseTomcatDefaults()) {
             ctx.setSessionTimeout(30);
@@ -836,6 +839,9 @@ public class Meecrowave implements AutoCloseable {
         @CliOption(name = "java9-skip-workarounds", description = "Should the java9 workarounds be skipped, default to false if on java 9")
         private boolean java9SkipWorkarounds = true;
 
+        @CliOption(name = "watcher-bouncing", description = "Activate redeployment on directories update using this bouncing.")
+        private int watcherBouncing = 500;
+
         @CliOption(name = "http", description = "HTTP port")
         private int httpPort = 8080;
 
@@ -1059,6 +1065,14 @@ public class Meecrowave implements AutoCloseable {
                     throw new IllegalArgumentException(e);
                 }
             }));
+        }
+
+        public int getWatcherBouncing() {
+            return watcherBouncing;
+        }
+
+        public void setWatcherBouncing(final int watcherBouncing) {
+            this.watcherBouncing = watcherBouncing;
         }
 
         public String getTomcatAccessLogPattern() {

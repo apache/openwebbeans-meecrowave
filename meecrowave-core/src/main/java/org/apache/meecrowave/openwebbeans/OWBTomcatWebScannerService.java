@@ -29,7 +29,9 @@ import org.apache.xbean.finder.AnnotationFinder;
 import org.apache.xbean.finder.filter.Filter;
 
 import javax.servlet.ServletContext;
+import java.io.Closeable;
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -39,6 +41,7 @@ import java.net.URL;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 import static java.util.Optional.of;
@@ -46,7 +49,7 @@ import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toSet;
 import static org.apache.tomcat.JarScanType.PLUGGABILITY;
 
-public class OWBTomcatWebScannerService extends WebScannerService {
+public class OWBTomcatWebScannerService extends WebScannerService implements Closeable {
     private final LogFacade logger = new LogFacade(OWBTomcatWebScannerService.class.getName());
 
     private JarScanFilter filter;
@@ -56,6 +59,7 @@ public class OWBTomcatWebScannerService extends WebScannerService {
     private final Set<String> urls = new HashSet<>();
     private String docBase;
     private String shared;
+    private Consumer<File> fileVisitor;
 
     @Override
     public void init(final Object context) {
@@ -103,11 +107,31 @@ public class OWBTomcatWebScannerService extends WebScannerService {
 
                 return shownValue;
             }).sorted().forEach(v -> logger.info("    " + v));
+
+            if (fileVisitor != null) {
+                urls.stream()
+                        .filter(this::isFile)
+                        .map(this::toFile)
+                        .filter(File::isDirectory)
+                        .forEach(fileVisitor);
+            }
         }
         urls.clear(); // no more needed
         filter = null;
         docBase = null;
         shared = null;
+    }
+
+    private File toFile(final String url) {
+        try {
+            return new File(new URL(url).getFile());
+        } catch (final MalformedURLException e) {
+            return new File(url.substring("file://".length(), url.length()));
+        }
+    }
+
+    private boolean isFile(final String url) {
+        return url.startsWith("file:") && !url.endsWith("!/") && !url.endsWith("!/META-INF/beans.xml");
     }
 
     private void scanGroovy(final ClassLoader currentClassLoader) {
@@ -242,5 +266,14 @@ public class OWBTomcatWebScannerService extends WebScannerService {
 
     public void setDocBase(final String docBase) {
         this.docBase = docBase;
+    }
+
+    @Override
+    public void close() throws IOException {
+
+    }
+
+    public void setFileVisitor(final Consumer<File> fileVisitor) {
+        this.fileVisitor = fileVisitor;
     }
 }

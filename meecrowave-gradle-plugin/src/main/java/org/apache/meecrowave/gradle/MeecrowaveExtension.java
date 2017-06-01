@@ -28,6 +28,7 @@ public class MeecrowaveExtension {
     private String context = "";
     private File webapp;
 
+    private int watcherBouncing;
     private int httpPort = 8080;
     private int httpsPort = 8443;
     private int stopPort = -1;
@@ -645,5 +646,13 @@ public class MeecrowaveExtension {
 
     public void setJaxrsAutoActivateBeanValidation(final boolean jaxrsAutoActivateBeanValidation) {
         this.jaxrsAutoActivateBeanValidation = jaxrsAutoActivateBeanValidation;
+    }
+
+    public int getWatcherBouncing() {
+        return watcherBouncing;
+    }
+
+    public void setWatcherBouncing(final int watcherBouncing) {
+        this.watcherBouncing = watcherBouncing;
     }
 }

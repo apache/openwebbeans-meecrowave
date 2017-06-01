@@ -18,10 +18,13 @@
  */
 package org.apache.catalina.startup;
 
+import org.apache.catalina.Lifecycle;
+import org.apache.catalina.LifecycleEvent;
 import org.apache.catalina.WebResource;
 import org.apache.meecrowave.Meecrowave;
 import org.apache.meecrowave.logging.tomcat.LogFacade;
 import org.apache.meecrowave.openwebbeans.OWBTomcatWebScannerService;
+import org.apache.meecrowave.watching.ReloadOnChangeController;
 import org.apache.tomcat.JarScanner;
 import org.apache.tomcat.util.descriptor.web.WebXml;
 import org.apache.webbeans.config.WebBeansContext;
@@ -48,6 +51,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
 
+import static java.util.Collections.emptySet;
 import static java.util.Optional.ofNullable;
 
 public class MeecrowaveContextConfig extends ContextConfig {
@@ -56,11 +60,14 @@ public class MeecrowaveContextConfig extends ContextConfig {
     private final Meecrowave.Builder configuration;
     private final Map<String, Collection<Class<?>>> webClasses = new HashMap<>();
     private final boolean fixDocBase;
+    private final ServletContainerInitializer intializer;
     private OwbAnnotationFinder finder;
+    private ReloadOnChangeController watcher;
 
-    public MeecrowaveContextConfig(final Meecrowave.Builder configuration, final boolean fixDocBase) {
+    public MeecrowaveContextConfig(final Meecrowave.Builder configuration, final boolean fixDocBase, final ServletContainerInitializer intializer) {
         this.configuration = configuration;
         this.fixDocBase = fixDocBase;
+        this.intializer= intializer;
     }
 
     @Override
@@ -73,6 +80,11 @@ public class MeecrowaveContextConfig extends ContextConfig {
 
     @Override
     protected void webConfig() {
+        if (context.getServletContext().getAttribute("meecrowave.configuration") == null) { // redeploy
+            context.getServletContext().setAttribute("meecrowave.configuration", configuration);
+            context.addServletContainerInitializer(intializer, emptySet());
+        }
+
         if (!configuration.isTomcatScanning()) {
             super.webConfig();
             return;
@@ -88,6 +100,10 @@ public class MeecrowaveContextConfig extends ContextConfig {
             scannerService.setFilter(ofNullable(context.getJarScanner()).map(JarScanner::getJarScanFilter).orElse(null), context.getServletContext());
             scannerService.setDocBase(context.getDocBase());
             scannerService.setShared(configuration.getSharedLibraries());
+            if (configuration.getWatcherBouncing() > 0) { // note that caching should be disabled with this config in most of the times
+                watcher = new ReloadOnChangeController(context, configuration.getWatcherBouncing());
+                scannerService.setFileVisitor(f -> watcher.register(f));
+            }
             scannerService.scan();
             finder = scannerService.getFinder();
             finder.link();
@@ -108,6 +124,18 @@ public class MeecrowaveContextConfig extends ContextConfig {
         } finally {
             webClasses.clear();
             finder = null;
+        }
+    }
+
+    @Override
+    public void lifecycleEvent(final LifecycleEvent event) {
+        super.lifecycleEvent(event);
+        if (watcher != null && watcher.shouldRun()) {
+            if (Lifecycle.AFTER_START_EVENT.equals(event.getType())) {
+                watcher.start();
+            } else if (Lifecycle.BEFORE_STOP_EVENT.equals(event.getType())) {
+                watcher.close();
+            }
         }
     }
 

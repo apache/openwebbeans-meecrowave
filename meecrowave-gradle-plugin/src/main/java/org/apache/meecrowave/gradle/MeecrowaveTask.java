@@ -54,6 +54,10 @@ public class MeecrowaveTask extends DefaultTask {
 
     @Input
     @Optional
+    private int watcherBouncing;
+
+    @Input
+    @Optional
     private int httpPort = 8080;
 
     @Input
@@ -1159,5 +1163,13 @@ public class MeecrowaveTask extends DefaultTask {
 
     public void setMeecrowaveProperties(final String meecrowaveProperties) {
         this.meecrowaveProperties = meecrowaveProperties;
+    }
+
+    public int getWatcherBouncing() {
+        return watcherBouncing;
+    }
+
+    public void setWatcherBouncing(final int watcherBouncing) {
+        this.watcherBouncing = watcherBouncing;
     }
 }

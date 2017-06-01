@@ -55,6 +55,9 @@ import static org.apache.maven.plugins.annotations.ResolutionScope.RUNTIME_PLUS_
 
 @Mojo(name = "run", requiresDependencyResolution = RUNTIME_PLUS_SYSTEM)
 public class MeecrowaveRunMojo extends AbstractMojo {
+    @Parameter(property = "meecrowave.watcher-bounding", defaultValue = "0")
+    private int watcherBouncing;
+
     @Parameter(property = "meecrowave.http", defaultValue = "8080")
     private int httpPort;
 

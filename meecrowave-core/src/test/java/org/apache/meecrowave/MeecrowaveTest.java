@@ -22,6 +22,7 @@ import org.apache.cxf.helpers.FileUtils;
 import org.apache.meecrowave.io.IO;
 import org.apache.meecrowave.runner.cli.CliOption;
 import org.junit.Test;
+import org.superbiz.app.Bounced;
 import org.superbiz.app.Endpoint;
 import org.superbiz.app.RsApp;
 
@@ -116,7 +117,7 @@ public class MeecrowaveTest {
             assertEquals("simple", slurp(new URL("http://localhost:" + meecrowave.getConfiguration().getHttpPort() + "/api/test")));
             assertEquals("simplefiltertrue", slurp(new URL("http://localhost:" + meecrowave.getConfiguration().getHttpPort() + "/filter")));
             assertEquals(
-                    "sci:" + Endpoint.class.getName() + RsApp.class.getName(),
+                    "sci:" + Bounced.class.getName() + Endpoint.class.getName() + RsApp.class.getName(),
                     slurp(new URL("http://localhost:" + meecrowave.getConfiguration().getHttpPort() + "/sci")));
         } catch (final IOException e) {
             fail(e.getMessage());
