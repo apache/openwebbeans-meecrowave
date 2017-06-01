@@ -18,6 +18,7 @@
  */
 package org.apache.catalina.startup;
 
+import org.apache.catalina.Context;
 import org.apache.catalina.Lifecycle;
 import org.apache.catalina.LifecycleEvent;
 import org.apache.catalina.WebResource;
@@ -130,7 +131,7 @@ public class MeecrowaveContextConfig extends ContextConfig {
     @Override
     public void lifecycleEvent(final LifecycleEvent event) {
         super.lifecycleEvent(event);
-        if (watcher != null && watcher.shouldRun()) {
+        if (watcher != null && watcher.shouldRun() && Context.class.cast(event.getLifecycle()) == context) {
             if (Lifecycle.AFTER_START_EVENT.equals(event.getType())) {
                 watcher.start();
             } else if (Lifecycle.BEFORE_STOP_EVENT.equals(event.getType())) {

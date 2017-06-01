@@ -84,17 +84,24 @@ public class ReloadOnChangeController implements AutoCloseable, Runnable {
 
     @Override
     public void close() {
+        if (!running) {
+            return;
+        }
         running = false;
         final long waitMs = bouncing * 2 + 5000 /*margin if redeploying, we can make it configurable later*/;
-        try {
-            bouncer.join(waitMs);
-        } catch (final InterruptedException e) {
-            Thread.interrupted();
+        if (bouncer != null) {
+            try {
+                bouncer.join(waitMs);
+            } catch (final InterruptedException e) {
+                Thread.interrupted();
+            }
         }
-        try {
-            watcher.join(waitMs);
-        } catch (final InterruptedException e) {
-            Thread.interrupted();
+        if (watcher != null) {
+            try {
+                watcher.join(waitMs);
+            } catch (final InterruptedException e) {
+                Thread.interrupted();
+            }
         }
     }
 
