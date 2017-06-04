@@ -606,7 +606,7 @@ public class Meecrowave implements AutoCloseable {
             throw new IllegalStateException(e);
         }
         ofNullable(configuration.getPidFile()).ifPresent(pidFile -> {
-            if (!pidFile.getParentFile().isDirectory() && !pidFile.getParentFile().mkdirs()) {
+            if (pidFile.getParentFile() != null && !pidFile.getParentFile().isDirectory() && !pidFile.getParentFile().mkdirs()) {
                 throw new IllegalArgumentException("Can't create " + pidFile);
             }
             final String pid = ManagementFactory.getRuntimeMXBean().getName();
