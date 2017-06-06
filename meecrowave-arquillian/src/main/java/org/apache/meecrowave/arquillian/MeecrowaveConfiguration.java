@@ -94,7 +94,6 @@ public class MeecrowaveConfiguration implements ContainerConfiguration {
     private String jsonbBinaryStrategy;
     private String jsonbNamingStrategy;
     private String jsonbOrderStrategy;
-    private boolean java9SkipWorkarounds = false;
     private String scanningIncludes;
     private String scanningExcludes;
     private String scanningPackageIncludes;
@@ -693,14 +692,6 @@ public class MeecrowaveConfiguration implements ContainerConfiguration {
 
     public void setJsonbOrderStrategy(final String jsonbOrderStrategy) {
         this.jsonbOrderStrategy = jsonbOrderStrategy;
-    }
-
-    public boolean isJava9SkipWorkarounds() {
-        return java9SkipWorkarounds;
-    }
-
-    public void setJava9SkipWorkarounds(final boolean java9SkipWorkarounds) {
-        this.java9SkipWorkarounds = java9SkipWorkarounds;
     }
 
     public String getScanningPackageIncludes() {

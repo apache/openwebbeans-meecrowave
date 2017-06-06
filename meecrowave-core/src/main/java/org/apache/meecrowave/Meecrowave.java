@@ -39,7 +39,6 @@ import org.apache.commons.lang3.text.StrSubstitutor;
 import org.apache.coyote.http2.Http2Protocol;
 import org.apache.johnzon.core.BufferStrategy;
 import org.apache.meecrowave.cxf.CxfCdiAutoSetup;
-import org.apache.meecrowave.hack.Java9WorkArounds;
 import org.apache.meecrowave.io.IO;
 import org.apache.meecrowave.logging.jul.Log4j2Logger;
 import org.apache.meecrowave.logging.openwebbeans.Log4j2LoggerFactory;
@@ -134,9 +133,6 @@ public class Meecrowave implements AutoCloseable {
     public Meecrowave(final Builder builder) {
         this.configuration = builder;
         this.ownedTempDir = new File(configuration.tempDir, "meecrowave_" + System.nanoTime());
-        if (!builder.isJava9SkipWorkarounds()) {
-            Java9WorkArounds.execute();
-        }
     }
 
     public Builder getConfiguration() {
@@ -835,10 +831,6 @@ public class Meecrowave implements AutoCloseable {
         @CliOption(name = "pid-file", description = "A file path to write the process id if the server starts")
         private File pidFile;
 
-        @Deprecated // waiting final release to see if we really need it, got broken in between
-        @CliOption(name = "java9-skip-workarounds", description = "Should the java9 workarounds be skipped, default to false if on java 9")
-        private boolean java9SkipWorkarounds = true;
-
         @CliOption(name = "watcher-bouncing", description = "Activate redeployment on directories update using this bouncing.")
         private int watcherBouncing = 500;
 
@@ -1143,14 +1135,6 @@ public class Meecrowave implements AutoCloseable {
 
         public void setScanningExcludes(final String scanningExcludes) {
             this.scanningExcludes = scanningExcludes;
-        }
-
-        public boolean isJava9SkipWorkarounds() {
-            return java9SkipWorkarounds;
-        }
-
-        public void setJava9SkipWorkarounds(final boolean java9SkipWorkarounds) {
-            this.java9SkipWorkarounds = java9SkipWorkarounds;
         }
 
         public String getJsonpBufferStrategy() {

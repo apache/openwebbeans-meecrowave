@@ -106,9 +106,6 @@ public class MeecrowaveRunMojo extends AbstractMojo {
     @Parameter(property = "meecrowave.tomcatAutoSetup", defaultValue = "true")
     private boolean tomcatAutoSetup;
 
-    @Parameter(property = "meecrowave.java9SkipWorkarounds")
-    private boolean java9SkipWorkarounds;
-
     @Parameter(property = "meecrowave.skipHttp")
     private boolean skipHttp;
 

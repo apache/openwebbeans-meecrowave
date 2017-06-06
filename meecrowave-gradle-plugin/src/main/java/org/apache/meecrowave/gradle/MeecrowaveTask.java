@@ -310,10 +310,6 @@ public class MeecrowaveTask extends DefaultTask {
 
     @Input
     @Optional
-    private boolean java9SkipWorkarounds = false;
-
-    @Input
-    @Optional
     private String scanningIncludes;
 
     @Input
@@ -979,14 +975,6 @@ public class MeecrowaveTask extends DefaultTask {
 
     public void setUseLog4j2JulLogManager(final boolean useLog4j2JulLogManager) {
         this.useLog4j2JulLogManager = useLog4j2JulLogManager;
-    }
-
-    public boolean isJava9SkipWorkarounds() {
-        return java9SkipWorkarounds;
-    }
-
-    public void setJava9SkipWorkarounds(final boolean java9SkipWorkarounds) {
-        this.java9SkipWorkarounds = java9SkipWorkarounds;
     }
 
     public String getScanningIncludes() {
