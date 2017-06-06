@@ -35,6 +35,7 @@ public class InstanceCustomizerTest {
     @Test
     public void instanceCustomizer() throws IOException {
         try (final Meecrowave meecrowave = new Meecrowave(new Meecrowave.Builder()
+                .randomHttpPort()
                 .instanceCustomizer(t -> t.getHost().getPipeline().addValve(new ValveBase() {
                     @Override
                     public void invoke(final Request request, final Response response) throws IOException, ServletException {

@@ -19,15 +19,19 @@
 package org.apache.meecrowave.openwebbeans;
 
 import org.apache.meecrowave.Meecrowave;
+import org.apache.meecrowave.cxf.JAXRSFieldInjectionInterceptor;
 import org.apache.webbeans.annotation.AnyLiteral;
 import org.apache.webbeans.annotation.DefaultLiteral;
 import org.apache.webbeans.config.WebBeansContext;
+import org.apache.webbeans.container.BeanManagerImpl;
+import org.apache.webbeans.intercept.InterceptorsManager;
 import org.apache.webbeans.servlet.WebBeansConfigurationListener;
 import org.apache.webbeans.web.context.WebConversationFilter;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.context.spi.CreationalContext;
 import javax.enterprise.inject.spi.Bean;
+import javax.enterprise.inject.spi.Extension;
 import javax.enterprise.inject.spi.InjectionPoint;
 import javax.servlet.DispatcherType;
 import javax.servlet.FilterRegistration;
@@ -59,7 +63,7 @@ public class OWBAutoSetup implements ServletContainerInitializer {
         ctx.addListener(bootListener);
     }
 
-    public static class EagerBootListener extends WebBeansConfigurationListener {
+    public static class EagerBootListener extends WebBeansConfigurationListener implements Extension {
         private final Meecrowave.Builder config;
 
         private EagerBootListener(final Meecrowave.Builder builder) {
@@ -73,11 +77,22 @@ public class OWBAutoSetup implements ServletContainerInitializer {
 
         private void doContextInitialized(final ServletContextEvent event) {
             try {
-                WebBeansContext.getInstance().getBeanManagerImpl().addInternalBean(new ConfigBean(config));
+                final WebBeansContext instance = WebBeansContext.getInstance();
+                customizeContext(instance);
             } catch (final IllegalStateException ise) {
                 // lifecycle not supporting it
             }
             super.contextInitialized(event);
+        }
+
+        private void customizeContext(final WebBeansContext instance) {
+            final BeanManagerImpl beanManager = instance.getBeanManagerImpl();
+            final InterceptorsManager interceptorsManager = instance.getInterceptorsManager();
+
+            beanManager.addInternalBean(new ConfigBean(config));
+
+            interceptorsManager.addInterceptorBindingType(JAXRSFieldInjectionInterceptor.Binding.class);
+            beanManager.addAdditionalAnnotatedType(this, beanManager.createAnnotatedType(JAXRSFieldInjectionInterceptor.class));
         }
 
         private static class ConfigBean implements Bean<Meecrowave.Builder> {
