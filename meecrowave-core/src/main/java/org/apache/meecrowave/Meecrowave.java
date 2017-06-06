@@ -951,7 +951,7 @@ public class Meecrowave implements AutoCloseable {
         private String jsonpBufferStrategy = BufferStrategy.QUEUE.name();
 
         @CliOption(name = "jsonp-max-string-length", description = "JSON-P JAX-RS provider max string limit size (see johnzon)")
-        private int jsonpMaxStringLen = 10 * 1024 * 1024;
+        private int jsonpMaxStringLen = 64 * 1024;
 
         @CliOption(name = "jsonp-read-buffer-length", description = "JSON-P JAX-RS provider read buffer limit size (see johnzon)")
         private int jsonpMaxReadBufferLen = 64 * 1024;
