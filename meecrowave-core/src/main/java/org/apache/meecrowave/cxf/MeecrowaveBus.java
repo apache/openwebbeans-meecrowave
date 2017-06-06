@@ -187,8 +187,8 @@ public class MeecrowaveBus implements Bus {
     }
 
     @Provider
-    @Produces(MediaType.APPLICATION_JSON)
-    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces({MediaType.APPLICATION_JSON, "*/*+json"})
+    @Consumes({MediaType.APPLICATION_JSON, "*/*+json"})
     public static class ConfiguredJsonbJaxrsProvider<T> extends JsonbJaxrsProvider<T> {
         private ConfiguredJsonbJaxrsProvider(final String encoding,
                                              final boolean nulls,
@@ -208,8 +208,8 @@ public class MeecrowaveBus implements Bus {
     }
 
     @Provider
-    @Produces(MediaType.APPLICATION_JSON)
-    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces({MediaType.APPLICATION_JSON, "application/*+json"})
+    @Consumes({MediaType.APPLICATION_JSON, "application/*+json"})
     public static class ConfiguredJsrProvider extends DelegateProvider<JsonStructure> { // TODO: probably wire the encoding in johnzon
         private ConfiguredJsrProvider(final String bufferStrategy, final int maxStringLen,
                                       final int maxReadBufferLen, final int maxWriteBufferLen,
