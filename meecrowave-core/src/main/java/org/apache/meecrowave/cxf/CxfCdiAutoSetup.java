@@ -60,6 +60,7 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -323,6 +324,9 @@ public class CxfCdiAutoSetup implements ServletContainerInitializer {
                         final Endpoint endpoint = ChainInitiationObserver.class.cast(sd.getMessageObserver()).getEndpoint();
                         final ApplicationInfo app = ApplicationInfo.class.cast(endpoint.get(Application.class.getName()));
                         final JAXRSServiceFactoryBean sfb = JAXRSServiceFactoryBean.class.cast(endpoint.get(JAXRSServiceFactoryBean.class.getName()));
+                        if (sfb == null) {
+                            return null;
+                        }
 
                         final List<Logs.LogResourceEndpointInfo> resourcesToLog = new ArrayList<>();
                         int classSize = 0;
@@ -395,7 +399,7 @@ public class CxfCdiAutoSetup implements ServletContainerInitializer {
                         }
 
                         return base;
-                    }).toArray(String[]::new);
+                    }).filter(Objects::nonNull).toArray(String[]::new);
         }
 
         private void dump(final LogFacade log, final ServerProviderFactory spf, final String description, final String fieldName) {
