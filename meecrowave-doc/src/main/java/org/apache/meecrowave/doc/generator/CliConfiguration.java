@@ -21,21 +21,60 @@ package org.apache.meecrowave.doc.generator;
 import org.apache.meecrowave.Meecrowave;
 import org.apache.meecrowave.runner.cli.CliOption;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.util.Comparator;
 import java.util.stream.Stream;
 
+import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.joining;
 
 public class CliConfiguration extends BaseGenerator {
     @Override
     protected String generate() {
         return super.tableConfig() + "|===\n|Name|Description\n" +
-                Stream.of(Meecrowave.Builder.class.getDeclaredFields())
-                        .filter(f -> f.isAnnotationPresent(CliOption.class))
-                        .sorted(Comparator.comparing(Field::getName))
-                        .map(f -> f.getAnnotation(CliOption.class))
+                Stream.of(
+                        Stream.of(Meecrowave.Builder.class.getDeclaredFields())
+                                .filter(f -> f.isAnnotationPresent(CliOption.class))
+                                .sorted(Comparator.comparing(Field::getName))
+                                .map(f -> f.getAnnotation(CliOption.class)),
+                        Stream.of(
+                                new DocCliOption("help", "Show the CLI help/usage"),
+                                new DocCliOption("context", "The context to use to deploy the webapp"),
+                                new DocCliOption("webapp", "Location of the webapp, if not set the classpath will be deployed"),
+                                new DocCliOption("docbase", "Location of the docbase for a classpath deployment")))
+                        .flatMap(identity())
                         .map(opt -> "|--" + opt.name() + "|" + opt.description())
                         .collect(joining("\n")) + "\n|===\n";
+    }
+
+    private static final class DocCliOption implements CliOption {
+        private final String description;
+        private final String name;
+
+        private DocCliOption(final String name, final String description) {
+            this.description = description;
+            this.name = name;
+        }
+
+        @Override
+        public Class<? extends Annotation> annotationType() {
+            return CliOption.class;
+        }
+
+        @Override
+        public String name() {
+            return name;
+        }
+
+        @Override
+        public String description() {
+            return description;
+        }
+
+        @Override
+        public String[] alias() {
+            return new String[0];
+        }
     }
 }
