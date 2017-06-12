@@ -72,11 +72,11 @@ public class Cli implements Runnable {
             } else {
                 meecrowave.deployWebapp(fixedCtx, new File(war));
             }
-            doWait(meecrowave);
+            doWait(meecrowave, line);
         }
     }
 
-    protected void doWait(final Meecrowave meecrowave) {
+    protected void doWait(final Meecrowave meecrowave, final CommandLine line) {
         meecrowave.getTomcat().getServer().await();
     }
 
