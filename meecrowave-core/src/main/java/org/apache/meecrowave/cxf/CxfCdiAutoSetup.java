@@ -29,6 +29,7 @@ import org.apache.cxf.jaxrs.model.OperationResourceInfo;
 import org.apache.cxf.jaxrs.model.ProviderInfo;
 import org.apache.cxf.jaxrs.provider.ProviderFactory;
 import org.apache.cxf.jaxrs.provider.ServerProviderFactory;
+import org.apache.cxf.service.model.EndpointInfo;
 import org.apache.cxf.transport.ChainInitiationObserver;
 import org.apache.cxf.transport.http.DestinationRegistry;
 import org.apache.cxf.transport.servlet.ServletDestination;
@@ -324,78 +325,82 @@ public class CxfCdiAutoSetup implements ServletContainerInitializer {
                         final Endpoint endpoint = ChainInitiationObserver.class.cast(sd.getMessageObserver()).getEndpoint();
                         final ApplicationInfo app = ApplicationInfo.class.cast(endpoint.get(Application.class.getName()));
                         final JAXRSServiceFactoryBean sfb = JAXRSServiceFactoryBean.class.cast(endpoint.get(JAXRSServiceFactoryBean.class.getName()));
-                        if (sfb == null) {
-                            return null;
-                        }
-
-                        final List<Logs.LogResourceEndpointInfo> resourcesToLog = new ArrayList<>();
-                        int classSize = 0;
-                        int addressSize = 0;
-
                         final String base = sd.getEndpointInfo().getAddress();
-                        final List<ClassResourceInfo> resources = sfb.getClassResourceInfo();
-                        for (final ClassResourceInfo info : resources) {
-                            if (info.getResourceClass() == null) { // possible?
-                                continue;
-                            }
 
-                            final String address = Logs.singleSlash(base, info.getURITemplate().getValue());
+                        if (sfb != null) {
+                            final List<Logs.LogResourceEndpointInfo> resourcesToLog = new ArrayList<>();
+                            int classSize = 0;
+                            int addressSize = 0;
 
-                            final String clazz = uproxyName(info.getResourceClass().getName());
-                            classSize = Math.max(classSize, clazz.length());
-                            addressSize = Math.max(addressSize, address.length());
-
-                            int methodSize = 7;
-                            int methodStrSize = 0;
-
-                            final List<Logs.LogOperationEndpointInfo> toLog = new ArrayList<>();
-
-                            final MethodDispatcher md = info.getMethodDispatcher();
-                            for (final OperationResourceInfo ori : md.getOperationResourceInfos()) {
-                                final String httpMethod = ori.getHttpMethod();
-                                final String currentAddress = Logs.singleSlash(address, ori.getURITemplate().getValue());
-                                final String methodToStr = Logs.toSimpleString(ori.getMethodToInvoke());
-                                toLog.add(new Logs.LogOperationEndpointInfo(httpMethod, currentAddress, methodToStr));
-
-                                if (httpMethod != null) {
-                                    methodSize = Math.max(methodSize, httpMethod.length());
+                            final List<ClassResourceInfo> resources = sfb.getClassResourceInfo();
+                            for (final ClassResourceInfo info : resources) {
+                                if (info.getResourceClass() == null) { // possible?
+                                    continue;
                                 }
-                                addressSize = Math.max(addressSize, currentAddress.length());
-                                methodStrSize = Math.max(methodStrSize, methodToStr.length());
+
+                                final String address = Logs.singleSlash(base, info.getURITemplate().getValue());
+
+                                final String clazz = uproxyName(info.getResourceClass().getName());
+                                classSize = Math.max(classSize, clazz.length());
+                                addressSize = Math.max(addressSize, address.length());
+
+                                int methodSize = 7;
+                                int methodStrSize = 0;
+
+                                final List<Logs.LogOperationEndpointInfo> toLog = new ArrayList<>();
+
+                                final MethodDispatcher md = info.getMethodDispatcher();
+                                for (final OperationResourceInfo ori : md.getOperationResourceInfos()) {
+                                    final String httpMethod = ori.getHttpMethod();
+                                    final String currentAddress = Logs.singleSlash(address, ori.getURITemplate().getValue());
+                                    final String methodToStr = Logs.toSimpleString(ori.getMethodToInvoke());
+                                    toLog.add(new Logs.LogOperationEndpointInfo(httpMethod, currentAddress, methodToStr));
+
+                                    if (httpMethod != null) {
+                                        methodSize = Math.max(methodSize, httpMethod.length());
+                                    }
+                                    addressSize = Math.max(addressSize, currentAddress.length());
+                                    methodStrSize = Math.max(methodStrSize, methodToStr.length());
+                                }
+
+                                Collections.sort(toLog);
+
+                                resourcesToLog.add(new Logs.LogResourceEndpointInfo(address, clazz, toLog, methodSize, methodStrSize));
                             }
 
-                            Collections.sort(toLog);
+                            // effective logging
+                            log.info("REST Application: " + endpoint.getEndpointInfo().getAddress() + " -> "
+                                    + ofNullable(app).map(ApplicationInfo::getResourceClass).map(Class::getName).map(CxfCdiAutoSetup::uproxyName).orElse(""));
 
-                            resourcesToLog.add(new Logs.LogResourceEndpointInfo(address, clazz, toLog, methodSize, methodStrSize));
-                        }
+                            Collections.sort(resourcesToLog);
+                            final int fClassSize = classSize;
+                            final int fAddressSize = addressSize;
+                            resourcesToLog.forEach(resource -> {
+                                log.info("     Service URI: "
+                                        + Logs.forceLength(resource.address, fAddressSize, true) + " -> "
+                                        + Logs.forceLength(resource.classname, fClassSize, true));
 
-                        // effective logging
-                        log.info("REST Application: " + endpoint.getEndpointInfo().getAddress() + " -> "
-                                + ofNullable(app).map(ApplicationInfo::getResourceClass).map(Class::getName).map(CxfCdiAutoSetup::uproxyName).orElse(""));
-
-                        Collections.sort(resourcesToLog);
-                        final int fClassSize = classSize;
-                        final int fAddressSize = addressSize;
-                        resourcesToLog.forEach(resource -> {
-                            log.info("     Service URI: "
-                                    + Logs.forceLength(resource.address, fAddressSize, true) + " -> "
-                                    + Logs.forceLength(resource.classname, fClassSize, true));
-
-                            resource.operations.forEach(info -> {
-                                log.info("          "
-                                        + Logs.forceLength(info.http, resource.methodSize, false) + " "
-                                        + Logs.forceLength(info.address, fAddressSize, true) + " ->      "
-                                        + Logs.forceLength(info.method, resource.methodStrSize, true));
+                                resource.operations.forEach(info -> {
+                                    log.info("          "
+                                            + Logs.forceLength(info.http, resource.methodSize, false) + " "
+                                            + Logs.forceLength(info.address, fAddressSize, true) + " ->      "
+                                            + Logs.forceLength(info.method, resource.methodStrSize, true));
+                                });
+                                resource.operations.clear();
                             });
-                            resource.operations.clear();
-                        });
-                        resourcesToLog.clear();
+                            resourcesToLog.clear();
 
-                        // log @Providers
-                        if (Meecrowave.Builder.class.cast(sc.getServletContext().getAttribute("meecrowave.configuration")).isJaxrsLogProviders()) {
-                            final ServerProviderFactory spf = ServerProviderFactory.class.cast(endpoint.get(ServerProviderFactory.class.getName()));
-                            dump(log, spf, "MessageBodyReaders", "messageReaders");
-                            dump(log, spf, "MessageBodyWriters", "messageWriters");
+                            // log @Providers
+                            if (Meecrowave.Builder.class.cast(sc.getServletContext().getAttribute("meecrowave.configuration")).isJaxrsLogProviders()) {
+                                final ServerProviderFactory spf = ServerProviderFactory.class.cast(endpoint.get(ServerProviderFactory.class.getName()));
+                                dump(log, spf, "MessageBodyReaders", "messageReaders");
+                                dump(log, spf, "MessageBodyWriters", "messageWriters");
+                            }
+                        } else {
+                            final EndpointInfo endpointInfo = endpoint.getEndpointInfo();
+                            if (endpointInfo.getName() != null) {
+                                log.info("@WebService > " + endpointInfo.getName().toString() + " -> " + base);
+                            }
                         }
 
                         return base;

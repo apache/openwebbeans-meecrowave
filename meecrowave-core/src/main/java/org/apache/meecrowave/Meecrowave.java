@@ -1037,6 +1037,9 @@ public class Meecrowave implements AutoCloseable {
                 description = "Loads a meecrowave properties, defaults to meecrowave.properties.")
         private String meecrowaveProperties = "meecrowave.properties";
 
+        @CliOption(name = "jaxws-support-if-present", description = "Should @WebService CDI beans be deployed if cxf-rt-frontend-jaxws is in the classpath.")
+        private boolean jaxwsSupportIfAvailable = true;
+
         private final Map<Class<?>, Object> extensions = new HashMap<>();
         private final Collection<Consumer<Tomcat>> instanceCustomizers = new ArrayList<>();
 
@@ -1057,6 +1060,14 @@ public class Meecrowave implements AutoCloseable {
                     throw new IllegalArgumentException(e);
                 }
             }));
+        }
+
+        public boolean isJaxwsSupportIfAvailable() {
+            return jaxwsSupportIfAvailable;
+        }
+
+        public void setJaxwsSupportIfAvailable(final boolean jaxwsSupportIfAvailable) {
+            this.jaxwsSupportIfAvailable = jaxwsSupportIfAvailable;
         }
 
         public int getWatcherBouncing() {

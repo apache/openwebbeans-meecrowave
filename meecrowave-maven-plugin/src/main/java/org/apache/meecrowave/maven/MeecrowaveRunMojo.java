@@ -281,6 +281,9 @@ public class MeecrowaveRunMojo extends AbstractMojo {
     @Parameter(property = "meecrowave.meecrowave-properties", defaultValue = "meecrowave.properties")
     private String meecrowaveProperties;
 
+    @Parameter(property = "meecrowave.jaxws-support", defaultValue = "true")
+    private boolean jaxwsSupportIfAvailable;
+
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         if (skip) {

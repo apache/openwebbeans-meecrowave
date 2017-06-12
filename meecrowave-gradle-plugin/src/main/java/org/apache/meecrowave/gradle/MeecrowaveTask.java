@@ -336,6 +336,10 @@ public class MeecrowaveTask extends DefaultTask {
     @Optional
     private String meecrowaveProperties = "meecrowave.properties";
 
+    @Input
+    @Optional
+    private boolean jaxwsSupportIfAvailable = true;
+
     @TaskAction
     public void bake() {
         fixConfig();
@@ -1159,5 +1163,13 @@ public class MeecrowaveTask extends DefaultTask {
 
     public void setWatcherBouncing(final int watcherBouncing) {
         this.watcherBouncing = watcherBouncing;
+    }
+
+    public boolean isJaxwsSupportIfAvailable() {
+        return jaxwsSupportIfAvailable;
+    }
+
+    public void setJaxwsSupportIfAvailable(final boolean jaxwsSupportIfAvailable) {
+        this.jaxwsSupportIfAvailable = jaxwsSupportIfAvailable;
     }
 }

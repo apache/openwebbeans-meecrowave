@@ -94,6 +94,15 @@ public class MeecrowaveExtension {
     private String tomcatAccessLogPattern;
     private boolean jaxrsAutoActivateBeanValidation = true;
     private String meecrowaveProperties = "meecrowave.properties";
+    private boolean jaxwsSupportIfAvailable = true;
+
+    public boolean isJaxwsSupportIfAvailable() {
+        return jaxwsSupportIfAvailable;
+    }
+
+    public void setJaxwsSupportIfAvailable(final boolean jaxwsSupportIfAvailable) {
+        this.jaxwsSupportIfAvailable = jaxwsSupportIfAvailable;
+    }
 
     public String getMeecrowaveProperties() {
         return meecrowaveProperties;
