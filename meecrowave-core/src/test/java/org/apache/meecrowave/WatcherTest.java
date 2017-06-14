@@ -57,7 +57,7 @@ public class WatcherTest {
                 // now replace it by "replaced", not we don't reload classes yet so we just check we redeployed, should we integ with fakereplace?
                 new File(bouncedFile).setLastModified(System.currentTimeMillis());
 
-                long max = 5000 /* deployment max */ + 250 /* bouncing */ * 4 /* wait in watcher + 3 loops in bouncer */;
+                long max = 15000 /* deployment max */ + 250 /* bouncing */ * 4 /* wait in watcher + 3 loops in bouncer */;
                 while (max > 0) {
                     try {
                         Thread.sleep(1000);
