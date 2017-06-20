@@ -77,7 +77,12 @@ public class JAXWSCdiExtension implements Extension {
         final Bean<?> mapperBean = beanManager.resolve(beanManager.getBeans(JAXWSAddressMapper.class));
         final JAXWSAddressMapper mapper;
         if (mapperBean == null) {
-            mapper = type -> "/webservices/" + type.getSimpleName();
+            mapper = type -> {
+                WsMapping wsMapping = type.getAnnotation(WsMapping.class);
+                return wsMapping != null
+                    ? wsMapping.value()
+                    : "/webservices/" + type.getSimpleName();
+            };
         } else {
             mapper = JAXWSAddressMapper.class.cast(beanManager.getReference(mapperBean, JAXWSAddressMapper.class, beanManager.createCreationalContext(mapperBean)));
         }

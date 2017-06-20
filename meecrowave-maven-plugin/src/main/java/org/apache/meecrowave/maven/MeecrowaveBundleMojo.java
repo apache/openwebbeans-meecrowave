@@ -170,34 +170,9 @@ public class MeecrowaveBundleMojo extends AbstractMojo {
         } catch (final IOException e) {
             throw new MojoExecutionException(e.getMessage(), e);
         }
-        write(new File(distroFolder, "conf/log4j2.xml"), "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-                "<Configuration status=\"INFO\">\n" +
-                "  <Properties>\n" +
-                "    <Property name=\"name\">" + artifactId + "</Property>\n" +
-                "  </Properties>\n" +
-                "  <Appenders>\n" +
-                "    <Console name=\"Console\" target=\"SYSTEM_OUT\">\n" +
-                "      <PatternLayout pattern=\"[%d{HH:mm:ss.SSS}][%highlight{%-5level}][%15.15t][%30.30logger] %msg%n\"/>\n" +
-                "    </Console>" +
-                "    <RollingFile name=\"DailyLogFile\" fileName=\"logs/meecrowave.log\"\n" +
-                "                 filePattern=\"logs/${name}-%d{yyyy-MM-dd}-%i.log.gz\">\n" +
-                "      <PatternLayout pattern=\"[%d{HH:mm:ss.SSS}][%-5level][%15.15t][%30.30logger] %msg%n\"/>\n" +
-                "      <Policies>\n" +
-                "        <TimeBasedTriggeringPolicy />\n" +
-                "        <SizeBasedTriggeringPolicy size=\"50 MB\"/>\n" +
-                "      </Policies>\n" +
-                "    </RollingFile>\n" +
-                "  </Appenders>\n" +
-                "  <Loggers>\n" +
-                "    <Root level=\"INFO\">\n" +
-                "      <!--<AppenderRef ref=\"Console\"/>-->\n" +
-                "      <AppenderRef ref=\"DailyLogFile\"/>\n" +
-                "    </Root>\n" +
-                "  </Loggers>\n" +
-                "</Configuration>\n\n");
-        write(new File(distroFolder, "conf/meecrowave.properties"), "# This file contains the meecrowave default configuration\n" +
-                "# More on http://openwebbeans.apache.org/meecrowave/meecrowave-core/cli.html\n\n" +
-                "tomcat-access-log-pattern = %h %l %u %t \"%r\" %s %b \"%{Referer}i\" \"%{User-Agent}i\"");
+
+        copyProvidedFiles(distroFolder);
+
         write(new File(distroFolder, "logs/you_can_safely_delete.txt"), DELETE_TEXT);
         final Collection<String> includedArtifacts = project.getArtifacts().stream()
                 .filter(this::isIncluded)
@@ -291,6 +266,61 @@ public class MeecrowaveBundleMojo extends AbstractMojo {
         }
     }
 
+
+    /**
+     * Copy over all files from src/meecrowave/*
+     * TODO!
+     * The following files get added with default content if not found there:
+     * <ul>
+     *     <li>conf/log4j2.xml</li>
+     *     <li>conf/meecrowave.properties</li>
+     * </ul>
+     * @param distroFolder
+     */
+    private void copyProvidedFiles(File distroFolder)
+    {
+        writeLog4jConfig(distroFolder);
+        writeMeecrowaveProperties(distroFolder);
+
+    }
+
+    private void writeMeecrowaveProperties(File distroFolder)
+    {
+        write(new File(distroFolder, "conf/meecrowave.properties"), "# This file contains the meecrowave default configuration\n" +
+                "# More on http://openwebbeans.apache.org/meecrowave/meecrowave-core/cli.html\n\n" +
+                "tomcat-access-log-pattern = %h %l %u %t \"%r\" %s %b \"%{Referer}i\" \"%{User-Agent}i\"");
+    }
+
+    private void writeLog4jConfig(File distroFolder)
+    {
+        write(new File(distroFolder, "conf/log4j2.xml"),
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+                "<Configuration status=\"INFO\">\n" +
+                "  <Properties>\n" +
+                "    <Property name=\"name\">" + artifactId + "</Property>\n" +
+                "  </Properties>\n" +
+                "  <Appenders>\n" +
+                "    <Console name=\"Console\" target=\"SYSTEM_OUT\">\n" +
+                "      <PatternLayout pattern=\"[%d{HH:mm:ss.SSS}][%highlight{%-5level}][%15.15t][%30.30logger] %msg%n\"/>\n" +
+                "    </Console>" +
+                "    <RollingFile name=\"DailyLogFile\" fileName=\"logs/meecrowave.log\"\n" +
+                "                 filePattern=\"logs/${name}-%d{yyyy-MM-dd}-%i.log.gz\">\n" +
+                "      <PatternLayout pattern=\"[%d{HH:mm:ss.SSS}][%-5level][%15.15t][%30.30logger] %msg%n\"/>\n" +
+                "      <Policies>\n" +
+                "        <TimeBasedTriggeringPolicy />\n" +
+                "        <SizeBasedTriggeringPolicy size=\"50 MB\"/>\n" +
+                "      </Policies>\n" +
+                "    </RollingFile>\n" +
+                "  </Appenders>\n" +
+                "  <Loggers>\n" +
+                "    <Root level=\"INFO\">\n" +
+                "      <!--<AppenderRef ref=\"Console\"/>-->\n" +
+                "      <AppenderRef ref=\"DailyLogFile\"/>\n" +
+                "    </Root>\n" +
+                "  </Loggers>\n" +
+                "</Configuration>\n\n");
+    }
+
     private void addLib(final File distroFolder, final File cc) {
         try {
             Files.copy(cc.toPath(), new File(distroFolder, "lib/" + cc.getName()).toPath(), StandardCopyOption.REPLACE_EXISTING);
@@ -328,6 +358,7 @@ public class MeecrowaveBundleMojo extends AbstractMojo {
             throw new IllegalStateException(e.getMessage(), e);
         }
     }
+
 
     private boolean isIncluded(final Artifact a) {
         return !((scopes == null && !(Artifact.SCOPE_COMPILE.equals(a.getScope()) || Artifact.SCOPE_RUNTIME.equals(a.getScope())))
