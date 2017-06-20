@@ -30,19 +30,25 @@
   <modelVersion>4.0.0</modelVersion>
 
   <artifactId>webservices</artifactId>
+  <packaging>war</packaging>
   <name>Meecrowave :: Integration Tests :: WebServices</name>
+
+  <properties>
+    <failOnMissingWebXml>false</failOnMissingWebXml>
+  </properties>
 
   <dependencies>
     <dependency>
       <groupId>org.apache.meecrowave</groupId>
       <artifactId>meecrowave-core</artifactId>
       <version>${project.version}</version>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.cxf</groupId>
       <artifactId>cxf-rt-frontend-jaxws</artifactId>
       <version>${cxf.version}</version>
-      <scope>runtime</scope>
+      <scope>provided</scope>
       <exclusions>
         <exclusion>
           <groupId>org.ow2.asm</groupId>
@@ -81,6 +87,7 @@
           </dependency>
         </dependencies>
       </plugin>
+
     </plugins>
   </build>
 </project>
