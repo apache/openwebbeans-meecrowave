@@ -24,19 +24,36 @@ import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 import org.apache.commons.lang3.text.StrSubstitutor;
 import org.apache.maven.artifact.Artifact;
+import org.apache.maven.model.Dependency;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
+import org.apache.maven.project.DefaultDependencyResolutionRequest;
+import org.apache.maven.project.DependencyResolutionException;
+import org.apache.maven.project.DependencyResolutionRequest;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.MavenProjectHelper;
+import org.apache.maven.project.ProjectDependenciesResolver;
+import org.eclipse.aether.RepositorySystem;
+import org.eclipse.aether.RepositorySystemSession;
+import org.eclipse.aether.artifact.DefaultArtifact;
+import org.eclipse.aether.graph.DependencyNode;
+import org.eclipse.aether.graph.DependencyVisitor;
+import org.eclipse.aether.impl.ArtifactResolver;
+import org.eclipse.aether.repository.LocalRepositoryManager;
+import org.eclipse.aether.repository.RemoteRepository;
+import org.eclipse.aether.resolution.ArtifactRequest;
+import org.eclipse.aether.resolution.ArtifactResolutionException;
+import org.eclipse.aether.resolution.ArtifactResult;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitResult;
@@ -48,11 +65,14 @@ import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Properties;
 import java.util.stream.Stream;
 import java.util.zip.GZIPOutputStream;
 
 import static java.util.Locale.ENGLISH;
 import static java.util.stream.Collectors.joining;
+import static java.util.stream.Collectors.toList;
 import static org.apache.maven.plugins.annotations.ResolutionScope.RUNTIME_PLUS_SYSTEM;
 
 @Mojo(name = "bundle", requiresDependencyResolution = RUNTIME_PLUS_SYSTEM)
@@ -104,8 +124,29 @@ public class MeecrowaveBundleMojo extends AbstractMojo {
     @Parameter(defaultValue = "${project}", readonly = true)
     private MavenProject project;
 
+    @Parameter(property = "meecrowave.enforce-commons_cli", defaultValue = "true")
+    private boolean enforceCommonsCli; // set to false if you use a packaged version of commons-cli not named commons-cli*.jar
+
+    @Parameter(property = "meecrowave.enforce-meecrowave", defaultValue = "true")
+    private boolean enforceMeecrowave; // set to false if you package meecrowave runner
+
     @Component
     private MavenProjectHelper projectHelper;
+
+    @Component
+    private ArtifactResolver resolver;
+
+    @Component
+    private RepositorySystem repositorySystem;
+
+    @Component
+    private ProjectDependenciesResolver dependenciesResolver;
+
+    @Parameter(defaultValue = "${repositorySystemSession}")
+    private RepositorySystemSession session;
+
+    @Parameter(defaultValue = "${project.remoteProjectRepositories}")
+    private List<RemoteRepository> remoteRepositories;
 
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
@@ -158,21 +199,46 @@ public class MeecrowaveBundleMojo extends AbstractMojo {
                 "# More on http://openwebbeans.apache.org/meecrowave/meecrowave-core/cli.html\n\n" +
                 "tomcat-access-log-pattern = %h %l %u %t \"%r\" %s %b \"%{Referer}i\" \"%{User-Agent}i\"");
         write(new File(distroFolder, "logs/you_can_safely_delete.txt"), DELETE_TEXT);
-        project.getArtifacts().stream()
+        final Collection<String> includedArtifacts = project.getArtifacts().stream()
                 .filter(this::isIncluded)
-                .map(Artifact::getFile)
-                .forEach(f -> {
-                    try {
-                        Files.copy(f.toPath(), new File(distroFolder, "lib/" + f.getName()).toPath(), StandardCopyOption.REPLACE_EXISTING);
-                    } catch (final IOException e) {
-                        throw new IllegalStateException(e);
+                .map(a -> {
+                    addLib(distroFolder, a.getFile());
+                    return a.getArtifactId();
+                }).collect(toList());
+        if (app.exists()) {
+            addLib(distroFolder, app);
+        }
+        if (enforceCommonsCli && !includedArtifacts.contains("commons-cli")) {
+            addLib(distroFolder, resolve("commons-cli", "commons-cli", "1.3.1"));
+        }
+        if (enforceMeecrowave && !includedArtifacts.contains("meecrowave-core")) {
+            final DependencyResolutionRequest request = new DefaultDependencyResolutionRequest();
+            request.setMavenProject(new MavenProject() {{
+                getDependencies().add(new Dependency() {{
+                    setGroupId("org.apache.meecrowave");
+                    setArtifactId("meecrowave-core");
+                    setVersion(findVersion());
+                }});
+            }});
+            request.setRepositorySession(session);
+            try {
+                dependenciesResolver.resolve(request).getDependencyGraph().accept(new DependencyVisitor() {
+                    @Override
+                    public boolean visitEnter(final DependencyNode node) {
+                        return true;
+                    }
+
+                    @Override
+                    public boolean visitLeave(final DependencyNode node) {
+                        final org.eclipse.aether.artifact.Artifact artifact = node.getArtifact();
+                        if (artifact != null && !includedArtifacts.contains(artifact.getArtifactId())) {
+                            addLib(distroFolder, artifact.getFile());
+                        }
+                        return true;
                     }
                 });
-        if (app.exists()) {
-            try {
-                Files.copy(app.toPath(), new File(distroFolder, "lib/" + app.getName()).toPath(), StandardCopyOption.REPLACE_EXISTING);
-            } catch (final IOException e) {
-                throw new IllegalStateException(e);
+            } catch (final DependencyResolutionException e) {
+                throw new MojoExecutionException(e.getMessage(), e);
             }
         }
 
@@ -213,6 +279,44 @@ public class MeecrowaveBundleMojo extends AbstractMojo {
 
         if (!keepExplodedFolder) {
             delete(distroFolder);
+        }
+    }
+
+    private void addLib(final File distroFolder, final File cc) {
+        try {
+            Files.copy(cc.toPath(), new File(distroFolder, "lib/" + cc.getName()).toPath(), StandardCopyOption.REPLACE_EXISTING);
+        } catch (final IOException e) {
+            throw new IllegalStateException(e.getMessage(), e);
+        }
+    }
+
+    private String findVersion() {
+        return new Properties() {{
+            try (final InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream("META-INF/maven/org.apache.meecrowave/meecrowave-core/pom.properties")) {
+                if (is != null) {
+                    load(is);
+                }
+            } catch (final IOException e) {
+                throw new IllegalStateException(e);
+            }
+        }}.getProperty("version", "0.3.2");
+    }
+
+    private File resolve(final String group, final String artifact, final String version) throws MojoExecutionException {
+        final DefaultArtifact art = new DefaultArtifact(group, artifact, "jar", version);
+        final ArtifactRequest artifactRequest = new ArtifactRequest().setArtifact(art).setRepositories(remoteRepositories);
+
+        final LocalRepositoryManager lrm = session.getLocalRepositoryManager();
+        art.setFile(new File(lrm.getRepository().getBasedir(), lrm.getPathForLocalArtifact(artifactRequest.getArtifact())));
+
+        try {
+            final ArtifactResult result = repositorySystem.resolveArtifact(session, artifactRequest);
+            if (result.isMissing()) {
+                throw new MojoExecutionException("Can't find commons-cli, please add it to the pom.");
+            }
+            return result.getArtifact().getFile();
+        } catch (final ArtifactResolutionException e) {
+            throw new MojoExecutionException(e.getMessage(), e);
         }
     }
 
