@@ -209,7 +209,16 @@ public class MeecrowaveBundleMojo extends AbstractMojo {
             addLib(distroFolder, app);
         }
         if (enforceCommonsCli && !includedArtifacts.contains("commons-cli")) {
-            addLib(distroFolder, resolve("commons-cli", "commons-cli", "1.3.1"));
+            addLib(distroFolder, resolve("commons-cli", "commons-cli", "1.3.1", ""));
+        }
+        if (libs != null) {
+            libs.forEach(l -> {
+                final String[] c = l.split(":");
+                if (c.length != 3 && c.length != 4) {
+                    throw new IllegalArgumentException("libs syntax is groupId:artifactId:version[:classifier]");
+                }
+                addLib(distroFolder, resolve(c[0], c[1], c[2], c.length == 4 ? c[3] : ""));
+            });
         }
         if (enforceMeecrowave && !includedArtifacts.contains("meecrowave-core")) {
             final DependencyResolutionRequest request = new DefaultDependencyResolutionRequest();
@@ -302,8 +311,8 @@ public class MeecrowaveBundleMojo extends AbstractMojo {
         }}.getProperty("version", "0.3.2");
     }
 
-    private File resolve(final String group, final String artifact, final String version) throws MojoExecutionException {
-        final DefaultArtifact art = new DefaultArtifact(group, artifact, "jar", version);
+    private File resolve(final String group, final String artifact, final String version, final String classifier) {
+        final DefaultArtifact art = new DefaultArtifact(group, artifact, classifier, "jar", version);
         final ArtifactRequest artifactRequest = new ArtifactRequest().setArtifact(art).setRepositories(remoteRepositories);
 
         final LocalRepositoryManager lrm = session.getLocalRepositoryManager();
@@ -312,11 +321,11 @@ public class MeecrowaveBundleMojo extends AbstractMojo {
         try {
             final ArtifactResult result = repositorySystem.resolveArtifact(session, artifactRequest);
             if (result.isMissing()) {
-                throw new MojoExecutionException("Can't find commons-cli, please add it to the pom.");
+                throw new IllegalStateException("Can't find commons-cli, please add it to the pom.");
             }
             return result.getArtifact().getFile();
         } catch (final ArtifactResolutionException e) {
-            throw new MojoExecutionException(e.getMessage(), e);
+            throw new IllegalStateException(e.getMessage(), e);
         }
     }
 
