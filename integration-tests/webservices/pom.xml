@@ -56,4 +56,21 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.meecrowave</groupId>
+        <artifactId>meecrowave-maven-plugin</artifactId>
+        <version>${project.version}</version>
+        <dependencies>
+          <dependency>
+            <groupId>org.apache.cxf</groupId>
+            <artifactId>cxf-rt-frontend-jaxws</artifactId>
+            <version>${cxf.version}</version>
+          </dependency>
+        </dependencies>
+      </plugin>
+    </plugins>
+  </build>
 </project>
