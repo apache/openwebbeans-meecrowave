@@ -107,6 +107,7 @@ public class KnowClassesFilter implements Filter { // one easy and efficient sol
         excluded.add("org.apache.johnzon");
         excluded.add("org.apache.juli");
         excluded.add("org.apache.logging.log4j.core");
+        excluded.add("org.apache.logging.log4j.jul");
         excluded.add("org.apache.logging.log4j.util");
         excluded.add("org.apache.logging.slf4j");
         excluded.add("org.apache.meecrowave");
