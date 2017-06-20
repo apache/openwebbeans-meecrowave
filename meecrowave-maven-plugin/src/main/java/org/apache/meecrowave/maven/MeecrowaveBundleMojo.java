@@ -28,6 +28,7 @@ import org.apache.maven.model.Dependency;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
@@ -85,6 +86,9 @@ public class MeecrowaveBundleMojo extends AbstractMojo {
     @Parameter(property = "meecrowave.scopes", defaultValue = "compile,runtime")
     private Collection<String> scopes;
 
+    /**
+     * A directory with configuration which should be put into the final bundle.
+     */
     @Parameter(property = "meecrowave.conf", defaultValue = "src/main/meecrowave/conf")
     private String conf;
 
@@ -277,11 +281,51 @@ public class MeecrowaveBundleMojo extends AbstractMojo {
      * </ul>
      * @param distroFolder
      */
-    private void copyProvidedFiles(File distroFolder)
+    private void copyProvidedFiles(File distroFolder) throws MojoExecutionException
     {
-        writeLog4jConfig(distroFolder);
-        writeMeecrowaveProperties(distroFolder);
+        boolean customLog4jConfig = false;
+        boolean customMwProperties = false;
+        Log log = getLog();
 
+        File srcConf = new File(conf);
+        if (srcConf.exists() && srcConf.isDirectory()) {
+            File targetConf = new File(distroFolder, "conf");
+            targetConf.mkdirs();
+
+            for (File file : srcConf.listFiles()) {
+                String fileName = file.getName();
+                if ("log4j2.xml".equals(fileName)) {
+                    customLog4jConfig = true;
+                }
+                if ("meecrowave.properties".equals(fileName)) {
+                    customMwProperties = true;
+                }
+
+                if (fileName.startsWith(".")) {
+                    // hidden file -> ignore
+                    continue;
+                }
+
+                try {
+                    if (log.isDebugEnabled()) {
+                        log.debug("Copying file from " + file + " to " + targetConf);
+                    }
+                    Files.copy(file.toPath(), new File(targetConf, fileName).toPath());
+                }
+                catch (IOException e) {
+                    throw new MojoExecutionException("Could not copy file " + file.getAbsolutePath(), e);
+                }
+            }
+        }
+        if (!customLog4jConfig)
+        {
+            writeLog4jConfig(distroFolder);
+        }
+
+        if (!customMwProperties)
+        {
+            writeMeecrowaveProperties(distroFolder);
+        }
     }
 
     private void writeMeecrowaveProperties(File distroFolder)
