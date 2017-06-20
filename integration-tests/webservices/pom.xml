@@ -63,6 +63,9 @@
         <groupId>org.apache.meecrowave</groupId>
         <artifactId>meecrowave-maven-plugin</artifactId>
         <version>${project.version}</version>
+        <configuration>
+          <scanningPackageIncludes>org.apache.meecrowave.tests.webservices</scanningPackageIncludes>
+        </configuration>
         <dependencies>
           <dependency>
             <groupId>org.apache.cxf</groupId>
