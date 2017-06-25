@@ -21,6 +21,7 @@ package org.apache.meecrowave.openwebbeans;
 import org.apache.meecrowave.Meecrowave;
 import org.apache.meecrowave.logging.tomcat.LogFacade;
 import org.apache.tomcat.JarScanFilter;
+import org.apache.webbeans.config.WebBeansContext;
 import org.apache.webbeans.corespi.scanner.xbean.CdiArchive;
 import org.apache.webbeans.spi.BeanArchiveService;
 import org.apache.webbeans.util.WebBeansUtil;
@@ -168,7 +169,7 @@ public class OWBTomcatWebScannerService extends WebScannerService implements Clo
         final String key = uri.toASCIIString();
         CdiArchive.FoundClasses foundClasses = archive.classesByUrl().get(key);
         if (foundClasses == null) {
-            final BeanArchiveService beanArchiveService = webBeansContext.getBeanArchiveService();
+            final BeanArchiveService beanArchiveService = webBeansContext().getBeanArchiveService();
             foundClasses = CdiArchive.FoundClasses.class.cast(
                     CdiArchive.FoundClasses.class.getConstructor(CdiArchive.class, URL.class, Collection.class, BeanArchiveService.BeanArchiveInformation.class)
                             .newInstance(null, url, new HashSet<>(), beanArchiveService.getBeanArchiveInformation(url)));
@@ -244,7 +245,7 @@ public class OWBTomcatWebScannerService extends WebScannerService implements Clo
             this.filter = new KnownJarsFilter(config);
         }
 
-        final Filter userFilter = this.webBeansContext.getService(Filter.class);
+        final Filter userFilter = webBeansContext().getService(Filter.class);
         if (KnowClassesFilter.class.isInstance(userFilter)) {
             KnowClassesFilter.class.cast(userFilter).init(config);
         }
@@ -275,5 +276,10 @@ public class OWBTomcatWebScannerService extends WebScannerService implements Clo
 
     public void setFileVisitor(final Consumer<File> fileVisitor) {
         this.fileVisitor = fileVisitor;
+    }
+
+    //don't rename this method - in case of owb2 it overrides the method defined in AbstractMetaDataDiscovery
+    protected WebBeansContext webBeansContext() {
+        return WebBeansContext.getInstance(); //only way to be compatible with owb 1.7.x and 2.x (without reflection)
     }
 }
