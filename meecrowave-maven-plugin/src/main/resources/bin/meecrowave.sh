@@ -303,7 +303,7 @@ fi
 
 if [ -z "$MEECROWAVE_TEMP" ]; then
   mkdir -p "$MEECROWAVE_BASE"/temp
-  MEECROWAVE_ARGS="--tmp-dir="$MEECROWAVE_ARGS $MEECROWAVE_BASE"/temp"
+  MEECROWAVE_ARGS="$MEECROWAVE_ARGS --tmp-dir="$MEECROWAVE_BASE"/temp"
 fi
 
 if [ "$1" = "run" ]; then
