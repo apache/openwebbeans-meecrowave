@@ -300,11 +300,7 @@ fi
 if [ -f "$MEECROWAVE_BASE"/conf/server.xml ]; then
   MEECROWAVE_ARGS="$MEECROWAVE_ARGS --server-xml="$MEECROWAVE_BASE"/conf/server.xml"
 fi
-
-if [ -z "$MEECROWAVE_TEMP" ]; then
-  mkdir -p "$MEECROWAVE_BASE"/temp
-  MEECROWAVE_ARGS="$MEECROWAVE_ARGS --tmp-dir="$MEECROWAVE_BASE"/temp"
-fi
+MEECROWAVE_ARGS="$MEECROWAVE_ARGS --tmp-dir="$MEECROWAVE_TMPDIR""
 
 if [ "$1" = "run" ]; then
 
