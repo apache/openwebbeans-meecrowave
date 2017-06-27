@@ -87,6 +87,7 @@ public class KnownJarsFilter implements JarScanFilter {
         add("commons-cli-");
         add("commons-codec-");
         add("commons-collections-");
+        add("commons-compress-");
         add("commons-configuration-");
         add("commons-dbcp");
         add("commons-dbcp-all-1.3-");
