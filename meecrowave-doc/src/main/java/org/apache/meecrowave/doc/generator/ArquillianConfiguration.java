@@ -34,7 +34,7 @@ public class ArquillianConfiguration extends BaseGenerator {
                 "<arquillian xmlns=\"http://jboss.org/schema/arquillian\"\n" +
                 "            xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
                 "            xsi:schemaLocation=\"http://jboss.org/schema/arquillian http://jboss.org/schema/arquillian/arquillian_1_0.xsd\">\n" +
-                "  <container qualifier=\"tomee-embedded\" default=\"true\">\n" +
+                "  <container qualifier=\"meecrowave\" default=\"true\">\n" +
                 "    <configuration>\n" +
                 Stream.of(MeecrowaveConfiguration.class.getDeclaredFields())
                         .sorted(Comparator.comparing(Field::getName))

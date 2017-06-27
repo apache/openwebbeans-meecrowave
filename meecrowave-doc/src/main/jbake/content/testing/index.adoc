@@ -22,25 +22,11 @@ Coordinates:
 
 === Rules and Runners
 
-Meecrowave provides two flavors of JUnit integration: mono or nor runners/rules. The mono one will
-ensure there is a single container for the whole JVM where the other ones will follow JUnit lifecycle (per class or test).
+Meecrowave provides two flavors of JUnit integration: standalone or runners/rules. The standalone one will
+ensure there is a single container for the whole JVM. It also fits standalone environments where you want to control the lifecycle.
+The other one will follow the JUnit lifecycle (per class or test rule).
 
-Here how to use the not mono rule:
-
-[source,java]
-----
-public class MeecrowaveRuleTest {
-    @ClassRule // started once for the class, @Rule would be per method
-    public static final MeecrowaveRule RULE = new MeecrowaveRule();
-
-    @Test
-    public void test() throws IOException {
-        // use "http://localhost:" + RULE.getConfiguration().getHttpPort()
-    }
-}
-----
-
-And here for the mono version:
+Here how to use the standalone flavor:
 
 [source,java]
 ----
@@ -61,11 +47,29 @@ public class MonoMeecrowaveRuleTest {
 }
 ----
 
-When using the mono runner, `@MonoMeecrowave.Runner.ConfigurationInject` allows to still
+When using the standalone, `@MonoMeecrowave.Runner.ConfigurationInject` allows to still
 access the configuration and random HTTP port.
 
-For the configuration, mono rule will use a global configuration shared by all tests. To load it
+For the configuration, the standalone runner will use a global configuration shared by all tests. To load it
 it will use a standard `ServiceLoader` on type `org.apache.meecrowave.Meecrowave$ConfigurationCustomizer`.
+
+And here is the one bound to the JUnit lifecycle
+
+[source,java]
+----
+public class MeecrowaveRuleTest {
+    @ClassRule // started once for the class, @Rule would be per method
+    public static final MeecrowaveRule RULE = new MeecrowaveRule();
+
+    @Test
+    public void test() throws IOException {
+        // use "http://localhost:" + RULE.getConfiguration().getHttpPort()
+    }
+}
+----
+
+As usual with JUnit rules, you can decide whereas the Meecrowave instance is bound to the entire test class
+or a method by using @ClassRule or @Rule.
 
 === JUnit 5
 
