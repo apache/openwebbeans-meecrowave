@@ -348,7 +348,7 @@ public class MeecrowaveBundleMojo extends AbstractMojo {
                 "      <PatternLayout pattern=\"[%d{HH:mm:ss.SSS}][%highlight{%-5level}][%15.15t][%30.30logger] %msg%n\"/>\n" +
                 "    </Console>\n" +
                 "    <RollingFile name=\"DailyLogFile\" fileName=\"${sys:meecrowave.base}/logs/meecrowave.log\"\n" +
-                "                 filePattern=\"logs/${name}-%d{yyyy-MM-dd}-%i.log.gz\">\n" +
+                "                 filePattern=\"${sys:meecrowave.base}/logs/${name}-%d{yyyy-MM-dd}-%i.log.gz\">\n" +
                 "      <PatternLayout pattern=\"[%d{HH:mm:ss.SSS}][%-5level][%15.15t][%30.30logger] %msg%n\"/>\n" +
                 "      <Policies>\n" +
                 "        <TimeBasedTriggeringPolicy />\n" +
