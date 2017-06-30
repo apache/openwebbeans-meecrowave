@@ -47,7 +47,7 @@ public class ReloadOnChangeController implements AutoCloseable, Runnable {
     private Thread bouncer;
     private Thread watcher;
     private volatile boolean running = true;
-    private volatile long redeployMarker = System.currentTimeMillis();
+    private volatile long redeployMarker = System.nanoTime();
 
     public ReloadOnChangeController(final Context context, final int watcherBouncing) {
         this.context = context;
@@ -139,6 +139,7 @@ public class ReloadOnChangeController implements AutoCloseable, Runnable {
                 }
 
                 if (needsRedeploy && last == antepenultiem) {
+                    new LogFacade(ReloadOnChangeController.class.getName()).info("Redeploying " + context.getName());
                     redeploy();
                 }
             }
@@ -197,6 +198,7 @@ public class ReloadOnChangeController implements AutoCloseable, Runnable {
                 }
 
                 if (foundNew) {
+                    new LogFacade(ReloadOnChangeController.class.getName()).info("Marking to redeploy " + context.getName());
                     redeployMarker = System.nanoTime();
                 }
 
