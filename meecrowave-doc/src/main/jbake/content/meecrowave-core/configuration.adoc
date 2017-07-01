@@ -34,6 +34,64 @@ new Meecrowave(new Builder() {{
     .await();
 ----
 
+== CDI SE API
+
+CDI 2.0 introduces a "SE API" for CDI. It looks like:
+
+[source,java]
+----
+try (final SeContainer container = SeContainerInitializer.newInstance()
+        .disableDiscovery()
+        .addBeanClasses(Configured.class)
+        .initialize()) {
+    // your main
+}
+----
+
+Meecrowave inherits from OpenWebBeans SE API implementation and therefore this SE API will work out of the box.
+
+It is implemented as a `bake()` and you can still access the `Builder` configuration or even `Meecrowave` itself if needed:
+
+[source,java]
+----
+try (final SeContainer container = SeContainerInitializer.newInstance()
+        .disableDiscovery()
+        .addBeanClasses(Configured.class)
+        .initialize()) {
+
+    // use the configuration to access extensions, custom config or even server port
+    Meecrowave.Builder config = container.select(Meecrowave.Builder.class).get();
+    int port = config.getHttpPort();
+
+    // default wait implementation relying on tomcat one
+    container.select(Meecrowave.class).get().await(); // wait for the program to be killed (tomcat.await() equivalent)
+
+}
+----
+
+All the configuration of meecrowave is still available using properties:
+
+[source,java]
+----
+try (final SeContainer container = SeContainerInitializer.newInstance()
+     .addProperty("nameOfTheProperty", instanceInTheRightType)
+     .initialize()) {
+    container.select(Meecrowave.class).get().await();
+}
+----
+
+The type should match the type expected by the `Builder` instance. Note you can also just pass directly a `Builder` instance as value
+(the property name is not important) if you want something preconfigured:
+
+[source,java]
+----
+try (final SeContainer container = SeContainerInitializer.newInstance()
+     .addProperty("meecrowaveConfiguration", new Meecrowave.Builder().randomPort())
+     .initialize()) {
+    container.select(Meecrowave.class).get().await();
+}
+----
+
 == Automatic configuration
 
 The `org.apache.meecrowave.Meecrowave$Builder` class also provides `loadFromProperties(Properties)`

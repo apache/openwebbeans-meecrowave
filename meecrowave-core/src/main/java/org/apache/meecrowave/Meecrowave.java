@@ -296,6 +296,7 @@ public class Meecrowave implements AutoCloseable {
                     break;
                 case Lifecycle.BEFORE_INIT_EVENT:
                     ctx.getServletContext().setAttribute("meecrowave.configuration", configuration);
+                    ctx.getServletContext().setAttribute("meecrowave.instance", Meecrowave.this);
                     if (configuration.loginConfig != null) {
                         ctx.setLoginConfig(configuration.loginConfig.build());
                     }

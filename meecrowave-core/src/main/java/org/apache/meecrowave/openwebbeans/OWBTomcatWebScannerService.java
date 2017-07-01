@@ -20,9 +20,11 @@ package org.apache.meecrowave.openwebbeans;
 
 import org.apache.meecrowave.Meecrowave;
 import org.apache.meecrowave.logging.tomcat.LogFacade;
+import org.apache.openwebbeans.se.CDISeScannerService;
 import org.apache.tomcat.JarScanFilter;
 import org.apache.webbeans.config.WebBeansContext;
 import org.apache.webbeans.corespi.scanner.xbean.CdiArchive;
+import org.apache.webbeans.corespi.scanner.xbean.OwbAnnotationFinder;
 import org.apache.webbeans.spi.BeanArchiveService;
 import org.apache.webbeans.util.WebBeansUtil;
 import org.apache.webbeans.web.scanner.WebScannerService;
@@ -30,9 +32,7 @@ import org.apache.xbean.finder.AnnotationFinder;
 import org.apache.xbean.finder.filter.Filter;
 
 import javax.servlet.ServletContext;
-import java.io.Closeable;
 import java.io.File;
-import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -41,6 +41,7 @@ import java.net.URI;
 import java.net.URL;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
@@ -50,10 +51,11 @@ import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toSet;
 import static org.apache.tomcat.JarScanType.PLUGGABILITY;
 
-public class OWBTomcatWebScannerService extends WebScannerService implements Closeable {
+public class OWBTomcatWebScannerService extends WebScannerService {
     private final LogFacade logger = new LogFacade(OWBTomcatWebScannerService.class.getName());
+    private final CDISeScannerService delegate;
 
-    private JarScanFilter filter;
+    protected JarScanFilter filter;
     private String jreBase;
 
     // just for logging (== temp)
@@ -62,16 +64,70 @@ public class OWBTomcatWebScannerService extends WebScannerService implements Clo
     private String shared;
     private Consumer<File> fileVisitor;
 
+    public OWBTomcatWebScannerService() {
+        this(null);
+    }
+
+
+    public OWBTomcatWebScannerService(final CDISeScannerService delegate) {
+        this.delegate = delegate;
+    }
+
     @Override
     public void init(final Object context) {
-        // no-op
+        if (delegate != null) {
+            delegate.init(context);
+        }
+    }
+
+    @Override
+    public OwbAnnotationFinder getFinder() {
+        if (delegate != null) {
+            return delegate.getFinder();
+        }
+        return super.getFinder();
+    }
+
+    @Override
+    public Map<BeanArchiveService.BeanArchiveInformation, Set<Class<?>>> getBeanClassesPerBda() {
+        if (delegate != null) {
+            return delegate.getBeanClassesPerBda();
+        }
+        return super.getBeanClassesPerBda();
+    }
+
+    @Override
+    public void release() {
+        if (delegate != null) {
+            delegate.release();
+        } else {
+            super.release();
+        }
+    }
+
+    @Override
+    public Set<Class<?>> getBeanClasses() {
+        if (delegate != null) {
+            return delegate.getBeanClasses();
+        }
+        return super.getBeanClasses();
     }
 
     @Override
     public void scan() {
+        if (delegate != null) {
+            if (getFinder() == null) {
+                delegate.scan();
+            }
+            if (finder == null) {
+                finder = getFinder();
+            }
+        }
+
         if (finder != null) {
             return;
         }
+
         super.scan();
         scanGroovy(WebBeansUtil.getCurrentClassLoader());
         if (!urls.isEmpty()) {
@@ -267,11 +323,6 @@ public class OWBTomcatWebScannerService extends WebScannerService implements Clo
 
     public void setDocBase(final String docBase) {
         this.docBase = docBase;
-    }
-
-    @Override
-    public void close() throws IOException {
-
     }
 
     public void setFileVisitor(final Consumer<File> fileVisitor) {
