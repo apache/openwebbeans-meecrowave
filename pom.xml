@@ -35,14 +35,14 @@
   <description>A Microprofile server @ ASF</description>
 
   <scm>
-    <connection>scm:svn:http://svn.apache.org/repos/asf/openwebbeans/meecrowave/trunk</connection>
-    <developerConnection>scm:svn:https://svn.apache.org/repos/asf/openwebbeans/meecrowave/trunk</developerConnection>
-    <url>https://svn.apache.org/repos/asf/openwebbeans/meecrowave/trunk</url>
+    <connection>scm:svn:http://svn.apache.org/repos/asf/openwebbeans/meecrowave/branches/meecrowave-1.0.x</connection>
+    <developerConnection>scm:svn:https://svn.apache.org/repos/asf/openwebbeans/meecrowave/meecrowave-1.0.x</developerConnection>
+    <url>https://svn.apache.org/repos/asf/openwebbeans/meecrowave/meecrowave-1.0.x</url>
   </scm>
 
   <issueManagement>
     <system>jira</system>
-    <url>http://issues.apache.org/jira/browse/OWB</url>
+    <url>http://issues.apache.org/jira/browse/MEECROWAVE</url>
   </issueManagement>
 
   <properties>
