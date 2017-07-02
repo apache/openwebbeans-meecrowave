@@ -26,6 +26,7 @@ import javax.ws.rs.Consumes;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.ext.Provider;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -197,6 +198,10 @@ public class MeecrowaveBus implements Bus {
                                              final String binaryStrategy,
                                              final String namingStrategy,
                                              final String orderStrategy) {
+            // ATTENTION this is only a workaround for MEECROWAVE-49 and shall get removed after Johnzon has a fix for it!
+            // We add byte[] to the ignored types.
+            super(Arrays.asList("[B"));
+
             ofNullable(encoding).ifPresent(this::setEncoding);
             ofNullable(namingStrategy).ifPresent(this::setPropertyNamingStrategy);
             ofNullable(orderStrategy).ifPresent(this::setPropertyOrderStrategy);
