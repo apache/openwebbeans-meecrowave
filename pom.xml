@@ -36,7 +36,7 @@
 
   <scm>
     <connection>scm:svn:http://svn.apache.org/repos/asf/openwebbeans/meecrowave/branches/meecrowave-1.0.x</connection>
-    <developerConnection>scm:svn:https://svn.apache.org/repos/asf/openwebbeans/meecrowave/meecrowave-1.0.x</developerConnection>
+    <developerConnection>scm:svn:https://svn.apache.org/repos/asf/openwebbeans/meecrowave/branches/meecrowave-1.0.x</developerConnection>
     <url>https://svn.apache.org/repos/asf/openwebbeans/meecrowave/meecrowave-1.0.x</url>
   </scm>
 
