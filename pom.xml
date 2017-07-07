@@ -28,16 +28,16 @@
 
   <groupId>org.apache.meecrowave</groupId>
   <artifactId>meecrowave</artifactId>
-  <version>0.3.2-SNAPSHOT</version>
+  <version>1.0.0</version>
   <packaging>pom</packaging>
 
   <name>Meecrowave</name>
   <description>A Microprofile server @ ASF</description>
 
   <scm>
-    <connection>scm:svn:http://svn.apache.org/repos/asf/openwebbeans/meecrowave/branches/meecrowave-1.0.x</connection>
-    <developerConnection>scm:svn:https://svn.apache.org/repos/asf/openwebbeans/meecrowave/meecrowave-1.0.x</developerConnection>
-    <url>https://svn.apache.org/repos/asf/openwebbeans/meecrowave/meecrowave-1.0.x</url>
+    <connection>scm:svn:http://svn.apache.org/repos/asf/openwebbeans/meecrowave/tags/meecrowave-1.0.0</connection>
+    <developerConnection>scm:svn:https://svn.apache.org/repos/asf/openwebbeans/meecrowave/meecrowave-1.0.x/tags/meecrowave-1.0.0</developerConnection>
+    <url>https://svn.apache.org/repos/asf/openwebbeans/meecrowave/meecrowave-1.0.x/tags/meecrowave-1.0.0</url>
   </scm>
 
   <issueManagement>
