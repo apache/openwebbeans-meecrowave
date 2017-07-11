@@ -20,8 +20,10 @@ package org.apache.meecrowave;
 
 import org.apache.catalina.Context;
 import org.apache.catalina.Globals;
+import org.apache.catalina.Host;
 import org.apache.catalina.Lifecycle;
 import org.apache.catalina.LifecycleException;
+import org.apache.catalina.LifecycleState;
 import org.apache.catalina.Manager;
 import org.apache.catalina.Realm;
 import org.apache.catalina.Server;
@@ -38,6 +40,8 @@ import org.apache.commons.lang3.text.StrLookup;
 import org.apache.commons.lang3.text.StrSubstitutor;
 import org.apache.coyote.http2.Http2Protocol;
 import org.apache.johnzon.core.BufferStrategy;
+import org.apache.meecrowave.api.StartListening;
+import org.apache.meecrowave.api.StopListening;
 import org.apache.meecrowave.cxf.CxfCdiAutoSetup;
 import org.apache.meecrowave.io.IO;
 import org.apache.meecrowave.logging.jul.Log4j2Logger;
@@ -59,6 +63,7 @@ import org.apache.tomcat.util.descriptor.web.SecurityCollection;
 import org.apache.tomcat.util.descriptor.web.SecurityConstraint;
 import org.apache.tomcat.util.modeler.Registry;
 import org.apache.tomcat.util.net.SSLHostConfig;
+import org.apache.webbeans.config.WebBeansContext;
 import org.apache.xbean.finder.ResourceFinder;
 import org.apache.xbean.recipe.ObjectRecipe;
 import org.xml.sax.Attributes;
@@ -145,6 +150,10 @@ public class Meecrowave implements AutoCloseable {
 
     public Tomcat getTomcat() {
         return tomcat;
+    }
+
+    public boolean isServing() {
+        return tomcat != null && tomcat.getHost().getState() == LifecycleState.STARTED;
     }
 
     public void undeploy(final String root) {
@@ -335,8 +344,17 @@ public class Meecrowave implements AutoCloseable {
 
         ofNullable(meta.consumer).ifPresent(c -> c.accept(ctx));
 
-        tomcat.getHost().addChild(ctx);
+        final Host host = tomcat.getHost();
+        host.addChild(ctx);
+
+        final ClassLoader classLoader = ctx.getLoader().getClassLoader();
+        if (host.getState().isAvailable()) {
+            fire(new StartListening(findFirstConnector(), host, ctx), classLoader);
+        }
         contexts.put(meta.context, () -> {
+            if (host.getState().isAvailable()) {
+                fire(new StopListening(findFirstConnector(), host, ctx), classLoader);
+            }
             ofNullable(releaseSCI.get()).ifPresent(Runnable::run);
             tomcat.getHost().removeChild(ctx);
         });
@@ -598,6 +616,14 @@ public class Meecrowave implements AutoCloseable {
             if (!initialized) {
                 tomcat.init();
             }
+
+            tomcat.getHost().addLifecycleListener(event -> {
+                if (!Host.class.isInstance(event.getSource())) {
+                    return;
+                }
+                broadcastHostEvent(event.getType(), Host.class.cast(event.getSource()));
+            });
+
             tomcat.start();
         } catch (final LifecycleException e) {
             throw new IllegalStateException(e);
@@ -622,6 +648,51 @@ public class Meecrowave implements AutoCloseable {
             Runtime.getRuntime().addShutdownHook(hook);
         }
         return this;
+    }
+
+    private void broadcastHostEvent(final String event, final Host host) {
+        switch (event) {
+            case Lifecycle.AFTER_START_EVENT: {
+                final Connector connector = findFirstConnector();
+                findContexts(host).forEach(ctx -> fire(new StartListening(connector, host, ctx), ctx.getLoader().getClassLoader()));
+                break;
+            }
+            case Lifecycle.BEFORE_STOP_EVENT: {
+                final Connector connector = findFirstConnector();
+                findContexts(host).forEach(ctx -> fire(new StopListening(connector, host, ctx), ctx.getLoader().getClassLoader()));
+                break;
+            }
+            default:
+        }
+    }
+
+    private Connector findFirstConnector() {
+        return Stream.of(tomcat.getServer().findServices())
+                .flatMap(s -> Stream.of(s.findConnectors()))
+                .findFirst()
+                .orElse(null);
+    }
+
+    private Stream<Context> findContexts(final Host host) {
+        return Stream.of(host.findChildren())
+                .filter(Context.class::isInstance)
+                .map(Context.class::cast)
+                .filter(ctx -> ctx.getState().isAvailable());
+    }
+
+    private <T> void fire(final T event, final ClassLoader classLoader) {
+        final Thread thread = Thread.currentThread();
+        final ClassLoader loader = thread.getContextClassLoader();
+        thread.setContextClassLoader(classLoader);
+        try {
+            WebBeansContext.currentInstance()
+                    .getBeanManagerImpl()
+                    .getEvent()
+                    .select(Class.class.cast(event.getClass()))
+                    .fire(event);
+        } finally {
+            thread.setContextClassLoader(loader);
+        }
     }
 
     private void setupJmx(final boolean skip) {
