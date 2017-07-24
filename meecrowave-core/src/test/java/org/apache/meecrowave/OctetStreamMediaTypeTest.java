@@ -35,34 +35,36 @@ import java.nio.charset.StandardCharsets;
 
 import static org.junit.Assert.assertEquals;
 
-public class OctectStreamMediaTypeTest {
+public class OctetStreamMediaTypeTest {
     @Test
     public void fields() throws IOException {
         try (final Meecrowave meecrowave = new Meecrowave(new Meecrowave.Builder()
-                .randomHttpPort()
-                .includePackages(OctectStreamMediaTypeTest.class.getName())).bake()) {
+            .randomHttpPort()
+            .includePackages(OctetStreamMediaTypeTest.class.getName())).bake()) {
             try (final InputStream stream = new URL(
-                    "http://localhost:" + meecrowave.getConfiguration().getHttpPort() + "/OctectStreamMediaTypeTest/response").openStream()) {
+                "http://localhost:" + meecrowave.getConfiguration().getHttpPort() + "/OctetStreamMediaTypeTest/response").openStream()) {
                 assertEquals("resp", Streams.asString(stream, "UTF-8"));
             }
             try (final InputStream stream = new URL(
-                    "http://localhost:" + meecrowave.getConfiguration().getHttpPort() + "/OctectStreamMediaTypeTest/streaming").openStream()) {
+                "http://localhost:" + meecrowave.getConfiguration().getHttpPort() + "/OctetStreamMediaTypeTest/responseBytes").openStream()) {
+                assertEquals("resp", Streams.asString(stream, "UTF-8"));
+            }
+            try (final InputStream stream = new URL(
+                "http://localhost:" + meecrowave.getConfiguration().getHttpPort() + "/OctetStreamMediaTypeTest/streaming").openStream()) {
                 assertEquals("stream", Streams.asString(stream, "UTF-8"));
             }
             try (final InputStream stream = new URL(
-                    "http://localhost:" + meecrowave.getConfiguration().getHttpPort() + "/OctectStreamMediaTypeTest/string").openStream()) {
+                "http://localhost:" + meecrowave.getConfiguration().getHttpPort() + "/OctetStreamMediaTypeTest/string").openStream()) {
                 assertEquals("string", Streams.asString(stream, "UTF-8"));
             }
-            /* too ambiguous to have it working, you can add it in ignored list of johnzon provider if you want to handle it particularly
             try (final InputStream stream = new URL(
-                    "http://localhost:" + meecrowave.getConfiguration().getHttpPort() + "/OctectStreamMediaTypeTest/bytes").openStream()) {
+                    "http://localhost:" + meecrowave.getConfiguration().getHttpPort() + "/OctetStreamMediaTypeTest/bytes").openStream()) {
                 assertEquals("bytes", Streams.asString(stream, "UTF-8"));
             }
-            */
         }
     }
 
-    @Path("OctectStreamMediaTypeTest")
+    @Path("OctetStreamMediaTypeTest")
     @ApplicationScoped
     public static class App {
         @GET
@@ -70,6 +72,13 @@ public class OctectStreamMediaTypeTest {
         @Produces(MediaType.APPLICATION_OCTET_STREAM)
         public Response getResponse() {
             return Response.ok("resp").build();
+        }
+
+        @GET
+        @Path("responseBytes")
+        @Produces(MediaType.APPLICATION_OCTET_STREAM)
+        public Response getResponseBytes() {
+            return Response.ok("resp".getBytes()).build();
         }
 
         @GET
