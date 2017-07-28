@@ -49,7 +49,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
     <junit.version>4.12</junit.version>
-    <tomcat.version>9.0.0.M22</tomcat.version>
+    <tomcat.version>9.0.0.M25</tomcat.version>
     <openwebbeans.version>2.0.0</openwebbeans.version>
     <cxf.version>3.1.12</cxf.version>
     <johnzon.version>1.1.1</johnzon.version>
