@@ -58,8 +58,8 @@
     <jaxb.version>2.2.11</jaxb.version>
     <openjpa.version>2.4.2</openjpa.version>
     <jpa-spec.version>1.0-alpha-1</jpa-spec.version>
-    <h2.version>1.4.192</h2.version>
-    <dbcp2.version>2.1</dbcp2.version>
+    <h2.version>1.4.196</h2.version>
+    <dbcp2.version>2.1.1</dbcp2.version>
     <commons-cli.version>1.4</commons-cli.version>
   </properties>
 
