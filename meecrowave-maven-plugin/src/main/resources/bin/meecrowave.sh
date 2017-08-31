@@ -51,7 +51,7 @@ PRGDIR=`dirname "$PRG"`
 [ -z "$MEECROWAVE_HOME" ] && MEECROWAVE_HOME=`cd "$PRGDIR/.." >/dev/null; pwd`
 
 # Copy MEECROWAVE_BASE from MEECROWAVE_HOME if not already set
-[ -z "$MEECROWAVE_BASE" ] && MEECROWAVE_BASE="$MEECROWAVE_HOME"
+[ -z "$MEECROWAVE_BASE" ] && export MEECROWAVE_BASE="$MEECROWAVE_HOME"
 
 # Ensure that any user defined CLASSPATH variables are not used on startup,
 # but allow them to be specified in setenv.sh, in rare case when it is needed.
