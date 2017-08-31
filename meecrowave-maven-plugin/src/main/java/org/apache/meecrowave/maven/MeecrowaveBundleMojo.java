@@ -287,7 +287,7 @@ public class MeecrowaveBundleMojo extends AbstractMojo {
         boolean customMwProperties = false;
         Log log = getLog();
 
-        File srcConf = new File(conf);
+        File srcConf = new File(project.getBasedir(), conf);
         if (srcConf.exists() && srcConf.isDirectory()) {
             File targetConf = new File(distroFolder, "conf");
             targetConf.mkdirs();
