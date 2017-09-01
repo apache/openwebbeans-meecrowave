@@ -566,7 +566,7 @@ public class Meecrowave implements AutoCloseable {
             httpsConnector.setProperty("sslProtocol", configuration.sslProtocol);
 
             if (configuration.keystoreFile != null) {
-                httpsConnector.setAttribute("", configuration.keystoreFile);
+                httpsConnector.setAttribute("keystoreFile", configuration.keystoreFile);
             }
             if (configuration.keystorePass != null) {
                 httpsConnector.setAttribute("keystorePass", configuration.keystorePass);
