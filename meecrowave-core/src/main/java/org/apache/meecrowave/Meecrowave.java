@@ -40,6 +40,7 @@ import org.apache.commons.lang3.text.StrLookup;
 import org.apache.commons.lang3.text.StrSubstitutor;
 import org.apache.coyote.http2.Http2Protocol;
 import org.apache.johnzon.core.BufferStrategy;
+import org.apache.logging.log4j.LogManager;
 import org.apache.meecrowave.api.StartListening;
 import org.apache.meecrowave.api.StopListening;
 import org.apache.meecrowave.cxf.CxfCdiAutoSetup;
@@ -371,6 +372,8 @@ public class Meecrowave implements AutoCloseable {
     }
 
     public Meecrowave start() {
+        disableLog4jShutdownHook();
+
         if (configuration.getMeecrowaveProperties() != null && !"meecrowave.properties".equals(configuration.getMeecrowaveProperties())) {
             configuration.loadFrom(configuration.getMeecrowaveProperties());
         }
@@ -650,6 +653,13 @@ public class Meecrowave implements AutoCloseable {
         return this;
     }
 
+    private void disableLog4jShutdownHook() {
+        // magic flag to disable log4j shutdown hook
+        // we need this, otherwise we don't get any logs
+        // when Meecrowave is shutting down!
+        System.setProperty("log4j.shutdownHookEnabled", "false");
+    }
+
     private void broadcastHostEvent(final String event, final Host host) {
         switch (event) {
             case Lifecycle.AFTER_START_EVENT: {
@@ -779,6 +789,17 @@ public class Meecrowave implements AutoCloseable {
                     // not very important if we can't delete it since next restart will write another value normally
                     ofNullable(configuration.getPidFile()).ifPresent(File::delete);
                 }
+            }
+
+            try {
+                // We disabled the log4j shutdown hook to gain more control and keep logs during shutdown.
+                // See #disableLog4jShutdownHook()
+                // Otoh that means we need to shutdown Log4j manually.
+                // So here we go...
+                LogManager.shutdown();
+            } catch (Exception e) {
+                System.out.println("A problem happened when shutting down Log4j: " + e + "\n" + e.getMessage());
+                System.clearProperty("log4j.shutdownHookEnabled");
             }
         }
     }

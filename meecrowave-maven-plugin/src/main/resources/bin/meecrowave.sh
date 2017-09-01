@@ -16,7 +16,7 @@
 # limitations under the License.
 
 #
-# forked from Meecrowave
+# This script is forked from Apache Tomcat
 #
 
 # OS specific support.  $var _must_ be set to either true or false.
@@ -375,7 +375,7 @@ elif [ "$1" = "stop" ] ; then
 
   shift
 
-  SLEEP=5
+  SLEEP=15
   if [ ! -z "$1" ]; then
     echo $1 | grep "[^0-9]" >/dev/null 2>&1
     if [ $? -gt 0 ]; then
@@ -393,7 +393,7 @@ elif [ "$1" = "stop" ] ; then
   if [ ! -z "$MEECROWAVE_PID" ]; then
     if [ -f "$MEECROWAVE_PID" ]; then
       if [ -s "$MEECROWAVE_PID" ]; then
-        kill -9 `cat "$MEECROWAVE_PID"` >/dev/null 2>&1
+        kill -15 `cat "$MEECROWAVE_PID"` >/dev/null 2>&1
         if [ $? -gt 0 ]; then
           echo "PID file found but no matching process was found. Stop aborted."
           exit 1
@@ -407,25 +407,10 @@ elif [ "$1" = "stop" ] ; then
     fi
   fi
 
-  #eval "\"$_RUNJAVA\"" $JAVA_OPTS \
-  #  -classpath "\"$CLASSPATH\"" \
-  #  -Dmeecrowave.base="\"$MEECROWAVE_BASE\"" \
-  #  -Dmeecrowave.home="\"$MEECROWAVE_HOME\"" \
-  #  -Djava.io.tmpdir="\"$MEECROWAVE_TMPDIR\"" \
-  #  ${main} "$@" stop
-
-  # stop failed. Shutdown port disabled? Try a normal kill.
-  #if [ $? != 0 ]; then
-  #  if [ ! -z "$MEECROWAVE_PID" ]; then
-  #    echo "The stop command failed. Attempting to signal the process to stop through OS signal."
-  #    kill -15 `cat "$MEECROWAVE_PID"` >/dev/null 2>&1
-  #  fi
-  #fi
-
   if [ ! -z "$MEECROWAVE_PID" ]; then
     if [ -f "$MEECROWAVE_PID" ]; then
       while [ $SLEEP -ge 0 ]; do
-        kill -9 `cat "$MEECROWAVE_PID"` >/dev/null 2>&1
+        kill -15 `cat "$MEECROWAVE_PID"` >/dev/null 2>&1
         if [ $? -gt 0 ]; then
           rm -f "$MEECROWAVE_PID" >/dev/null 2>&1
           if [ $? != 0 ]; then
@@ -456,7 +441,7 @@ elif [ "$1" = "stop" ] ; then
     fi
   fi
 
-  KILL_SLEEP_INTERVAL=5
+  KILL_SLEEP_INTERVAL=15
   if [ $FORCE -eq 1 ]; then
     if [ -z "$MEECROWAVE_PID" ]; then
       echo "Kill failed: \$MEECROWAVE_PID not set"
@@ -464,7 +449,7 @@ elif [ "$1" = "stop" ] ; then
       if [ -f "$MEECROWAVE_PID" ]; then
         PID=`cat "$MEECROWAVE_PID"`
         echo "Killing Meecrowave with the PID: $PID"
-        kill -9 $PID
+        kill -0 $PID
         while [ $KILL_SLEEP_INTERVAL -ge 0 ]; do
             kill -0 `cat "$MEECROWAVE_PID"` >/dev/null 2>&1
             if [ $? -gt 0 ]; then
@@ -498,9 +483,9 @@ else
   echo "  jpda start        Start MEECROWAVE under JPDA debugger"
   echo "  run               Start MEECROWAVE in the current window"
   echo "  start             Start MEECROWAVE in a separate window"
-  echo "  stop              Stop MEECROWAVE, waiting up to 5 seconds for the process to end"
+  echo "  stop              Stop MEECROWAVE, waiting up t/o 15 seconds for the process to end"
   echo "  stop n            Stop MEECROWAVE, waiting up to n seconds for the process to end"
-  echo "  stop -force       Stop MEECROWAVE, wait up to 5 seconds and then use kill -KILL if still running"
+  echo "  stop -force       Stop MEECROWAVE, wait up to 15 seconds and then use kill -KILL if still running"
   echo "  stop n -force     Stop MEECROWAVE, wait up to n seconds and then use kill -KILL if still running"
   echo "Note: Waiting for the process to end and use of the -force option require that \$MEECROWAVE_PID is defined"
   exit 1
