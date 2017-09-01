@@ -779,8 +779,13 @@ public class Meecrowave implements AutoCloseable {
                 ofNullable(postTask).ifPresent(Runnable::run);
                 postTask = null;
                 try {
-                    IO.delete(base);
-                    IO.delete(ownedTempDir);
+                    if (base != null) {
+                        IO.delete(base);
+                    }
+
+                    if (ownedTempDir != null) {
+                        IO.delete(ownedTempDir);
+                    }
                 } catch (final IllegalArgumentException /*does not exist from the hook*/ e) {
                     // no-op
                 } finally {
