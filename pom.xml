@@ -53,7 +53,7 @@
     <openwebbeans.version>2.0.1</openwebbeans.version>
     <cxf.version>3.1.12</cxf.version>
     <johnzon.version>1.1.2</johnzon.version>
-    <log4j2.version>2.8.2</log4j2.version>
+    <log4j2.version>2.9.0</log4j2.version>
     <deltaspike.version>1.8.0</deltaspike.version>
     <jaxb.version>2.2.11</jaxb.version>
     <openjpa.version>2.4.2</openjpa.version>
