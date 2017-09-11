@@ -278,7 +278,7 @@ public class OWBTomcatWebScannerService extends WebScannerService {
         if (path.startsWith("jar:file:") && path.endsWith(".jar!/")) {
             final int lastSep = path.substring(0, path.length() - 2).lastIndexOf('/');
             if (lastSep > 0) {
-                return filter.check(PLUGGABILITY, path.substring(lastSep + 1, path.length() - 2)) ?
+                return filter != null && filter.check(PLUGGABILITY, path.substring(lastSep + 1, path.length() - 2)) ?
                         -1 : (path.indexOf(".jar") - 1 /*should be lastIndexOf but filterExcludedJar logic would be broken*/);
             }
         }
@@ -288,7 +288,7 @@ public class OWBTomcatWebScannerService extends WebScannerService {
             return -1;
         }
 
-        return filter.check(PLUGGABILITY, path.substring(filenameIdx)) ? -1 : (path.indexOf(".jar") - 1);
+        return filter!= null && filter.check(PLUGGABILITY, path.substring(filenameIdx)) ? -1 : (path.indexOf(".jar") - 1);
     }
 
     // replace init

@@ -58,7 +58,7 @@ public class MeecrowaveBus implements Bus {
         });
 
         final Meecrowave.Builder builder = Meecrowave.Builder.class.cast(context.getAttribute("meecrowave.configuration"));
-        if (builder.isJaxrsProviderSetup()) {
+        if (builder != null && builder.isJaxrsProviderSetup()) {
             final List<Object> providers =
                     ofNullable(builder.getJaxrsDefaultProviders())
                             .map(s -> Stream.of(s.split(" *, *"))
