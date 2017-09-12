@@ -20,9 +20,12 @@ package org.apache.meecrowave.logging.log4j2;
 
 import org.apache.logging.log4j.LogManager;
 
-public class Log4j2Shutdown implements Runnable {
-    @Override
-    public void run() {
+/**
+ * Hide away Log4j2 stuff
+ */
+public class Log4j2Shutdown {
+
+    public void shutodwn() {
         try {
             // We disabled the log4j shutdown hook to gain more control and keep logs during shutdown.
             // See #disableLog4jShutdownHook()

@@ -372,8 +372,30 @@ public class Meecrowave implements AutoCloseable {
     }
 
     public Meecrowave start() {
+        final Map<String, String> systemPropsToRestore = new HashMap<>();
+
         if (configuration.getMeecrowaveProperties() != null && !"meecrowave.properties".equals(configuration.getMeecrowaveProperties())) {
             configuration.loadFrom(configuration.getMeecrowaveProperties());
+        }
+
+        if (configuration.loggingGlobalSetup) {
+
+            setSystemProperty(systemPropsToRestore, "log4j.shutdownHookEnabled", "false");
+            setSystemProperty(systemPropsToRestore, "openwebbeans.logging.factory", Log4j2LoggerFactory.class.getName());
+            setSystemProperty(systemPropsToRestore, "org.apache.cxf.Logger", Log4j2Logger.class.getName());
+            setSystemProperty(systemPropsToRestore, "org.apache.tomcat.Logger", Log4j2Log.class.getName());
+
+            postTask = () -> {
+                new Log4j2Shutdown().shutodwn();
+                systemPropsToRestore.entrySet().forEach(entry -> {
+                    if (entry.getValue() == null) {
+                        System.clearProperty(entry.getKey());
+                    }
+                    else {
+                        System.setProperty(entry.getKey(), entry.getValue());
+                    }
+                });
+            };
         }
 
         setupJmx(configuration.isTomcatNoJmx());
@@ -383,42 +405,6 @@ public class Meecrowave implements AutoCloseable {
             System.setProperty("java.util.logging.manager", "org.apache.logging.log4j.jul.LogManager");
         }
 
-        if (configuration.loggingGlobalSetup) {
-            final String[] toRestore = new String[]{
-                    System.getProperty("openwebbeans.logging.factory"),
-                    System.getProperty("org.apache.cxf.Logger"),
-                    System.getProperty("org.apache.tomcat.Logger"),
-                    System.getProperty("log4j.shutdownHookEnabled")
-            };
-            System.setProperty("openwebbeans.logging.factory", Log4j2LoggerFactory.class.getName());
-            System.setProperty("org.apache.cxf.Logger", Log4j2Logger.class.getName());
-            System.setProperty("org.apache.tomcat.Logger", Log4j2Log.class.getName());
-            System.setProperty("log4j.shutdownHookEnabled", "false");
-            postTask = () -> {
-                if (toRestore[0] == null) {
-                    System.clearProperty("openwebbeans.logging.factory");
-                } else {
-                    System.setProperty("openwebbeans.logging.factory", toRestore[0]);
-                }
-                if (toRestore[1] == null) {
-                    System.clearProperty("org.apache.cxf.Logger");
-                } else {
-                    System.setProperty("org.apache.cxf.Logger", toRestore[1]);
-                }
-                if (toRestore[2] == null) {
-                    System.clearProperty("org.apache.tomcat.Logger");
-                } else {
-                    System.setProperty("org.apache.tomcat.Logger", toRestore[2]);
-                }
-
-                new Log4j2Shutdown().run();
-                if (toRestore[3] == null) { // note this can be too late
-                    System.clearProperty("log4j.shutdownHookEnabled");
-                } else {
-                    System.setProperty("log4j.shutdownHookEnabled", toRestore[3]);
-                }
-            };
-        }
         if (configuration.quickSession) {
             tomcat = new TomcatWithFastSessionIDs();
         } else {
@@ -658,6 +644,20 @@ public class Meecrowave implements AutoCloseable {
             Runtime.getRuntime().addShutdownHook(hook);
         }
         return this;
+    }
+
+
+    /**
+     * Store away the current system property for restoring it later
+     * during shutdown.
+     * @param backupPropertyMap a Map to store away the previous value before setting the newValue
+     * @param propertyKey
+     * @param newValue
+     */
+    private void setSystemProperty(Map<String, String> backupPropertyMap, String propertyKey, String newValue) {
+        backupPropertyMap.put(propertyKey, System.getProperty(propertyKey));
+
+        System.setProperty(propertyKey, newValue);
     }
 
     private void broadcastHostEvent(final String event, final Host host) {
