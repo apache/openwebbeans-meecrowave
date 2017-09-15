@@ -20,12 +20,15 @@ package org.apache.meecrowave.oauth2.configuration;
 
 import org.apache.catalina.realm.GenericPrincipal;
 import org.apache.cxf.Bus;
+import org.apache.cxf.common.util.StringUtils;
 import org.apache.cxf.interceptor.security.AuthenticationException;
 import org.apache.cxf.jaxrs.ext.MessageContext;
 import org.apache.cxf.message.Message;
 import org.apache.cxf.phase.PhaseInterceptorChain;
-import org.apache.cxf.rs.security.jose.jwe.JweDecryptionProvider;
-import org.apache.cxf.rs.security.jose.jws.JwsSignatureVerifier;
+import org.apache.cxf.rs.security.jose.jwe.JweEncryptionProvider;
+import org.apache.cxf.rs.security.jose.jwe.JweHeaders;
+import org.apache.cxf.rs.security.jose.jwe.JweUtils;
+import org.apache.cxf.rs.security.jose.jws.JwsSignatureProvider;
 import org.apache.cxf.rs.security.jose.jws.JwsUtils;
 import org.apache.cxf.rs.security.oauth2.common.OAuthRedirectionState;
 import org.apache.cxf.rs.security.oauth2.common.UserSubject;
@@ -47,9 +50,11 @@ import org.apache.cxf.rs.security.oauth2.provider.JCacheOAuthDataProvider;
 import org.apache.cxf.rs.security.oauth2.provider.JPAOAuthDataProvider;
 import org.apache.cxf.rs.security.oauth2.provider.JoseSessionTokenProvider;
 import org.apache.cxf.rs.security.oauth2.provider.OAuthDataProvider;
+import org.apache.cxf.rs.security.oauth2.provider.OAuthServiceException;
 import org.apache.cxf.rs.security.oauth2.services.AbstractTokenService;
 import org.apache.cxf.rs.security.oauth2.services.RedirectionBasedGrantService;
 import org.apache.cxf.rs.security.oauth2.utils.OAuthConstants;
+import org.apache.cxf.rs.security.oauth2.utils.OAuthUtils;
 import org.apache.meecrowave.Meecrowave;
 import org.apache.meecrowave.oauth2.data.RefreshTokenEnabledProvider;
 import org.apache.meecrowave.oauth2.provider.JCacheCodeDataProvider;
@@ -61,10 +66,9 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.core.MultivaluedMap;
 import java.io.IOException;
 import java.io.StringReader;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.security.Principal;
 import java.util.ArrayList;
@@ -167,7 +171,7 @@ public class OAuth2Configurer {
                 try {
                     final Principal pcp = request.getUserPrincipal();
                     final List<String> roles = GenericPrincipal.class.isInstance(pcp) ?
-                            new ArrayList<String>(asList(GenericPrincipal.class.cast(pcp).getRoles())) : Collections.<String>emptyList();
+                            new ArrayList<>(asList(GenericPrincipal.class.cast(pcp).getRoles())) : Collections.<String>emptyList();
                     final UserSubject userSubject = new UserSubject(name, roles);
                     userSubject.setAuthenticationMethod(PASSWORD);
                     return userSubject;
@@ -246,41 +250,44 @@ public class OAuth2Configurer {
                 .collect(toMap(s -> s.substring("oauth2.cxf.".length()), s -> builder.getProperties().getProperty(s)));
 
         final JoseSessionTokenProvider sessionAuthenticityTokenProvider = new JoseSessionTokenProvider() {
-            // getSessionState() is buggy in cxf 3.1.9 so we fix it there
-            private final Method convertStateStringToState;
+            private int maxDefaultSessionInterval;
+            private boolean jweRequired;
+            private JweEncryptionProvider jweEncryptor;
 
-            {
-                try {
-                    convertStateStringToState = JoseSessionTokenProvider.class.getDeclaredMethod("convertStateStringToState", String.class);
-                    if (!convertStateStringToState.isAccessible()) {
-                        convertStateStringToState.setAccessible(true);
-                    }
-                } catch (final NoSuchMethodException e) {
-                    throw new IllegalStateException(e);
+            @Override // workaround a NPE of 3.2.0 - https://issues.apache.org/jira/browse/CXF-7504
+            public String createSessionToken(final MessageContext mc, final MultivaluedMap<String, String> params,
+                                             final UserSubject subject, final OAuthRedirectionState secData) {
+                String stateString = convertStateToString(secData);
+                final JwsSignatureProvider jws = getInitializedSigProvider();
+                final JweEncryptionProvider jwe = jweEncryptor == null ?
+                        JweUtils.loadEncryptionProvider(new JweHeaders(), jweRequired) : jweEncryptor;
+                if (jws == null && jwe == null) {
+                    throw new OAuthServiceException("Session token can not be created");
                 }
+                if (jws != null) {
+                    stateString = JwsUtils.sign(jws, stateString, null);
+                }
+                if (jwe != null) {
+                    stateString = jwe.encrypt(StringUtils.toBytesUTF8(stateString), null);
+                }
+                return OAuthUtils.setSessionToken(mc, stateString, maxDefaultSessionInterval);
+            }
+
+            public void setJweEncryptor(final JweEncryptionProvider jweEncryptor) {
+                super.setJweEncryptor(jweEncryptor);
+                this.jweEncryptor = jweEncryptor;
             }
 
             @Override
-            public OAuthRedirectionState getSessionState(final MessageContext messageContext, final String sessionToken,
-                                                         final UserSubject subject) {
-                final JweDecryptionProvider jwe = getInitializedDecryptionProvider();
-                final JwsSignatureVerifier jws = getInitializedSigVerifier();
-                String stateString = jwe.decrypt(sessionToken).getContentText();
-                if (jws != null) {
-                    stateString = JwsUtils.verify(jws, stateString).getDecodedJwsPayload();
-                }
-                try {
-                    return OAuthRedirectionState.class.cast(convertStateStringToState.invoke(this, stateString));
-                } catch (IllegalAccessException e) {
-                    throw new IllegalStateException(e);
-                } catch (InvocationTargetException e) {
-                    final Throwable cause = e.getCause();
-                    if (RuntimeException.class.isInstance(cause)) {
-                        throw RuntimeException.class.cast(cause);
-                    }
-                    throw new IllegalStateException(cause);
-                }
+            public void setJweRequired(final boolean jweRequired) {
+                super.setJweRequired(jweRequired);
+                this.jweRequired = jweRequired;
+            }
 
+            @Override
+            public void setMaxDefaultSessionInterval(final int maxDefaultSessionInterval) {
+                super.setMaxDefaultSessionInterval(maxDefaultSessionInterval);
+                this.maxDefaultSessionInterval = maxDefaultSessionInterval;
             }
         };
         sessionAuthenticityTokenProvider.setMaxDefaultSessionInterval(configuration.getMaxDefaultSessionInterval());

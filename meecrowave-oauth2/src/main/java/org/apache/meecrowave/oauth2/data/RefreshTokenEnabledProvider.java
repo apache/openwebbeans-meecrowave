@@ -85,12 +85,6 @@ public class RefreshTokenEnabledProvider implements OAuthDataProvider, Authoriza
     }
 
     @Override
-    @Deprecated
-    public void removeAccessToken(final ServerAccessToken accessToken) throws OAuthServiceException {
-        delegate.removeAccessToken(accessToken);
-    }
-
-    @Override
     public List<ServerAccessToken> getAccessTokens(final Client client, final UserSubject subject) throws OAuthServiceException {
         return delegate.getAccessTokens(client, subject);
     }

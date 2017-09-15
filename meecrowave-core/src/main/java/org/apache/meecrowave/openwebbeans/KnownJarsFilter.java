@@ -300,7 +300,7 @@ public class KnownJarsFilter implements JarScanFilter {
         add("webbeans-impl");
         add("webbeans-spi");
         add("websocket-api");
-        add("woodstox-core-asl-");
+        add("woodstox-core-");
         add("ws-commons-util-");
         add("wsdl4j-");
         add("wss4j-");

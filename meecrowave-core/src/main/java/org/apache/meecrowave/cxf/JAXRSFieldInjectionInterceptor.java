@@ -18,13 +18,14 @@
  */
 package org.apache.meecrowave.cxf;
 
-import org.apache.cxf.jaxrs.model.ApplicationInfo;
-import org.apache.cxf.jaxrs.model.OperationResourceInfoStack;
-import org.apache.cxf.jaxrs.utils.InjectionUtils;
-import org.apache.cxf.jaxrs.utils.JAXRSUtils;
-import org.apache.cxf.message.Message;
-import org.apache.webbeans.annotation.EmptyAnnotationLiteral;
-import org.apache.webbeans.intercept.ConstructorInterceptorInvocationContext;
+import static java.lang.annotation.ElementType.TYPE;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
+
+import java.io.Serializable;
+import java.lang.annotation.Annotation;
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.annotation.Priority;
 import javax.interceptor.AroundConstruct;
@@ -33,14 +34,15 @@ import javax.interceptor.Interceptor;
 import javax.interceptor.InterceptorBinding;
 import javax.interceptor.InvocationContext;
 import javax.ws.rs.core.Application;
-import java.io.Serializable;
-import java.lang.annotation.Annotation;
-import java.lang.annotation.Retention;
-import java.lang.annotation.Target;
-import java.util.concurrent.atomic.AtomicBoolean;
 
-import static java.lang.annotation.ElementType.TYPE;
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
+import org.apache.cxf.jaxrs.model.ApplicationInfo;
+import org.apache.cxf.jaxrs.model.OperationResourceInfoStack;
+import org.apache.cxf.jaxrs.provider.ProviderFactory;
+import org.apache.cxf.jaxrs.utils.InjectionUtils;
+import org.apache.cxf.jaxrs.utils.JAXRSUtils;
+import org.apache.cxf.message.Message;
+import org.apache.webbeans.annotation.EmptyAnnotationLiteral;
+import org.apache.webbeans.intercept.ConstructorInterceptorInvocationContext;
 
 @Interceptor
 @Priority(Interceptor.Priority.PLATFORM_BEFORE)
@@ -87,7 +89,8 @@ public class JAXRSFieldInjectionInterceptor implements Serializable {
                     InjectionUtils.injectContextProxiesAndApplication(
                             stack.lastElement().getMethodInfo().getClassResourceInfo(),
                             instance,
-                            application);
+                            application,
+                            ProviderFactory.getInstance(current));
                     injected.compareAndSet(false, true);
                 }
             }

@@ -59,10 +59,17 @@
       <artifactId>geronimo-jsonb_1.0_spec</artifactId>
       <version>1.0</version>
     </dependency>
+    <!-- todo: when G has the API just upgrade and get rid of javax one
     <dependency>
       <groupId>org.apache.geronimo.specs</groupId>
       <artifactId>geronimo-jaxrs_2.0_spec</artifactId>
       <version>1.0-alpha-1</version>
+    </dependency>
+    -->
+    <dependency>
+      <groupId>javax.ws.rs</groupId>
+      <artifactId>javax.ws.rs-api</artifactId>
+      <version>2.1</version>
     </dependency>
     <dependency>
       <groupId>org.apache.tomcat</groupId>
@@ -128,8 +135,8 @@
           <artifactId>javax.annotation-api</artifactId>
         </exclusion>
         <exclusion>
-          <groupId>org.codehaus.woodstox</groupId>
-          <artifactId>woodstox-core-asl</artifactId>
+          <groupId>com.fasterxml.woodstox</groupId>
+          <artifactId>woodstox-core</artifactId>
         </exclusion>
         <exclusion>
           <groupId>org.apache.ws.xmlschema</groupId>
