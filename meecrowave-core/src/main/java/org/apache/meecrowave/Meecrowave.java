@@ -378,6 +378,10 @@ public class Meecrowave implements AutoCloseable {
             configuration.loadFrom(configuration.getMeecrowaveProperties());
         }
 
+        if (configuration.isUseLog4j2JulLogManager()) { // /!\ don't move this line or add anything before without checking log setup
+            System.setProperty("java.util.logging.manager", "org.apache.logging.log4j.jul.LogManager");
+        }
+
         if (configuration.loggingGlobalSetup) {
 
             setSystemProperty(systemPropsToRestore, "log4j.shutdownHookEnabled", "false");
@@ -401,9 +405,6 @@ public class Meecrowave implements AutoCloseable {
         setupJmx(configuration.isTomcatNoJmx());
 
         clearCatalinaSystemProperties = System.getProperty("catalina.base") == null && System.getProperty("catalina.home") == null;
-        if (configuration.isUseLog4j2JulLogManager()) {
-            System.setProperty("java.util.logging.manager", "org.apache.logging.log4j.jul.LogManager");
-        }
 
         if (configuration.quickSession) {
             tomcat = new TomcatWithFastSessionIDs();
