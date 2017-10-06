@@ -18,35 +18,33 @@
  */
 package org.apache.meecrowave.junit5;
 
+import javax.enterprise.context.spi.CreationalContext;
+
 import org.apache.meecrowave.Meecrowave;
 import org.apache.meecrowave.testing.Injector;
 import org.apache.meecrowave.testing.MonoBase;
 import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
-import org.junit.jupiter.api.extension.ContainerExtensionContext;
 import org.junit.jupiter.api.extension.ExtensionContext;
-import org.junit.jupiter.api.extension.TestExtensionContext;
-
-import javax.enterprise.context.spi.CreationalContext;
 
 public class MonoMeecrowaveExtension implements BeforeAllCallback, BeforeEachCallback, AfterEachCallback {
     private static final MonoBase BASE = new MonoBase();
     private static final ExtensionContext.Namespace NAMESPACE = ExtensionContext.Namespace.create(MonoMeecrowaveExtension.class.getName());
 
     @Override
-    public void beforeAll(final ContainerExtensionContext context) throws Exception {
+    public void beforeAll(final ExtensionContext context) throws Exception {
         context.getStore(NAMESPACE).put(Meecrowave.Builder.class.getName(), BASE.startIfNeeded());
     }
 
     @Override
-    public void beforeEach(final TestExtensionContext context) throws Exception {
-        context.getStore(NAMESPACE).put(CreationalContext.class.getName(), Injector.inject(context.getTestInstance()));
-        Injector.injectConfig(Meecrowave.Builder.class.cast(context.getStore(NAMESPACE).get(Meecrowave.Builder.class.getName())), context.getTestInstance());
+    public void beforeEach(final ExtensionContext context) throws Exception {
+        context.getStore(NAMESPACE).put(CreationalContext.class.getName(), Injector.inject(context.getTestInstance().orElse(null)));
+        Injector.injectConfig(Meecrowave.Builder.class.cast(context.getStore(NAMESPACE).get(Meecrowave.Builder.class.getName())), context.getTestInstance().orElse(null));
     }
 
     @Override
-    public void afterEach(final TestExtensionContext context) throws Exception {
+    public void afterEach(final ExtensionContext context) throws Exception {
         CreationalContext.class.cast(context.getStore(NAMESPACE).get(CreationalContext.class.getName())).release();
     }
 }

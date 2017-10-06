@@ -18,27 +18,26 @@
  */
 package org.apache.meecrowave.junit5;
 
+import java.io.File;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.util.Optional;
+
+import javax.enterprise.context.spi.CreationalContext;
+
 import org.apache.meecrowave.Meecrowave;
 import org.apache.meecrowave.testing.Injector;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
-import org.junit.jupiter.api.extension.ContainerExtensionContext;
 import org.junit.jupiter.api.extension.ExtensionContext;
-import org.junit.jupiter.api.extension.TestExtensionContext;
-
-import javax.enterprise.context.spi.CreationalContext;
-import java.io.File;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.util.Optional;
 
 public class MeecrowaveExtension implements BeforeAllCallback, AfterAllCallback, BeforeEachCallback, AfterEachCallback {
     private static final ExtensionContext.Namespace NAMESPACE = ExtensionContext.Namespace.create(MeecrowaveExtension.class.getName());
 
     @Override
-    public void beforeAll(final ContainerExtensionContext context) throws Exception {
+    public void beforeAll(final ExtensionContext context) throws Exception {
         final Meecrowave.Builder builder = new Meecrowave.Builder();
         final Optional<MeecrowaveConfig> meecrowaveConfig = context.getElement().map(e -> e.getAnnotation(MeecrowaveConfig.class));
         final String ctx;
@@ -85,18 +84,18 @@ public class MeecrowaveExtension implements BeforeAllCallback, AfterAllCallback,
     }
 
     @Override
-    public void afterAll(final ContainerExtensionContext context) throws Exception {
+    public void afterAll(final ExtensionContext context) throws Exception {
         Meecrowave.class.cast(context.getStore(NAMESPACE).get(Meecrowave.class.getName())).close();
     }
 
     @Override
-    public void beforeEach(final TestExtensionContext context) throws Exception {
-        context.getStore(NAMESPACE).put(CreationalContext.class.getName(), Injector.inject(context.getTestInstance()));
-        Injector.injectConfig(Meecrowave.Builder.class.cast(context.getStore(NAMESPACE).get(Meecrowave.Builder.class.getName())), context.getTestInstance());
+    public void beforeEach(final ExtensionContext context) throws Exception {
+        context.getStore(NAMESPACE).put(CreationalContext.class.getName(), Injector.inject(context.getTestInstance().orElse(null)));
+        Injector.injectConfig(Meecrowave.Builder.class.cast(context.getStore(NAMESPACE).get(Meecrowave.Builder.class.getName())), context.getTestInstance().orElse(null));
     }
 
     @Override
-    public void afterEach(final TestExtensionContext context) throws Exception {
+    public void afterEach(final ExtensionContext context) throws Exception {
         CreationalContext.class.cast(context.getStore(NAMESPACE).get(CreationalContext.class.getName())).release();
     }
 }

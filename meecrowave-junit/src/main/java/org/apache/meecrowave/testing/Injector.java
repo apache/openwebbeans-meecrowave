@@ -33,6 +33,9 @@ public final class Injector {
     }
 
     public static CreationalContext<?> inject(final Object testInstance) {
+        if (testInstance == null) {
+            return null;
+        }
         final BeanManager bm = CDI.current().getBeanManager();
         final AnnotatedType<?> annotatedType = bm.createAnnotatedType(testInstance.getClass());
         final InjectionTarget injectionTarget = bm.createInjectionTarget(annotatedType);
@@ -42,6 +45,9 @@ public final class Injector {
     }
 
     public static void injectConfig(final Meecrowave.Builder config, final Object test) {
+        if (test == null) {
+            return;
+        }
         final Class<?> aClass = test.getClass();
         Stream.of(aClass.getDeclaredFields())
                 .filter(f -> f.isAnnotationPresent(ConfigurationInject.class))
