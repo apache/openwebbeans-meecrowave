@@ -18,10 +18,17 @@
  */
 package org.apache.meecrowave.junit5;
 
+import static java.util.Arrays.asList;
+
 import java.io.File;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import javax.enterprise.context.spi.CreationalContext;
 
@@ -90,6 +97,10 @@ public class MeecrowaveExtension implements BeforeAllCallback, AfterAllCallback,
 
     @Override
     public void beforeEach(final ExtensionContext context) throws Exception {
+        getScopes(context).ifPresent(scopes -> {
+           final ContextsService contextsService = WebBeansContext.currentInstance().getContextsService();
+           Stream.of(scopes).forEach(s -> contextsService.startContext(s, null));
+        });
         context.getStore(NAMESPACE).put(CreationalContext.class.getName(), Injector.inject(context.getTestInstance().orElse(null)));
         Injector.injectConfig(Meecrowave.Builder.class.cast(context.getStore(NAMESPACE).get(Meecrowave.Builder.class.getName())), context.getTestInstance().orElse(null));
     }
@@ -97,5 +108,18 @@ public class MeecrowaveExtension implements BeforeAllCallback, AfterAllCallback,
     @Override
     public void afterEach(final ExtensionContext context) throws Exception {
         CreationalContext.class.cast(context.getStore(NAMESPACE).get(CreationalContext.class.getName())).release();
+        getScopes(context).ifPresent(scopes -> {
+            final ContextsService contextsService = WebBeansContext.currentInstance().getContextsService();
+            final List<Class<? extends Annotation>> list = new ArrayList<>(asList(scopes));
+            Collections.reverse(list);
+            list.forEach(s -> contextsService.endContext(s, null));
+        });
+    }
+
+    private Optional<Class<? extends Annotation>[]> getScopes(final ExtensionContext context) {
+        return context.getElement()
+                      .map(e -> e.getAnnotation(MeecrowaveConfig.class))
+                      .map(MeecrowaveConfig::scopes)
+                      .filter(s -> s.length > 0);
     }
 }

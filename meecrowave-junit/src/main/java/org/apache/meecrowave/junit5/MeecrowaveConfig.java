@@ -20,6 +20,7 @@ package org.apache.meecrowave.junit5;
 
 import org.junit.jupiter.api.extension.ExtendWith;
 
+import java.lang.annotation.Annotation;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
@@ -83,4 +84,6 @@ public @interface MeecrowaveConfig {
     boolean tomcatWrapLoader() default false;
     String sharedLibraries() default "";
     boolean useLog4j2JulLogManager() default false;
+
+    Class<? extends Annotation>[] scopes() default {};
 }
