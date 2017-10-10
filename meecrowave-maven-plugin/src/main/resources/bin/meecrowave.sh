@@ -209,6 +209,7 @@ if $cygwin; then
   MEECROWAVE_BASE=`cygpath --absolute --windows "$MEECROWAVE_BASE"`
   MEECROWAVE_TMPDIR=`cygpath --absolute --windows "$MEECROWAVE_TMPDIR"`
   CLASSPATH=`cygpath --path --windows "$CLASSPATH"`
+  JAVA_ENDORSED_DIRS=`cygpath --path --windows "$JAVA_ENDORSED_DIRS"`
 fi
 
 if [ -z "$JSSE_OPTS" ] ; then

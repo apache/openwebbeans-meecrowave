@@ -27,7 +27,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.StreamSupport;
 
 public class MonoBase {
-    private static final AtomicReference<AutoCloseable> CONTAINER = new AtomicReference<>();
+    private static final AtomicReference<Meecrowave> CONTAINER = new AtomicReference<>();
     private static final AtomicReference<Meecrowave.Builder> CONFIGURATION = new AtomicReference<>();
 
     public Meecrowave.Builder doBoot() {
@@ -89,6 +89,8 @@ public class MonoBase {
         }
         return getConfiguration();
     }
+
+
 
     public interface Configuration {
         default int order() {

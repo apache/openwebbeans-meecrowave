@@ -21,9 +21,12 @@ package org.apache.meecrowave.junit;
 import org.apache.meecrowave.Meecrowave;
 import org.apache.meecrowave.io.IO;
 import org.apache.meecrowave.testing.ConfigurationInject;
+import org.app.MyAppClass;
+import org.app.MyReqClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import javax.inject.Inject;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -38,13 +41,42 @@ public class MonoMeecrowaveRuleTest {
     public static final MonoMeecrowave.Rule RULE = new MonoMeecrowave.Rule();
     */
 
+    private static int count = 0;
+
     @ConfigurationInject
     private Meecrowave.Builder config;
+
+    private @Inject MyAppClass appClass;
+    private @Inject MyReqClass reqClass;
+
 
     @Test
     public void test() throws IOException {
         assertEquals("simple", slurp(new URL("http://localhost:" + config.getHttpPort() + "/api/test")));
+
+        testScopes();
     }
+
+    @Test
+    public void anotherTest() throws IOException {
+        assertEquals("simple", slurp(new URL("http://localhost:" + config.getHttpPort() + "/api/test")));
+
+        testScopes();
+    }
+
+    private void testScopes() {
+        count++;
+
+        if (count == 2) {
+            assertEquals("beenhere", appClass.getX());
+            assertEquals("init", reqClass.getX());
+        }
+        else {
+            reqClass.setX("beenhere");
+            appClass.setX("beenhere");
+        }
+    }
+
 
     private String slurp(final URL url) {
         try (final InputStream is = url.openStream()) {
@@ -54,4 +86,5 @@ public class MonoMeecrowaveRuleTest {
         }
         return null;
     }
+
 }
