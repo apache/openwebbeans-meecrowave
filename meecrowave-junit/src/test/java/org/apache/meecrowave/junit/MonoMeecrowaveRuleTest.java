@@ -18,33 +18,36 @@
  */
 package org.apache.meecrowave.junit;
 
-import org.apache.meecrowave.Meecrowave;
-import org.apache.meecrowave.io.IO;
-import org.apache.meecrowave.testing.ConfigurationInject;
-import org.app.MyAppClass;
-import org.app.MyReqClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
-import javax.inject.Inject;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import javax.enterprise.context.RequestScoped;
+import javax.enterprise.context.SessionScoped;
+import javax.inject.Inject;
 
-@RunWith(MonoMeecrowave.Runner.class)
+import org.apache.meecrowave.io.IO;
+import org.app.MyAppClass;
+import org.app.MyReqClass;
+import org.junit.ClassRule;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TestRule;
+
 public class MonoMeecrowaveRuleTest {
-    /* or
     @ClassRule
     public static final MonoMeecrowave.Rule RULE = new MonoMeecrowave.Rule();
-    */
+
+    @Rule
+    public final TestRule scopeRule = new ScopeRule(RequestScoped.class, SessionScoped.class);
+
+    @Rule
+    public final TestRule injectRule = new InjectRule(this);
 
     private static int count = 0;
-
-    @ConfigurationInject
-    private Meecrowave.Builder config;
 
     private @Inject MyAppClass appClass;
     private @Inject MyReqClass reqClass;
@@ -52,14 +55,14 @@ public class MonoMeecrowaveRuleTest {
 
     @Test
     public void test() throws IOException {
-        assertEquals("simple", slurp(new URL("http://localhost:" + config.getHttpPort() + "/api/test")));
+        assertEquals("simple", slurp(new URL("http://localhost:" + RULE.getConfiguration().getHttpPort() + "/api/test")));
 
         testScopes();
     }
 
     @Test
     public void anotherTest() throws IOException {
-        assertEquals("simple", slurp(new URL("http://localhost:" + config.getHttpPort() + "/api/test")));
+        assertEquals("simple", slurp(new URL("http://localhost:" + RULE.getConfiguration().getHttpPort() + "/api/test")));
 
         testScopes();
     }

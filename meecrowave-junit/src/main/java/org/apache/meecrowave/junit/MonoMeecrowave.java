@@ -18,20 +18,17 @@
  */
 package org.apache.meecrowave.junit;
 
+import java.util.List;
+
+import javax.enterprise.context.spi.CreationalContext;
+
 import org.apache.meecrowave.Meecrowave;
 import org.apache.meecrowave.testing.Injector;
 import org.apache.meecrowave.testing.MonoBase;
-import org.apache.webbeans.config.WebBeansContext;
-import org.apache.webbeans.spi.ContextsService;
 import org.junit.rules.MethodRule;
 import org.junit.runners.BlockJUnit4ClassRunner;
 import org.junit.runners.model.InitializationError;
 import org.junit.runners.model.Statement;
-
-import javax.enterprise.context.RequestScoped;
-import javax.enterprise.context.SessionScoped;
-import javax.enterprise.context.spi.CreationalContext;
-import java.util.List;
 
 /**
  * A MeecrowaveRule starting a single container.
@@ -56,18 +53,13 @@ public class MonoMeecrowave {
                 @Override
                 public void evaluate() throws Throwable {
                     BASE.startIfNeeded();
-                    ContextsService contextsService = WebBeansContext.currentInstance().getContextsService();
 
                     configInjection(test.getClass(), test);
                     final CreationalContext<?> creationalContext = Injector.inject(test);
                     try {
-                        contextsService.startContext(RequestScoped.class, null);
-                        contextsService.startContext(SessionScoped.class, null);
                         base.evaluate();
                     } finally {
                         creationalContext.release();
-                        contextsService.endContext(SessionScoped.class, null);
-                        contextsService.endContext(RequestScoped.class, null);
                     }
                 }
 
