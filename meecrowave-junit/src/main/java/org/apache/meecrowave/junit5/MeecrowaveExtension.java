@@ -34,6 +34,8 @@ import javax.enterprise.context.spi.CreationalContext;
 
 import org.apache.meecrowave.Meecrowave;
 import org.apache.meecrowave.testing.Injector;
+import org.apache.webbeans.config.WebBeansContext;
+import org.apache.webbeans.spi.ContextsService;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
