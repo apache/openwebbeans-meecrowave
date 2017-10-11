@@ -28,7 +28,7 @@
 
   <groupId>org.apache.meecrowave</groupId>
   <artifactId>meecrowave</artifactId>
-  <version>1.1.1-SNAPSHOT</version>
+  <version>1.2.0-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <name>Meecrowave</name>
@@ -53,7 +53,7 @@
     <openwebbeans.version>2.0.2</openwebbeans.version>
     <cxf.version>3.2.0</cxf.version>
     <johnzon.version>1.1.4</johnzon.version>
-    <log4j2.version>2.9.0</log4j2.version>
+    <log4j2.version>2.9.1</log4j2.version>
     <deltaspike.version>1.8.0</deltaspike.version>
     <jaxb.version>2.2.11</jaxb.version>
     <openjpa.version>2.4.2</openjpa.version>
