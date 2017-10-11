@@ -284,6 +284,12 @@
               </transformers>
               <filters>
                 <filter>
+                  <artifact>org.apache.logging.log4j:log4j-api</artifact>
+                  <excludes>
+                    <exclude>META-INF/versions/**</exclude>
+                  </excludes>
+                </filter>
+                <filter>
                   <artifact>*:*</artifact>
                   <excludes>
                     <exclude>META-INF/*.SF</exclude>
