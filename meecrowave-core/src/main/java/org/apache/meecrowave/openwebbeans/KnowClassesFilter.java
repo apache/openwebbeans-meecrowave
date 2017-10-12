@@ -157,6 +157,8 @@ public class KnowClassesFilter implements Filter { // one easy and efficient sol
         excluded.add("org.yaml.snakeyaml");
         excluded.add("serp");
 
+        excluded.add("META-INF.versions"); // mjar is not yet supported
+
         final Set<String> included = new HashSet<>();
         included.add("org.apache.camel.cdi");
         included.add("org.apache.myfaces.cdi");
