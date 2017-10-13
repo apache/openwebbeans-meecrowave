@@ -30,10 +30,12 @@ import javax.enterprise.inject.spi.CDI;
 import javax.servlet.ServletContext;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.UriInfo;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Serializable;
 import java.net.URL;
 
 import static org.junit.Assert.assertEquals;
@@ -97,5 +99,29 @@ public class ContextInProxiedInstancesTest {
         public String get() {
             return uri.getPath();
         }
+
+        @Produces
+        @RequestScoped
+        public MyRestApi createMyApi() {
+            return new MyRestApi() {
+                @Override
+                public String get() {
+                    return null;
+                }
+
+                @Override
+                public void close() throws Exception {
+
+                }
+            };
+        }
     }
+
+    @Path("myapi")
+    public  interface MyRestApi extends Serializable, AutoCloseable {
+        @GET
+        String get();
+    }
+
+
 }

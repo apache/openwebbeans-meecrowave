@@ -14,6 +14,9 @@ import org.apache.johnzon.jaxrs.JsrMessageBodyReader;
 import org.apache.johnzon.jaxrs.JsrMessageBodyWriter;
 import org.apache.johnzon.jaxrs.jsonb.jaxrs.JsonbJaxrsProvider;
 import org.apache.meecrowave.Meecrowave;
+import org.apache.webbeans.config.WebBeansContext;
+import org.apache.webbeans.proxy.InterceptorDecoratorProxyFactory;
+import org.apache.webbeans.proxy.NormalScopeProxyFactory;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -42,6 +45,8 @@ import static java.util.stream.Collectors.toList;
 @ApplicationScoped
 public class MeecrowaveBus implements Bus {
     private final Bus delegate = new ExtensionManagerBus();
+    private NormalScopeProxyFactory normalScopeProxyFactory;
+    private InterceptorDecoratorProxyFactory interceptorDecoratorProxyFactory;
 
     protected MeecrowaveBus() {
         // no-op: for proxies
@@ -49,13 +54,11 @@ public class MeecrowaveBus implements Bus {
 
     @Inject
     public MeecrowaveBus(final ServletContext context) {
-        setProperty(ClassUnwrapper.class.getName(), (ClassUnwrapper) o -> {
-            final Class<?> aClass = o.getClass();
-            if (aClass.getName().contains("$$")) {
-                return aClass.getSuperclass();
-            }
-            return aClass;
-        });
+        WebBeansContext webBeansContext = WebBeansContext.currentInstance();
+        normalScopeProxyFactory = webBeansContext.getNormalScopeProxyFactory();
+        interceptorDecoratorProxyFactory = webBeansContext.getInterceptorDecoratorProxyFactory();
+
+        setProperty(ClassUnwrapper.class.getName(), (ClassUnwrapper) this::getRealClass);
 
         final Meecrowave.Builder builder = Meecrowave.Builder.class.cast(context.getAttribute("meecrowave.configuration"));
         if (builder != null && builder.isJaxrsProviderSetup()) {
@@ -100,6 +103,35 @@ public class MeecrowaveBus implements Bus {
                 setProperty("org.apache.cxf.jaxrs.bus.providers", providers);
             }
         }
+    }
+
+
+    /**
+     * Unwrap all proxies and get the real underlying class
+     * for detecting annotations, etc.
+     * @param o
+     * @return
+     */
+    protected Class<?> getRealClass(Object o) {
+        final Class<?> aClass = o.getClass();
+        if (aClass.getName().contains("$$")) {
+            Class realClass = aClass.getSuperclass();
+            if (realClass == Object.class || realClass.isInterface()) {
+                // we have to dig deeper as we might have a producer method for an interface
+                Class<?>[] interfaces = aClass.getInterfaces();
+                if (interfaces.length > 0) {
+                    Class<?> rootInterface = interfaces[0];
+                    for (Class<?> anInterface : interfaces) {
+                        if (rootInterface.isAssignableFrom(anInterface)) {
+                            rootInterface = anInterface;
+                        }
+                    }
+                    return rootInterface;
+                }
+            }
+            return realClass;
+        }
+        return aClass;
     }
 
     @Override
