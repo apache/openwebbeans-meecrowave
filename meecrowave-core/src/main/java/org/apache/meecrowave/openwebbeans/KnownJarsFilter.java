@@ -72,6 +72,7 @@ public class KnownJarsFilter implements JarScanFilter {
         add("axis-");
         add("axis2-");
         add("batchee-jbatch");
+        add("batik-");
         add("bcprov-");
         add("bootstrap.jar");
         add("bsf-");
@@ -104,6 +105,7 @@ public class KnownJarsFilter implements JarScanFilter {
         add("commons-net-");
         add("commons-pool-");
         add("commons-pool2-");
+        add("commons-text-");
         add("cryptacular-");
         add("cssparser-");
         add("cxf-");
@@ -311,6 +313,7 @@ public class KnownJarsFilter implements JarScanFilter {
         add("xml-apis-");
         add("xml-resolver-");
         add("xmlbeans-");
+        add("xmlgraphics-");
         add("xmlpull-");
         add("xmlrpc-");
         add("xmlschema-");
