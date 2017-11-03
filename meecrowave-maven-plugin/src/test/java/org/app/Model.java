@@ -18,31 +18,25 @@
  */
 package org.app;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
+public class Model {
 
-@Path("test")
-@ApplicationScoped
-public class Endpoint {
-    @Inject
-    private Injectable injectable;
+    private String firstName;
+    private String lastName;
 
-    @GET
-    @Produces(MediaType.TEXT_PLAIN)
-    public String simple() {
-        return Boolean.parseBoolean(injectable.injected()) ? "simple" : "fail";
+    public String getFirstName() {
+        return firstName;
     }
-    
-    @GET
-    @Path("/model")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Model simpleJsonModel() {
-        Model model = new Model();
-        model.setFirstName("firstname");
-        return model;
+
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
     }
+
+    public String getLastName() {
+        return lastName;
+    }
+
+    public void setLastName(String lastName) {
+        this.lastName = lastName;
+    }
+
 }

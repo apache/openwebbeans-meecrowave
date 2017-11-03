@@ -44,6 +44,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.apache.ziplock.JarLocation.jarLocation;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public class MeecrowaveRunMojoTest {
@@ -103,6 +104,10 @@ public class MeecrowaveRunMojoTest {
             for (int i = 0; i < 120; i++) {
                 try {
                     assertEquals("simple", IOUtils.toString(new URL("http://localhost:" + port + "/api/test")));
+                    assertTrue(IOUtils.toString(new URL("http://localhost:" + port + "/api/test/model")).contains("first_name"));
+                    assertTrue(IOUtils.toString(new URL("http://localhost:" + port + "/api/test/model")).contains("last_name"));
+                    assertTrue(IOUtils.toString(new URL("http://localhost:" + port + "/api/test/model")).contains("firstname"));
+                    assertTrue(IOUtils.toString(new URL("http://localhost:" + port + "/api/test/model")).contains("null"));
                     latch.countDown();
                     break;
                 } catch (final Exception | AssertionError e) {

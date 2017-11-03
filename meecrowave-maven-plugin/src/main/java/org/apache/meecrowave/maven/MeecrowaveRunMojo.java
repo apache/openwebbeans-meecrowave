@@ -403,6 +403,7 @@ public class MeecrowaveRunMojo extends AbstractMojo {
                 getLog().warn("can't initialize attribute " + field.getName());
             }
         }
+        config.loadFrom(meecrowaveProperties);
         if (properties != null) {
             config.getProperties().putAll(properties);
         }
