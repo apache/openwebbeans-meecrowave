@@ -19,10 +19,12 @@
 package org.apache.meecrowave.testing;
 
 import org.apache.meecrowave.Meecrowave;
+import org.apache.meecrowave.internal.ClassLoaderLock;
+import org.apache.webbeans.config.WebBeansContext;
+import org.apache.webbeans.config.WebBeansFinder;
+import org.apache.webbeans.spi.SingletonService;
 
 import java.io.File;
-import java.net.URL;
-import java.net.URLClassLoader;
 import java.util.Comparator;
 import java.util.ServiceLoader;
 import java.util.concurrent.atomic.AtomicReference;
@@ -37,46 +39,79 @@ public class MonoBase {
         final Meecrowave.Builder configuration = new Meecrowave.Builder().randomHttpPort().noShutdownHook(/*the rule does*/);
         CONFIGURATION.compareAndSet(null, configuration);
 
-        ClassLoader originalCL = Thread.currentThread().getContextClassLoader();
-        monoClassLoader = new URLClassLoader(new URL[0], originalCL);
-
-        final Meecrowave meecrowave = new Meecrowave(CONFIGURATION.get());
-        if (CONTAINER.compareAndSet(null, meecrowave)) {
-            final Configuration runnerConfig = StreamSupport.stream(ServiceLoader.load(Configuration.class).spliterator(), false)
-                    .sorted(Comparator.comparingInt(Configuration::order))
-                    .findFirst()
-                    .orElseGet(() -> new Configuration() {
-                    });
-
-            runnerConfig.beforeStarts();
-
-            final File war = runnerConfig.application();
-            if (war == null) {
-                meecrowave.bake(runnerConfig.context());
-            } else {
-                meecrowave.deployWebapp(runnerConfig.context(), runnerConfig.application());
+        boolean unlocked = false;
+        ClassLoaderLock.LOCK.lock();
+        try {
+            ClassLoader originalCL = Thread.currentThread()
+                                           .getContextClassLoader();
+            if (originalCL == null) {
+                originalCL = this.getClass()
+                                 .getClassLoader();
+            }
+            final SingletonService<WebBeansContext> singletonInstance = WebBeansFinder.getSingletonService();
+            synchronized (singletonInstance) {
+                try {
+                    singletonInstance.get(originalCL);
+                } catch (final IllegalArgumentException iae) {
+                    monoClassLoader = new ClassLoader(originalCL) {};
+                }
             }
 
-            runnerConfig.afterStarts();
+            final Meecrowave meecrowave = new Meecrowave(CONFIGURATION.get());
+            if (CONTAINER.compareAndSet(null, meecrowave)) {
+                final Configuration runnerConfig = StreamSupport.stream(ServiceLoader.load(Configuration.class)
+                                                                                     .spliterator(), false)
+                                                                .sorted(Comparator.comparingInt(Configuration::order))
+                                                                .findFirst()
+                                                                .orElseGet(() -> new Configuration() {});
 
-            Runtime.getRuntime().addShutdownHook(new Thread() {
-                {
-                    setName("Meecrowave-mono-rue-stopping");
+                runnerConfig.beforeStarts();
+
+                final File war = runnerConfig.application();
+                final Thread thread = Thread.currentThread();
+                if (monoClassLoader != null) {
+                    thread.setContextClassLoader(monoClassLoader);
                 }
-
-                @Override
-                public void run() {
-                    try {
-                        runnerConfig.beforeStops();
-                    } finally {
-                        try {
-                            meecrowave.close();
-                        } finally {
-                            runnerConfig.afterStops();
-                        }
+                try {
+                    if (war == null) {
+                        meecrowave.bake(runnerConfig.context());
+                    } else {
+                        meecrowave.deployWebapp(runnerConfig.context(), runnerConfig.application());
+                    }
+                } finally {
+                    if (monoClassLoader != null) {
+                        thread.setContextClassLoader(originalCL);
                     }
                 }
-            });
+                ClassLoaderLock.LOCK.unlock();
+                unlocked = true;
+
+                runnerConfig.afterStarts();
+
+                Runtime.getRuntime()
+                       .addShutdownHook(new Thread() {
+                           {
+                               setName("Meecrowave-mono-rule-stopping");
+                           }
+
+                           @Override
+                           public void run() {
+                               try {
+                                   runnerConfig.beforeStops();
+                               } finally {
+                                   try {
+                                       meecrowave.close();
+                                   } finally {
+                                       runnerConfig.afterStops();
+                                   }
+                               }
+                           }
+                       });
+            }
+        } finally {
+            if (!unlocked) {
+                ClassLoaderLock.LOCK.unlock();
+            }
         }
         return getConfiguration();
     }

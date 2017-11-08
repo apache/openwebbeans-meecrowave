@@ -19,6 +19,10 @@
 package org.apache.meecrowave.junit;
 
 import org.apache.meecrowave.Meecrowave;
+import org.apache.meecrowave.internal.ClassLoaderLock;
+import org.apache.webbeans.config.WebBeansContext;
+import org.apache.webbeans.config.WebBeansFinder;
+import org.apache.webbeans.spi.SingletonService;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
@@ -37,29 +41,43 @@ import static java.util.stream.Collectors.toList;
 public abstract class MeecrowaveRuleBase<T extends MeecrowaveRuleBase> implements TestRule {
     private final Collection<Object> toInject = new ArrayList<>();
     private final AtomicBoolean started = new AtomicBoolean(false);
+    private ClassLoader meecrowaveCL;
 
     @Override
     public Statement apply(final Statement base, final Description description) {
         return new Statement() {
             @Override
             public void evaluate() throws Throwable {
-                ClassLoader oldCL = Thread.currentThread().getContextClassLoader();
-                ClassLoader newCl = getClassLoader();
-                if (newCl != null) {
-                    Thread.currentThread().setContextClassLoader(newCl);
-                }
-                try (final AutoCloseable closeable = onStart()) {
-                    started.set(true);
-                    final Collection<CreationalContext<?>> contexts = toInject.stream().map(MeecrowaveRuleBase::doInject).collect(toList());
-                    try {
-                        base.evaluate();
-                    } finally {
-                        contexts.forEach(CreationalContext::release);
-                        started.set(false);
+                final Thread thread = Thread.currentThread();
+                ClassLoader oldCL = thread.getContextClassLoader();
+                ClassLoaderLock.LOCK.lock();
+                boolean unlocked = false;
+                try {
+                    ClassLoader newCl = getClassLoader();
+                    if (newCl != null) {
+                        thread.setContextClassLoader(newCl);
                     }
-                }
-                finally {
-                    Thread.currentThread().setContextClassLoader(oldCL);
+                    try (final AutoCloseable closeable = onStart()) {
+                        ClassLoaderLock.LOCK.unlock();
+                        unlocked = true;
+
+                        started.set(true);
+                        final Collection<CreationalContext<?>> contexts = toInject.stream()
+                                                                                  .map(MeecrowaveRuleBase::doInject)
+                                                                                  .collect(toList());
+                        try {
+                            base.evaluate();
+                        } finally {
+                            contexts.forEach(CreationalContext::release);
+                            started.set(false);
+                        }
+                    } finally {
+                        thread.setContextClassLoader(oldCL);
+                    }
+                } finally {
+                    if (!unlocked) {
+                        ClassLoaderLock.LOCK.unlock();
+                    }
                 }
             }
         };
@@ -88,6 +106,22 @@ public abstract class MeecrowaveRuleBase<T extends MeecrowaveRuleBase> implement
     protected abstract AutoCloseable onStart();
 
     protected ClassLoader getClassLoader() {
-        return null;
+        if (meecrowaveCL == null) {
+            ClassLoader currentCL = Thread.currentThread().getContextClassLoader();
+            if (currentCL == null) {
+                currentCL = this.getClass().getClassLoader();
+            }
+
+            final SingletonService<WebBeansContext> singletonInstance = WebBeansFinder.getSingletonService();
+            synchronized (singletonInstance) {
+                try {
+                    singletonInstance.get(currentCL);
+                    meecrowaveCL = currentCL;
+                } catch (final IllegalArgumentException iae) {
+                    meecrowaveCL = new ClassLoader(currentCL) {};
+                }
+            }
+        }
+        return meecrowaveCL;
     }
 }

@@ -16,30 +16,15 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.meecrowave.junit;
+package org.apache.meecrowave.internal;
 
-import org.apache.meecrowave.Meecrowave;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
-public class MeecrowaveRule extends MeecrowaveRuleBase<MeecrowaveRule> {
-    private final Meecrowave.Builder configuration;
-    private final String context;
+public final class ClassLoaderLock {
+    public static final Lock LOCK = new ReentrantLock();
 
-    public MeecrowaveRule() {
-        this(new Meecrowave.Builder().randomHttpPort(), "");
-    }
-
-    public MeecrowaveRule(final Meecrowave.Builder configuration, final String context) {
-        this.configuration = configuration;
-        this.context = context;
-    }
-
-    @Override
-    public Meecrowave.Builder getConfiguration() {
-        return configuration;
-    }
-
-    @Override
-    protected AutoCloseable onStart() {
-        return new Meecrowave(configuration).bake(context);
+    private ClassLoaderLock() {
+        // no-op
     }
 }
