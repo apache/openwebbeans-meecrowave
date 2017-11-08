@@ -86,5 +86,15 @@ public class MonoMeecrowave {
             BASE.startIfNeeded();
             return NOOP_CLOSEABLE;
         }
+
+        @Override
+        protected void doUnlockContext(final boolean unlocked) {
+            // no-op: done in the monobase
+        }
+
+        @Override
+        protected void doLockContext() {
+            // no-op: done in the monobase
+        }
     }
 }

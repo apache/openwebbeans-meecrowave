@@ -20,9 +20,6 @@ package org.apache.meecrowave.testing;
 
 import org.apache.meecrowave.Meecrowave;
 import org.apache.meecrowave.internal.ClassLoaderLock;
-import org.apache.webbeans.config.WebBeansContext;
-import org.apache.webbeans.config.WebBeansFinder;
-import org.apache.webbeans.spi.SingletonService;
 
 import java.io.File;
 import java.util.Comparator;
@@ -33,7 +30,6 @@ import java.util.stream.StreamSupport;
 public class MonoBase {
     private static final AtomicReference<Meecrowave> CONTAINER = new AtomicReference<>();
     private static final AtomicReference<Meecrowave.Builder> CONFIGURATION = new AtomicReference<>();
-    private static ClassLoader monoClassLoader = null;
 
     public Meecrowave.Builder doBoot() {
         final Meecrowave.Builder configuration = new Meecrowave.Builder().randomHttpPort().noShutdownHook(/*the rule does*/);
@@ -42,20 +38,9 @@ public class MonoBase {
         boolean unlocked = false;
         ClassLoaderLock.LOCK.lock();
         try {
-            ClassLoader originalCL = Thread.currentThread()
-                                           .getContextClassLoader();
-            if (originalCL == null) {
-                originalCL = this.getClass()
-                                 .getClassLoader();
-            }
-            final SingletonService<WebBeansContext> singletonInstance = WebBeansFinder.getSingletonService();
-            synchronized (singletonInstance) {
-                try {
-                    singletonInstance.get(originalCL);
-                } catch (final IllegalArgumentException iae) {
-                    monoClassLoader = new ClassLoader(originalCL) {};
-                }
-            }
+            final ClassLoader originalCL = Thread.currentThread().getContextClassLoader();
+            ClassLoaderLock.LOCK.lock();
+            final ClassLoader containerLoader = ClassLoaderLock.getUsableContainerLoader();
 
             final Meecrowave meecrowave = new Meecrowave(CONFIGURATION.get());
             if (CONTAINER.compareAndSet(null, meecrowave)) {
@@ -69,8 +54,8 @@ public class MonoBase {
 
                 final File war = runnerConfig.application();
                 final Thread thread = Thread.currentThread();
-                if (monoClassLoader != null) {
-                    thread.setContextClassLoader(monoClassLoader);
+                if (containerLoader != originalCL) {
+                    thread.setContextClassLoader(containerLoader);
                 }
                 try {
                     if (war == null) {
@@ -79,7 +64,7 @@ public class MonoBase {
                         meecrowave.deployWebapp(runnerConfig.context(), runnerConfig.application());
                     }
                 } finally {
-                    if (monoClassLoader != null) {
+                    if (containerLoader != originalCL) {
                         thread.setContextClassLoader(originalCL);
                     }
                 }

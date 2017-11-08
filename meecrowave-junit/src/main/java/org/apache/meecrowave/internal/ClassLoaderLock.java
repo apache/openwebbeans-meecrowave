@@ -21,8 +21,41 @@ package org.apache.meecrowave.internal;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import org.apache.webbeans.config.WebBeansContext;
+import org.apache.webbeans.config.WebBeansFinder;
+import org.apache.webbeans.corespi.DefaultSingletonService;
+import org.apache.webbeans.spi.SingletonService;
+
 public final class ClassLoaderLock {
     public static final Lock LOCK = new ReentrantLock();
+
+    public static ClassLoader getUsableContainerLoader() {
+        ClassLoader currentCL = Thread.currentThread().getContextClassLoader();
+        if (currentCL == null) {
+            currentCL = ClassLoaderLock.class.getClassLoader();
+        }
+
+        final SingletonService<WebBeansContext> singletonService = WebBeansFinder.getSingletonService();
+        synchronized (singletonService) {
+            try {
+                if (singletonService instanceof DefaultSingletonService) {
+                    synchronized (singletonService) {
+                        ((DefaultSingletonService) singletonService).register(currentCL, null);
+                        // all fine, it seems we do not have an OWB container for this ClassLoader yet
+
+                        // let's reset it then ;
+                        singletonService.clear(currentCL);
+                    }
+                    return currentCL;
+                }
+            }
+            catch (IllegalArgumentException iae) {
+                // whoops there is already an OWB container registered for this very ClassLoader
+            }
+
+            return new ClassLoader(currentCL) {};
+        }
+    }
 
     private ClassLoaderLock() {
         // no-op

@@ -20,10 +20,6 @@ package org.apache.meecrowave.junit;
 
 import org.apache.meecrowave.Meecrowave;
 import org.apache.meecrowave.internal.ClassLoaderLock;
-import org.apache.webbeans.config.WebBeansContext;
-import org.apache.webbeans.config.WebBeansFinder;
-import org.apache.webbeans.corespi.DefaultSingletonService;
-import org.apache.webbeans.spi.SingletonService;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
@@ -51,15 +47,15 @@ public abstract class MeecrowaveRuleBase<T extends MeecrowaveRuleBase> implement
             public void evaluate() throws Throwable {
                 final Thread thread = Thread.currentThread();
                 ClassLoader oldCL = thread.getContextClassLoader();
-                ClassLoaderLock.LOCK.lock();
                 boolean unlocked = false;
+                doLockContext();
                 try {
                     ClassLoader newCl = getClassLoader();
                     if (newCl != null) {
                         thread.setContextClassLoader(newCl);
                     }
                     try (final AutoCloseable closeable = onStart()) {
-                        ClassLoaderLock.LOCK.unlock();
+                        doUnlockContext(unlocked);
                         unlocked = true;
 
                         started.set(true);
@@ -76,12 +72,20 @@ public abstract class MeecrowaveRuleBase<T extends MeecrowaveRuleBase> implement
                         thread.setContextClassLoader(oldCL);
                     }
                 } finally {
-                    if (!unlocked) {
-                        ClassLoaderLock.LOCK.unlock();
-                    }
+                    doUnlockContext(unlocked);
                 }
             }
         };
+    }
+
+    protected void doUnlockContext(final boolean unlocked) {
+        if (!unlocked) {
+            ClassLoaderLock.LOCK.unlock();
+        }
+    }
+
+    protected void doLockContext() {
+        ClassLoaderLock.LOCK.lock();
     }
 
     private static CreationalContext<Object> doInject(final Object instance) {
@@ -108,33 +112,7 @@ public abstract class MeecrowaveRuleBase<T extends MeecrowaveRuleBase> implement
 
     protected ClassLoader getClassLoader() {
         if (meecrowaveCL == null) {
-            ClassLoader currentCL = Thread.currentThread().getContextClassLoader();
-            if (currentCL == null) {
-                currentCL = this.getClass().getClassLoader();
-            }
-
-            final SingletonService<WebBeansContext> singletonService = WebBeansFinder.getSingletonService();
-            synchronized (singletonService) {
-                try {
-                    if (singletonService instanceof DefaultSingletonService) {
-                        synchronized (singletonService) {
-                            ((DefaultSingletonService) singletonService).register(currentCL, null);
-                            // all fine, it seems we do not have an OWB container for this ClassLoader yet
-
-                            // let's reset it then ;
-                            ((DefaultSingletonService) singletonService).clear(currentCL);
-                        }
-                        meecrowaveCL = currentCL;
-                    }
-                }
-                catch (IllegalArgumentException iae) {
-                    // whoops there is already an OWB container registered for this very ClassLoader
-                }
-
-                if (meecrowaveCL == null) {
-                    meecrowaveCL = new ClassLoader(currentCL) {};
-                }
-            }
+            meecrowaveCL = ClassLoaderLock.getUsableContainerLoader();
         }
         return meecrowaveCL;
     }
