@@ -22,6 +22,7 @@ import org.apache.meecrowave.Meecrowave;
 import org.apache.meecrowave.internal.ClassLoaderLock;
 import org.apache.webbeans.config.WebBeansContext;
 import org.apache.webbeans.config.WebBeansFinder;
+import org.apache.webbeans.corespi.DefaultSingletonService;
 import org.apache.webbeans.spi.SingletonService;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
@@ -112,12 +113,25 @@ public abstract class MeecrowaveRuleBase<T extends MeecrowaveRuleBase> implement
                 currentCL = this.getClass().getClassLoader();
             }
 
-            final SingletonService<WebBeansContext> singletonInstance = WebBeansFinder.getSingletonService();
-            synchronized (singletonInstance) {
+            final SingletonService<WebBeansContext> singletonService = WebBeansFinder.getSingletonService();
+            synchronized (singletonService) {
                 try {
-                    singletonInstance.get(currentCL);
-                    meecrowaveCL = currentCL;
-                } catch (final IllegalArgumentException iae) {
+                    if (singletonService instanceof DefaultSingletonService) {
+                        synchronized (singletonService) {
+                            ((DefaultSingletonService) singletonService).register(currentCL, null);
+                            // all fine, it seems we do not have an OWB container for this ClassLoader yet
+
+                            // let's reset it then ;
+                            ((DefaultSingletonService) singletonService).clear(currentCL);
+                        }
+                        meecrowaveCL = currentCL;
+                    }
+                }
+                catch (IllegalArgumentException iae) {
+                    // whoops there is already an OWB container registered for this very ClassLoader
+                }
+
+                if (meecrowaveCL == null) {
                     meecrowaveCL = new ClassLoader(currentCL) {};
                 }
             }
