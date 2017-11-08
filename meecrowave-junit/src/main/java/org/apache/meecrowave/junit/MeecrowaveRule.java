@@ -18,11 +18,16 @@
  */
 package org.apache.meecrowave.junit;
 
+import java.net.URL;
+import java.net.URLClassLoader;
+
 import org.apache.meecrowave.Meecrowave;
 
 public class MeecrowaveRule extends MeecrowaveRuleBase<MeecrowaveRule> {
     private final Meecrowave.Builder configuration;
     private final String context;
+
+    private ClassLoader meecrowaveCL;
 
     public MeecrowaveRule() {
         this(new Meecrowave.Builder().randomHttpPort(), "");
@@ -41,5 +46,18 @@ public class MeecrowaveRule extends MeecrowaveRuleBase<MeecrowaveRule> {
     @Override
     protected AutoCloseable onStart() {
         return new Meecrowave(configuration).bake(context);
+    }
+
+    @Override
+    protected ClassLoader getClassLoader() {
+        if (meecrowaveCL == null) {
+            ClassLoader currentCL = Thread.currentThread().getContextClassLoader();
+            if (currentCL == null) {
+                this.getClass().getClassLoader();
+            }
+
+            meecrowaveCL = new URLClassLoader(new URL[0], currentCL);
+        }
+        return meecrowaveCL;
     }
 }

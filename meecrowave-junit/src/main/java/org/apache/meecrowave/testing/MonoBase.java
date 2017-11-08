@@ -21,6 +21,8 @@ package org.apache.meecrowave.testing;
 import org.apache.meecrowave.Meecrowave;
 
 import java.io.File;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.Comparator;
 import java.util.ServiceLoader;
 import java.util.concurrent.atomic.AtomicReference;
@@ -29,10 +31,14 @@ import java.util.stream.StreamSupport;
 public class MonoBase {
     private static final AtomicReference<Meecrowave> CONTAINER = new AtomicReference<>();
     private static final AtomicReference<Meecrowave.Builder> CONFIGURATION = new AtomicReference<>();
+    private static ClassLoader monoClassLoader = null;
 
     public Meecrowave.Builder doBoot() {
         final Meecrowave.Builder configuration = new Meecrowave.Builder().randomHttpPort().noShutdownHook(/*the rule does*/);
         CONFIGURATION.compareAndSet(null, configuration);
+
+        ClassLoader originalCL = Thread.currentThread().getContextClassLoader();
+        monoClassLoader = new URLClassLoader(new URL[0], originalCL);
 
         final Meecrowave meecrowave = new Meecrowave(CONFIGURATION.get());
         if (CONTAINER.compareAndSet(null, meecrowave)) {

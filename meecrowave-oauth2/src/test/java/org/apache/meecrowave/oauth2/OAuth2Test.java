@@ -206,7 +206,7 @@ public class OAuth2Test {
         final CachingProvider provider = Caching.getCachingProvider();
         final CacheManager cacheManager = provider.getCacheManager(
                 ClassLoaderUtils.getResource("default-oauth2.jcs", OAuth2Test.class).toURI(),
-                provider.getDefaultClassLoader());
+                Thread.currentThread().getContextClassLoader());
         Cache<String, org.apache.cxf.rs.security.oauth2.common.Client> cache;
         try {
             cache = cacheManager

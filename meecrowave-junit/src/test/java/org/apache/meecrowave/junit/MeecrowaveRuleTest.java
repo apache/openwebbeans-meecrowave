@@ -19,23 +19,36 @@
 package org.apache.meecrowave.junit;
 
 import org.apache.meecrowave.io.IO;
+import org.app.MyAppClass;
 import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestRule;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 
+import javax.inject.Inject;
+
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
 public class MeecrowaveRuleTest {
     @ClassRule
     public static final MeecrowaveRule RULE = new MeecrowaveRule();
 
+    @Rule
+    public final TestRule injectRule = new InjectRule(this);
+
+    private @Inject MyAppClass myApp;
+
     @Test
     public void test() throws IOException {
         assertEquals("simple", slurp(new URL("http://localhost:" + RULE.getConfiguration().getHttpPort() + "/api/test")));
+
+        assertNotNull(myApp);
     }
 
     private String slurp(final URL url) {

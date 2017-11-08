@@ -43,6 +43,11 @@ public abstract class MeecrowaveRuleBase<T extends MeecrowaveRuleBase> implement
         return new Statement() {
             @Override
             public void evaluate() throws Throwable {
+                ClassLoader oldCL = Thread.currentThread().getContextClassLoader();
+                ClassLoader newCl = getClassLoader();
+                if (newCl != null) {
+                    Thread.currentThread().setContextClassLoader(newCl);
+                }
                 try (final AutoCloseable closeable = onStart()) {
                     started.set(true);
                     final Collection<CreationalContext<?>> contexts = toInject.stream().map(MeecrowaveRuleBase::doInject).collect(toList());
@@ -52,6 +57,9 @@ public abstract class MeecrowaveRuleBase<T extends MeecrowaveRuleBase> implement
                         contexts.forEach(CreationalContext::release);
                         started.set(false);
                     }
+                }
+                finally {
+                    Thread.currentThread().setContextClassLoader(oldCL);
                 }
             }
         };
@@ -78,4 +86,8 @@ public abstract class MeecrowaveRuleBase<T extends MeecrowaveRuleBase> implement
     public abstract Meecrowave.Builder getConfiguration();
 
     protected abstract AutoCloseable onStart();
+
+    protected ClassLoader getClassLoader() {
+        return null;
+    }
 }
