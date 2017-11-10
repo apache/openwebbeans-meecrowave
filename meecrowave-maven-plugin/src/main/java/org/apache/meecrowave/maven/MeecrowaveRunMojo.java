@@ -166,7 +166,7 @@ public class MeecrowaveRunMojo extends AbstractMojo {
     @Parameter(property = "meecrowave.jaxrsMapping", defaultValue = "/*")
     private String jaxrsMapping;
 
-    @Parameter(property = "meecrowave.cdiConversation", defaultValue = "true")
+    @Parameter(property = "meecrowave.cdiConversation", defaultValue = "false")
     private boolean cdiConversation;
 
     @Parameter(property = "meecrowave.skip")
