@@ -63,7 +63,8 @@ public class MeecrowaveSeContainerInitializer extends OWBInitializer {
         }
 
         final String setter = "set" + Character.toUpperCase(s.charAt(0)) + s.substring(1);
-        final Optional<Method> setterOpt = Stream.of(builder.getClass().getMethods())
+        final Class<? extends Meecrowave.Builder> builderClass = builder.getClass();
+        final Optional<Method> setterOpt = Stream.of(builderClass.getMethods())
                 .filter(m -> m.getName().equals(setter) && m.getParameterCount() == 1)
                 .findFirst();
         if (!setterOpt.isPresent()) {
@@ -73,8 +74,30 @@ public class MeecrowaveSeContainerInitializer extends OWBInitializer {
         }
 
         try {
-            builder.getClass().getMethod(setter, o.getClass()).invoke(builder, o);
-        } catch (final IllegalAccessException | NoSuchMethodException | InvocationTargetException ex) {
+            builderClass.getMethod(setter, o.getClass()).invoke(builder, o);
+        } catch (final NoSuchMethodException nsme) {
+            if (Integer.class.isInstance(o)) {
+                try {
+                    builderClass.getMethod(setter, int.class).invoke(builder, o);
+                } catch (final NoSuchMethodException | IllegalAccessException | InvocationTargetException ex) {
+                    throw new IllegalArgumentException(nsme);
+                }
+            } else if (Long.class.isInstance(o)) {
+                try {
+                    builderClass.getMethod(setter, long.class).invoke(builder, o);
+                } catch (final NoSuchMethodException | IllegalAccessException | InvocationTargetException ex) {
+                    throw new IllegalArgumentException(nsme);
+                }
+            } else if (Boolean.class.isInstance(o)) {
+                try {
+                    builderClass.getMethod(setter, boolean.class).invoke(builder, o);
+                } catch (final NoSuchMethodException | IllegalAccessException | InvocationTargetException ex) {
+                    throw new IllegalArgumentException(nsme);
+                }
+            } else {
+                throw new IllegalArgumentException(nsme);
+            }
+        } catch (final IllegalAccessException | InvocationTargetException ex) {
             throw new IllegalArgumentException(ex);
         }
         return this;

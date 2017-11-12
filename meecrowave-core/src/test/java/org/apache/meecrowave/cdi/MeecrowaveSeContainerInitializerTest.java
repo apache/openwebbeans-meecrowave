@@ -39,6 +39,7 @@ public class MeecrowaveSeContainerInitializerTest {
     @Test
     public void run() {
         try (final SeContainer container = SeContainerInitializer.newInstance()
+                .addProperty("httpPort", new Meecrowave.Builder().randomHttpPort().getHttpPort())
                 .disableDiscovery()
                 .addBeanClasses(Configured.class)
                 .initialize()) {
