@@ -18,11 +18,17 @@
  */
 package org.apache.meecrowave.junit;
 
+import org.apache.catalina.Context;
 import org.apache.meecrowave.Meecrowave;
+
+import java.io.File;
+import java.util.function.Consumer;
 
 public class MeecrowaveRule extends MeecrowaveRuleBase<MeecrowaveRule> {
     private final Meecrowave.Builder configuration;
     private final String context;
+    private File docBase;
+    private Consumer<Context> customizer;
 
     public MeecrowaveRule() {
         this(new Meecrowave.Builder().randomHttpPort(), "");
@@ -33,6 +39,16 @@ public class MeecrowaveRule extends MeecrowaveRuleBase<MeecrowaveRule> {
         this.context = context;
     }
 
+    public MeecrowaveRule setDocBase(File docBase) {
+        this.docBase = docBase;
+        return this;
+    }
+
+    public MeecrowaveRule setCustomizer(Consumer<Context> customizer) {
+        this.customizer = customizer;
+        return this;
+    }
+
     @Override
     public Meecrowave.Builder getConfiguration() {
         return configuration;
@@ -40,6 +56,9 @@ public class MeecrowaveRule extends MeecrowaveRuleBase<MeecrowaveRule> {
 
     @Override
     protected AutoCloseable onStart() {
-        return new Meecrowave(configuration).bake(context);
+        final Meecrowave meecrowave = new Meecrowave(configuration);
+        meecrowave.start();
+        meecrowave.deployClasspath(new Meecrowave.DeploymentMeta(context, docBase, customizer));
+        return meecrowave;
     }
 }
