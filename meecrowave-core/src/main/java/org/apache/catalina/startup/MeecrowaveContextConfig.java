@@ -202,7 +202,10 @@ public class MeecrowaveContextConfig extends ContextConfig {
 
     private void processClasses(final WebXml fragment, final boolean handlesTypesOnly,
                                 final Map<String, JavaClassCacheEntry> javaClassCache, final String key) {
-        final Collection<Class<?>> classes = webClasses.remove(key);
+        Collection<Class<?>> classes = webClasses.remove(key);
+        if (classes == null && key.endsWith(".jar") && key.startsWith("file:")) { // xbean vs o.a.tomcat.u.scan.JarFileUrlJar
+            classes = webClasses.remove("jar:" + key + "!/");
+        }
         if (classes != null && !classes.isEmpty()) {
             final ClassLoader loader = context.getLoader().getClassLoader();
             classes.forEach(c -> {
