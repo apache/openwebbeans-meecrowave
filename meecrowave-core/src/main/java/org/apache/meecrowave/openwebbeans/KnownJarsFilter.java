@@ -205,6 +205,7 @@ public class KnownJarsFilter implements JarScanFilter {
         add("leveldb");
         add("log4j-");
         add("logkit-");
+        add("lombok-");
         add("lucene-analyzers-");
         add("lucene-core-");
         add("management-agent.jar");
