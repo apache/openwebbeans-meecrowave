@@ -91,7 +91,10 @@ public class MeecrowaveBus implements Bus {
                 try { // we don't need the jaxrsbeanvalidationfeature since bean validation cdi extension handles it normally
                     final ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
                     contextClassLoader.loadClass("javax.validation.Validation");
-                    providers.add(contextClassLoader.loadClass("org.apache.cxf.jaxrs.validation.ValidationExceptionMapper").newInstance());
+                    final Object instance = contextClassLoader.loadClass("org.apache.cxf.jaxrs.validation.ValidationExceptionMapper")
+                                                       .getConstructor().newInstance();
+                    instance.getClass().getGenericInterfaces(); // validate bval can be used, check NoClassDefFoundError javax.validation.ValidationException
+                    providers.add(instance);
                 } catch (final Exception | NoClassDefFoundError e) {
                     // no-op
                 }
