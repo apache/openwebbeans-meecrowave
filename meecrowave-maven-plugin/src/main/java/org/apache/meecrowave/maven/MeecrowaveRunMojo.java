@@ -82,7 +82,7 @@ public class MeecrowaveRunMojo extends AbstractMojo {
     @Parameter(property = "meecrowave.jaxrsLogProviders", defaultValue = "false")
     private boolean jaxrsLogProviders;
 
-    @Parameter(property = "meecrowave.jaxrsLogProviders", defaultValue = "true")
+    @Parameter(property = "meecrowave.tomcatWrapLoader", defaultValue = "false")
     private boolean tomcatWrapLoader;
 
     @Parameter(property = "meecrowave.useTomcatDefaults", defaultValue = "true")
