@@ -441,7 +441,7 @@ public class MeecrowaveBundleMojo extends AbstractMojo {
 
     private void attach(final String ext, final File output) {
         if (attach) {
-            getLog().info("Attaching Custom TomEE Distribution (" + ext + ")");
+            getLog().info("Attaching Custom Meecrowave Distribution (" + ext + ")");
             if (classifier != null) {
                 projectHelper.attachArtifact(project, ext, classifier, output);
             } else {
