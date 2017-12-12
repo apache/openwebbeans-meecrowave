@@ -105,6 +105,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.ServiceLoader;
 import java.util.Set;
@@ -899,10 +900,15 @@ public class Meecrowave implements AutoCloseable {
             return dirFile.getAbsolutePath();
         }
 
-        file = new File(Stream.of(new File(System.getProperty("meecrowave.base", "."), "temp").getAbsolutePath(), "target", "build", ".")
+        Optional<File> baseDir = Stream.of("target", "build")
                 .map(File::new)
                 .filter(File::isDirectory)
-                .findFirst().get(), "meecrowave-" + System.nanoTime());
+                .findFirst();
+        if (baseDir.isPresent()) {
+            file = new File(baseDir.get(), "meecrowave-" + System.nanoTime());
+        } else {
+            file = ownedTempDir;
+        }
         IO.mkdirs(file);
         return file.getAbsolutePath();
     }
