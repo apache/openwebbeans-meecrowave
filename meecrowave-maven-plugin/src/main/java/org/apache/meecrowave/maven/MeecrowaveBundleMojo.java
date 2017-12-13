@@ -87,6 +87,12 @@ public class MeecrowaveBundleMojo extends AbstractMojo {
     private Collection<String> scopes;
 
     /**
+     * A directory with bin/ files like setenv.sh.
+     */
+    @Parameter(property = "meecrowave.bin", defaultValue = "src/main/meecrowave/bin")
+    private String bin;
+
+    /**
      * A directory with configuration which should be put into the final bundle.
      */
     @Parameter(property = "meecrowave.conf", defaultValue = "src/main/meecrowave/conf")
@@ -325,6 +331,29 @@ public class MeecrowaveBundleMojo extends AbstractMojo {
         if (!customMwProperties)
         {
             writeMeecrowaveProperties(distroFolder);
+        }
+
+        final File srcBin = new File(project.getBasedir(), bin);
+        if (srcBin.exists() && srcBin.isDirectory()) {
+            final File targetRoot = new File(distroFolder, "bin");
+            targetRoot.mkdirs();
+            Stream.of(srcBin.listFiles())
+                  .filter(f -> !f.isDirectory()) // not nested for now
+                  .forEach(f -> {
+                      try {
+                          if (log.isDebugEnabled()) {
+                              log.debug("Copying file from " + f + " to " + targetRoot);
+                          }
+                          final File target = new File(targetRoot, f.getName());
+                          Files.copy(f.toPath(), target.toPath());
+                          if (target.getName().endsWith(".sh")) {
+                              target.setExecutable(true);
+                          }
+                      }
+                      catch (final IOException e) {
+                          throw new IllegalArgumentException("Could not copy file " + f.getAbsolutePath(), e);
+                      }
+                  });
         }
     }
 
