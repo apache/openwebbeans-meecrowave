@@ -18,6 +18,56 @@
  */
 package org.apache.meecrowave;
 
+import static java.util.Collections.emptyList;
+import static java.util.Collections.emptySet;
+import static java.util.Optional.ofNullable;
+import static java.util.stream.Collectors.toList;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.Writer;
+import java.lang.management.ManagementFactory;
+import java.lang.reflect.Field;
+import java.net.MalformedURLException;
+import java.net.ServerSocket;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Properties;
+import java.util.ServiceLoader;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
+
+import javax.crypto.Cipher;
+import javax.crypto.spec.SecretKeySpec;
+import javax.enterprise.context.spi.CreationalContext;
+import javax.enterprise.inject.spi.AnnotatedType;
+import javax.enterprise.inject.spi.BeanManager;
+import javax.enterprise.inject.spi.CDI;
+import javax.enterprise.inject.spi.InjectionTarget;
+import javax.servlet.ServletContainerInitializer;
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
+
 import org.apache.catalina.Context;
 import org.apache.catalina.Globals;
 import org.apache.catalina.Host;
@@ -70,56 +120,6 @@ import org.apache.xbean.recipe.ObjectRecipe;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
-
-import javax.crypto.Cipher;
-import javax.crypto.spec.SecretKeySpec;
-import javax.enterprise.context.spi.CreationalContext;
-import javax.enterprise.inject.spi.AnnotatedType;
-import javax.enterprise.inject.spi.BeanManager;
-import javax.enterprise.inject.spi.CDI;
-import javax.enterprise.inject.spi.InjectionTarget;
-import javax.servlet.ServletContainerInitializer;
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.Writer;
-import java.lang.management.ManagementFactory;
-import java.lang.reflect.Field;
-import java.net.MalformedURLException;
-import java.net.ServerSocket;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Properties;
-import java.util.ServiceLoader;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
-
-import static java.util.Collections.emptyList;
-import static java.util.Collections.emptySet;
-import static java.util.Optional.ofNullable;
-import static java.util.stream.Collectors.toList;
 
 public class Meecrowave implements AutoCloseable {
     private final Builder configuration;
@@ -885,8 +885,6 @@ public class Meecrowave implements AutoCloseable {
     }
 
     private String newBaseDir() {
-        File file;
-
         final String dir = configuration.dir;
         if (dir != null) {
             final File dirFile = new File(dir);
@@ -900,15 +898,26 @@ public class Meecrowave implements AutoCloseable {
             return dirFile.getAbsolutePath();
         }
 
-        Optional<File> baseDir = Stream.of("target", "build")
+        final File file = Stream.concat(
+                    // bundle uses that with a high priority since it is the expected behavior
+                    ofNullable(System.getProperty("meecrowave.base"))
+                        .map(File::new)
+                        .filter(File::isDirectory)
+                        .map(base -> new File(base, "temp"))
+                        .map(location -> {
+                            IO.mkdirs(location);
+                            return location;
+                        })
+                        .map(File::getAbsolutePath)
+                        .map(Stream::of)
+                        .orElseGet(Stream::empty),
+                    // test common build locations - else set configuration.dir if you don't use a default setup
+                    Stream.of("target", "build"))
                 .map(File::new)
                 .filter(File::isDirectory)
-                .findFirst();
-        if (baseDir.isPresent()) {
-            file = new File(baseDir.get(), "meecrowave-" + System.nanoTime());
-        } else {
-            file = ownedTempDir;
-        }
+                .findFirst()
+                .map(file1 -> new File(file1, "meecrowave-" + System.nanoTime()))
+                .orElse(ownedTempDir);
         IO.mkdirs(file);
         return file.getAbsolutePath();
     }

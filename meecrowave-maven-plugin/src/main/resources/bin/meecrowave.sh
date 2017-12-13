@@ -310,7 +310,6 @@ if [ "$1" = "run" ]; then
     -classpath "\"$CLASSPATH\"" \
     -Dmeecrowave.base="\"$MEECROWAVE_BASE\"" \
     -Dmeecrowave.home="\"$MEECROWAVE_HOME\"" \
-    -Dmeecrowave.home="\"$MEECROWAVE_HOME\"" \
     -Djava.io.tmpdir="\"$MEECROWAVE_TMPDIR\"" \
     ${main} "$MEECROWAVE_ARGS" "$@"
 
