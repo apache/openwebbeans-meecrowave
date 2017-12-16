@@ -50,8 +50,8 @@ public class TomcatAutoInitializer implements ServletContainerInitializer {
                 jspDef.setInitParameter("xpoweredBy", "false");
                 jspDef.setInitParameter("development", "false");
                 jspDef.setLoadOnStartup(3);
-                def.addMapping("*.jsp");
-                def.addMapping("*.jspx");
+                jspDef.addMapping("*.jsp");
+                jspDef.addMapping("*.jspx");
             }
         } catch (final NoClassDefFoundError | ClassNotFoundException e) {
             // not there, skip
