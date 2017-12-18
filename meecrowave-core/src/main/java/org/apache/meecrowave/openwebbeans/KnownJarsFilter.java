@@ -226,6 +226,7 @@ public class KnownJarsFilter implements JarScanFilter {
         add("openjpa-");
         add("openmdx-");
         add("opensaml-");
+        add("opentest4j-");
         add("openwebbeans-");
         add("openws-");
         add("ops4j-");

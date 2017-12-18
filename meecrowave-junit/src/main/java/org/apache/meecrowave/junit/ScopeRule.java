@@ -22,13 +22,8 @@ import static java.util.Arrays.asList;
 
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Stream;
-import javax.enterprise.context.RequestScoped;
-import javax.enterprise.context.SessionScoped;
 
 import org.apache.webbeans.config.WebBeansContext;
 import org.apache.webbeans.spi.ContextsService;
@@ -39,8 +34,8 @@ import org.junit.runners.model.Statement;
 public class ScopeRule implements TestRule {
     private final List<Class<? extends Annotation>> scopes;
 
-    public ScopeRule(final Class<? extends Annotation>... scopes) {
-        this.scopes = new ArrayList<>(asList(scopes));
+    public ScopeRule(final Class<?>... scopes) {
+        this.scopes = new ArrayList(asList(scopes));
     }
 
     @Override

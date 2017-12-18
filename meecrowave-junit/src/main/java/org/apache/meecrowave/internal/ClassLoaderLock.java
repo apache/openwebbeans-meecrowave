@@ -34,6 +34,9 @@ public final class ClassLoaderLock {
         if (currentCL == null) {
             currentCL = ClassLoaderLock.class.getClassLoader();
         }
+        if (Boolean.getBoolean("meecrowave.junit.classloaderlock.off")) { // safeguard for advanced cases
+            return currentCL;
+        }
 
         final SingletonService<WebBeansContext> singletonService = WebBeansFinder.getSingletonService();
         synchronized (singletonService) {

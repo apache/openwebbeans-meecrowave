@@ -38,8 +38,6 @@ import org.junit.runners.model.Statement;
 
 public class MonoMeecrowave {
     private static final MonoBase BASE = new MonoBase();
-    private static final AutoCloseable NOOP_CLOSEABLE = () -> {
-    };
 
     public static class Runner extends BlockJUnit4ClassRunner {
         public Runner(final Class<?> klass) throws InitializationError {
@@ -52,14 +50,21 @@ public class MonoMeecrowave {
             rules.add((base, method, target) -> new Statement() {
                 @Override
                 public void evaluate() throws Throwable {
-                    BASE.startIfNeeded();
+                    final MonoBase.Instance instance = BASE.startIfNeeded();
 
-                    configInjection(test.getClass(), test);
-                    final CreationalContext<?> creationalContext = Injector.inject(test);
+                    final Thread thread = Thread.currentThread();
+                    final ClassLoader originalLoader = thread.getContextClassLoader();
+                    thread.setContextClassLoader(instance.getStartupClassLoader());
                     try {
-                        base.evaluate();
-                    } finally {
-                        creationalContext.release();
+                        configInjection(test.getClass(), test);
+                        final CreationalContext<?> creationalContext = Injector.inject(test);
+                        try {
+                            base.evaluate();
+                        } finally {
+                            creationalContext.release();
+                        }
+                    } finally{
+                        thread.setContextClassLoader(originalLoader);
                     }
                 }
 
@@ -83,8 +88,11 @@ public class MonoMeecrowave {
 
         @Override
         protected AutoCloseable onStart() {
-            BASE.startIfNeeded();
-            return NOOP_CLOSEABLE;
+            final MonoBase.Instance instance = BASE.startIfNeeded();
+            final Thread thread = Thread.currentThread();
+            final ClassLoader originalLoader = thread.getContextClassLoader();
+            thread.setContextClassLoader(instance.getStartupClassLoader());
+            return () -> thread.setContextClassLoader(originalLoader);
         }
 
         @Override

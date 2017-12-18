@@ -20,6 +20,7 @@ package org.apache.meecrowave.junit;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
+import static org.junit.rules.RuleChain.outerRule;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -32,17 +33,16 @@ import javax.inject.Inject;
 import org.apache.meecrowave.io.IO;
 import org.app.MyAppClass;
 import org.app.MyReqClass;
-import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
 
 public class MonoMeecrowaveRuleTest {
-    @ClassRule
-    public static final MonoMeecrowave.Rule RULE = new MonoMeecrowave.Rule();
+    private final MonoMeecrowave.Rule meecrowave = new MonoMeecrowave.Rule().inject(this);
 
     @Rule
-    public final TestRule scopeRule = new ScopeRule(RequestScoped.class, SessionScoped.class);
+    public final TestRule scopeRule = outerRule(meecrowave)
+            .around(new ScopeRule(RequestScoped.class, SessionScoped.class));
 
     @Rule
     public final TestRule injectRule = new InjectRule(this);
@@ -55,14 +55,14 @@ public class MonoMeecrowaveRuleTest {
 
     @Test
     public void test() throws IOException {
-        assertEquals("simple", slurp(new URL("http://localhost:" + RULE.getConfiguration().getHttpPort() + "/api/test")));
+        assertEquals("simple", slurp(new URL("http://localhost:" + meecrowave.getConfiguration().getHttpPort() + "/api/test")));
 
         testScopes();
     }
 
     @Test
     public void anotherTest() throws IOException {
-        assertEquals("simple", slurp(new URL("http://localhost:" + RULE.getConfiguration().getHttpPort() + "/api/test")));
+        assertEquals("simple", slurp(new URL("http://localhost:" + meecrowave.getConfiguration().getHttpPort() + "/api/test")));
 
         testScopes();
     }

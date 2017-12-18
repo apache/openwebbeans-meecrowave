@@ -28,13 +28,10 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.StreamSupport;
 
 public class MonoBase {
-    private static final AtomicReference<Meecrowave> CONTAINER = new AtomicReference<>();
-    private static final AtomicReference<Meecrowave.Builder> CONFIGURATION = new AtomicReference<>();
+    private static final AtomicReference<Instance> CONTAINER = new AtomicReference<>();
 
     public Meecrowave.Builder doBoot() {
         final Meecrowave.Builder configuration = new Meecrowave.Builder().randomHttpPort().noShutdownHook(/*the rule does*/);
-        CONFIGURATION.compareAndSet(null, configuration);
-
         boolean unlocked = false;
         ClassLoaderLock.LOCK.lock();
         try {
@@ -42,8 +39,8 @@ public class MonoBase {
             ClassLoaderLock.LOCK.lock();
             final ClassLoader containerLoader = ClassLoaderLock.getUsableContainerLoader();
 
-            final Meecrowave meecrowave = new Meecrowave(CONFIGURATION.get());
-            if (CONTAINER.compareAndSet(null, meecrowave)) {
+            final Meecrowave meecrowave = new Meecrowave(configuration);
+            if (CONTAINER.compareAndSet(null, new Instance(meecrowave, configuration, containerLoader))) {
                 final Configuration runnerConfig = StreamSupport.stream(ServiceLoader.load(Configuration.class)
                                                                                      .spliterator(), false)
                                                                 .sorted(Comparator.comparingInt(Configuration::order))
@@ -102,10 +99,10 @@ public class MonoBase {
     }
 
     public Meecrowave.Builder getConfiguration() {
-        return CONFIGURATION.get();
+        return CONTAINER.get().configuration;
     }
 
-    public Meecrowave.Builder startIfNeeded() {
+    public Instance startIfNeeded() {
         if (CONTAINER.get() == null) { // yes synchro could be simpler but it does the job, feel free to rewrite it
             synchronized (CONTAINER) {
                 if (CONTAINER.get() == null) {
@@ -113,10 +110,32 @@ public class MonoBase {
                 }
             }
         }
-        return getConfiguration();
+        return CONTAINER.get();
     }
 
+    public static final class Instance {
+        private final Meecrowave container;
+        private final Meecrowave.Builder configuration;
+        private final ClassLoader startupClassLoader;
 
+        private Instance(final Meecrowave container, final Meecrowave.Builder configuration, final ClassLoader startupClassLoader) {
+            this.container = container;
+            this.configuration = configuration;
+            this.startupClassLoader = startupClassLoader;
+        }
+
+        public Meecrowave getContainer() {
+            return container;
+        }
+
+        public Meecrowave.Builder getConfiguration() {
+            return configuration;
+        }
+
+        public ClassLoader getStartupClassLoader() {
+            return startupClassLoader;
+        }
+    }
 
     public interface Configuration {
         default int order() {
