@@ -59,17 +59,10 @@
       <artifactId>geronimo-jsonb_1.0_spec</artifactId>
       <version>1.0</version>
     </dependency>
-    <!-- todo: when G has the API just upgrade and get rid of javax one
     <dependency>
       <groupId>org.apache.geronimo.specs</groupId>
-      <artifactId>geronimo-jaxrs_2.0_spec</artifactId>
-      <version>1.0-alpha-1</version>
-    </dependency>
-    -->
-    <dependency>
-      <groupId>javax.ws.rs</groupId>
-      <artifactId>javax.ws.rs-api</artifactId>
-      <version>2.1</version>
+      <artifactId>geronimo-jaxrs_2.1_spec</artifactId>
+      <version>1.0</version>
     </dependency>
     <dependency>
       <groupId>org.apache.tomcat</groupId>
