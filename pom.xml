@@ -42,7 +42,7 @@
 
   <issueManagement>
     <system>jira</system>
-    <url>http://issues.apache.org/jira/browse/OWB</url>
+    <url>http://issues.apache.org/jira/browse/MEECROWAVE</url>
   </issueManagement>
 
   <properties>
