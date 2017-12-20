@@ -109,6 +109,7 @@
     </plugins>
   </build>
 
+<!-- only needed when under development
   <repositories>
     <repository>
       <id>asf-snapshot</id>
@@ -120,15 +121,6 @@
         <enabled>true</enabled>
       </snapshots>
     </repository>
-    <repository>
-      <id>geronimo-jaxrs21-staging</id>
-      <url>https://repository.apache.org/content/repositories/orgapachegeronimo-1046/</url>
-      <releases>
-        <enabled>true</enabled>
-      </releases>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
-    </repository>
   </repositories>
+-->
 </project>
