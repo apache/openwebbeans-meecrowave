@@ -21,7 +21,7 @@
   <parent>
     <artifactId>meecrowave</artifactId>
     <groupId>org.apache.meecrowave</groupId>
-    <version>1.2.0</version>
+    <version>1.2.1-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
@@ -33,7 +33,7 @@
     <dependency>
       <groupId>org.apache.meecrowave</groupId>
       <artifactId>meecrowave-core</artifactId>
-      <version>1.2.0</version>
+      <version>1.2.1-SNAPSHOT</version>
     </dependency>
     <dependency>
       <groupId>commons-cli</groupId>
@@ -51,7 +51,7 @@
     <dependency>
       <groupId>org.apache.meecrowave</groupId>
       <artifactId>meecrowave-junit</artifactId>
-      <version>1.2.0</version>
+      <version>1.2.1-SNAPSHOT</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
@@ -61,7 +61,7 @@
       <plugin>
         <groupId>org.apache.meecrowave</groupId>
         <artifactId>meecrowave-maven-plugin</artifactId>
-        <version>1.2.0</version>
+        <version>1.2.1-SNAPSHOT</version>
       </plugin>
     </plugins>
   </build>
