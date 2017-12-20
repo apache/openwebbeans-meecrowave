@@ -1,0 +1,69 @@
+= Components
+:jbake-date: 2016-10-24
+:jbake-type: page
+:jbake-status: published
+:jbake-meecrowavepdf:
+:jbake-meecrowavetitleicon: icon icon_puzzle_alt
+:jbake-meecrowavecolor: body-orange
+:icons: font
+
+== Meecrowave Core
+
+Core component is the backbone of Meecrowave. It is based on Tomcat embedded for
+Servlet container, CXF for JAX-RS, OpenWebBeans for CDI and Log4j2 for the logging.
+
+link:{context_rootpath}/meecrowave-core/configuration.html[Read about Meecrowave configuration]
+
+link:{context_rootpath}/meecrowave-core/cli.html[Read about Meecrowave command line]
+
+== Meecrowave JPA
+
+Meecrowave JPA provides a thin layer on top of JPA to make it easier to use JPA
+without requiring to use a full container like JavaEE or Spring. It is just a
+CDI extension.
+
+link:{context_rootpath}/meecrowave-jpa/index.html[Read More]
+
+== Meecrowave Maven
+
+Meecrowave provides a Maven plugin to run meecrowave with your preferred build tool.
+
+link:{context_rootpath}/meecrowave-maven/index.html[Read More]
+
+== Meecrowave Gradle
+
+Meecrowave provides a Gradle plugin to run meecrowave with your preferred build tool.
+
+link:{context_rootpath}/meecrowave-gradle/index.html[Read More]
+
+== Meecrowave and the Testing
+
+Meecrowave provides two main testing integration: a JUnit one and an Arquillian Container.
+
+link:{context_rootpath}/testing/index.html[Read More]
+
+== Meecrowave and Monitoring
+
+Meecrowave provides few integration for the monitoring:
+
+link:{context_rootpath}/meecrowave-jolokia/index.html[Jolokia (JMX)]
+
+== Meecrowave and JTA
+
+This is an experimental integration of geronimo-transaction and meecrowave.
+
+link:{context_rootpath}/meecrowave-jta/index.html[JTA module]
+
+== Meecrowave and OAuth2
+
+This is an experimental module integrating CXF OAuth2 server in Meecrowave
+through an embeddable dependency or a directly executable har.
+
+link:{context_rootpath}/meecrowave-oauth2/index.html[OAuth2 module]
+
+== Going further
+
+Meecrowave scope is not the full scope of microservices (whatever it means) or at least enterprise needs
+cause several Apache projects cover part of them in a very good way.
+
+See link:companion-projects.html[Companion Projects] for more information.

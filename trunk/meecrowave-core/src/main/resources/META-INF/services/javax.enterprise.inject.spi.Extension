@@ -1,0 +1,2 @@
+org.apache.meecrowave.openwebbeans.MeecrowaveExtension
+org.apache.meecrowave.cxf.JAXWSCdiExtension

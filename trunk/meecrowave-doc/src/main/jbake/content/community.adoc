@@ -1,0 +1,30 @@
+= Community
+:jbake-date: 2016-10-27
+:jbake-type: page
+:jbake-status: published
+:jbake-meecrowavepdf:
+:jbake-meecrowavetitleicon: icon icon_puzzle_alt
+:jbake-meecrowavecolor: body-green
+:icons: font
+
+For now please use OpenWebBeans mailing-lists, JIRA and IRC channel.
+
+See http://openwebbeans.apache.org/community.html[OpenWebBeans Community] page for more details.
+
+== Source code
+
+Source code can be found at http://svn.apache.org/repos/asf/openwebbeans/meecrowave/trunk/
+
+[source]
+----
+svn co http://svn.apache.org/repos/asf/openwebbeans/meecrowave/trunk/ meecrowave
+----
+
+=== Build it
+
+To build the project just run maven:
+
+[source]
+----
+mvn clean install
+----

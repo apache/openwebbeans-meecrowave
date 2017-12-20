@@ -1,0 +1,140 @@
+= Meecrowave Maven
+:jbake-date: 2016-10-24
+:jbake-type: page
+:jbake-status: published
+:jbake-meecrowavepdf:
+:jbake-meecrowavetitleicon: icon icon_puzzle_alt
+:jbake-meecrowavecolor: body-blue
+:icons: font
+
+Coordinates:
+
+[source,xml]
+----
+<plugin>
+  <groupId>org.apache.meecrowave</groupId>
+  <artifactId>meecrowave-maven-plugin</artifactId>
+  <version>${meecrowave.version}</version>
+</plugin>
+----
+
+TIP: most of the configuration is inherited from meecrowave-core.
+
+Here are the available options (see core configuration for the details):
+
+include::../../../../../target/generated-doc/MavenConfiguration.adoc[]
+
+== Bundling
+
+[source]
+----
+mvn meecrowave:bundle
+----
+
+This maven goal will create a zip/tar.gz (configurable) ready to launch your application.
+
+The layout if the following one:
+
+[source]
+----
+.
+├── bin
+│   └── meecrowave.sh
+├── conf
+│   ├── log4j2.xml
+│   └── meecrowave.properties
+├── lib
+│   └── *.jar
+├── logs
+│   └── meecrowave.logls l
+└── temp
+----
+
+conf folder supports out of the box these files (but you can add your own if needed):
+
+- log4j2.xml
+- server.xml
+- meecrowave.properties
+
+You can acess the root folder of the distribution reading the system property `meecrowave.base`.
+
+`meecrowave.properties` supports all configuration options of the cli (just remove the `--`): http://openwebbeans.apache.org/meecrowave/meecrowave-core/cli.html.
+
+Note: you can also split like Tomcat MEECROWAVE_BASE and MEECROWAVE_HOME if you want to extract meecrowave stack in a separate folder (from the application) to be able to update
+it independently.
+
+== Shading
+
+Plain Maven shade plugin enables you to build fatjar with Maven.
+
+Points to take care are:
+
+1. merge CXF resources
+2. merge Log4j2 resources
+3. merge OpenWebBeans resources
+4. merge SPI files (META-INF/services)
+5. ensure signatures are still valid in the aggregated jar
+
+[source,xml]
+----
+<plugin>
+  <groupId>org.apache.maven.plugins</groupId>
+  <artifactId>maven-shade-plugin</artifactId>
+  <version>2.4.3</version>
+  <executions>
+    <execution>
+      <id>bundle</id>
+      <phase>package</phase>
+      <goals>
+        <goal>shade</goal>
+      </goals>
+      <configuration>
+        <shadedClassifierName>fat</shadedClassifierName>
+        <shadedArtifactAttached>true</shadedArtifactAttached>
+        <dependencyReducedPomLocation>${project.build.directory}/reduced-pom-bundle.xml</dependencyReducedPomLocation>
+        <transformers>
+          <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+            <mainClass>org.apache.meecrowave.runner.Cli</mainClass>
+          </transformer>
+          <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+            <resource>META-INF/cxf/bus-extensions.txt</resource>
+          </transformer>
+          <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+            <resource>log4j2.component.properties</resource>
+          </transformer>
+          <transformer
+              implementation="com.github.edwgiz.mavenShadePlugin.log4j2CacheTransformer.PluginsCacheFileTransformer"/>
+          <transformer implementation="org.apache.openwebbeans.maven.shade.OpenWebBeansPropertiesTransformer"/>
+          <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+        </transformers>
+        <filters>
+          <filter>
+            <artifact>*:*</artifact>
+            <excludes>
+              <exclude>META-INF/*.SF</exclude>
+              <exclude>META-INF/*.DSA</exclude>
+              <exclude>META-INF/*.RSA</exclude>
+              <exclude>META-INF/LICENSE.txt</exclude>
+              <exclude>META-INF/LICENSE</exclude>
+              <exclude>META-INF/NOTICE.txt</exclude>
+              <exclude>META-INF/NOTICE</exclude>
+            </excludes>
+          </filter>
+        </filters>
+      </configuration>
+    </execution>
+  </executions>
+  <dependencies>
+    <dependency>
+      <groupId>org.apache.openwebbeans</groupId>
+      <artifactId>openwebbeans-maven</artifactId>
+      <version>1.7.0</version>
+    </dependency>
+    <dependency>
+      <groupId>com.github.edwgiz</groupId>
+      <artifactId>maven-shade-plugin.log4j2-cachefile-transformer</artifactId>
+      <version>2.1</version>
+    </dependency>
+  </dependencies>
+</plugin>
+----

@@ -1,0 +1,21 @@
+= Meecrowave JTA
+:jbake-date: 2016-12-22
+:jbake-type: page
+:jbake-status: published
+:jbake-meecrowavepdf:
+:jbake-meecrowavetitleicon: icon icon_puzzle_alt
+:jbake-meecrowavecolor: body-green
+:icons: font
+
+Coordinates:
+
+[source,xml]
+----
+<dependency>
+  <groupId>org.apache.meecrowave</groupId>
+  <artifactId>meecrowave-jta</artifactId>
+  <version>${meecrowave.version}</version>
+</dependency>
+----
+
+This allows to use `@Transactional` and `@TransactionScoped` features of JTA 1.2.

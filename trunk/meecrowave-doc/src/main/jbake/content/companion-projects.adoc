@@ -1,0 +1,28 @@
+= Companion projects
+:jbake-date: 2016-11-05
+:jbake-type: page
+:jbake-status: published
+:jbake-meecrowavepdf:
+:jbake-meecrowavetitleicon: icon icon_puzzle_alt
+:jbake-meecrowavecolor: body-pink
+:icons: font
+
+== Apache DeltaSpike
+
+Apache DeltaSpike will cover several useful areas:
+
+- Configuration
+- Exception handling
+- Advanced CDI utilities like partial bean binding (you define a bean behavior from a CDI handler implementation)
+- Quartz integration
+- Data/JPA integration (it is different than the Meecrowave one but depending your need can be useful)
+- And much more
+
+See http://deltaspike.apache.org/ for more information.
+
+== Apache Sirona
+
+Sirona aims to provide some monitoring capabilities (metrics on the runtime).
+By default its servlet integration makes it smooth to integrate with Meecrowave.
+
+See http://sirona.apache.org/ for more information.

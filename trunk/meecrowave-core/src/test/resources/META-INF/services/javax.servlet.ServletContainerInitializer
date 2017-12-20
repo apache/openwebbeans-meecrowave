@@ -1,0 +1,3 @@
+org.superbiz.app.Init
+org.apache.meecrowave.runner.CliTest$BeanTester
+org.apache.meecrowave.ServletContainerInitialierInjectionTest$Init

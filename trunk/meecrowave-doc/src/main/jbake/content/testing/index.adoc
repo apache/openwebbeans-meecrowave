@@ -1,0 +1,127 @@
+= Meecrowave Testing
+:jbake-date: 2016-10-24
+:jbake-type: page
+:jbake-status: published
+:jbake-meecrowavepdf:
+:jbake-meecrowavetitleicon: icon icon_puzzle_alt
+:jbake-meecrowavecolor: body-blue
+:icons: font
+
+== JUnit
+
+Coordinates:
+
+[source,xml]
+----
+<dependency>
+  <groupId>org.apache.meecrowave</groupId>
+  <artifactId>meecrowave-junit</artifactId>
+  <version>${meecrowave.version}</version>
+</dependency>
+----
+
+=== Rules and Runners
+
+Meecrowave provides two flavors of JUnit integration: standalone or runners/rules. The standalone one will
+ensure there is a single container for the whole JVM. It also fits standalone environments where you want to control the lifecycle.
+The other one will follow the JUnit lifecycle (per class or test rule).
+
+Here how to use the standalone flavor:
+
+[source,java]
+----
+@RunWith(MonoMeecrowave.Runner.class)
+public class MonoMeecrowaveRuleTest {
+    /* or
+    @ClassRule
+    public static final MonoMeecrowave.Rule RULE = new MonoMeecrowave.Rule();
+    */
+
+    @MonoMeecrowave.Runner.ConfigurationInject
+    private Meecrowave.Builder config;
+
+    @Test
+    public void test() throws IOException {
+        // use "http://localhost:" + config.getHttpPort()
+    }
+}
+----
+
+When using the standalone, `@MonoMeecrowave.Runner.ConfigurationInject` allows to still
+access the configuration and random HTTP port.
+
+For the configuration, the standalone runner will use a global configuration shared by all tests. To load it
+it will use a standard `ServiceLoader` on type `org.apache.meecrowave.Meecrowave$ConfigurationCustomizer`.
+
+And here is the one bound to the JUnit lifecycle
+
+[source,java]
+----
+public class MeecrowaveRuleTest {
+    @ClassRule // started once for the class, @Rule would be per method
+    public static final MeecrowaveRule RULE = new MeecrowaveRule();
+
+    @Test
+    public void test() throws IOException {
+        // use "http://localhost:" + RULE.getConfiguration().getHttpPort()
+    }
+}
+----
+
+As usual with JUnit rules, you can decide whereas the Meecrowave instance is bound to the entire test class
+or a method by using @ClassRule or @Rule.
+
+=== JUnit 5
+
+JUnit 5 integrates a new `Extension` system. It is not yet very well supported by IDEs but you can already use it with
+Gradle and Maven (see http://junit.org/junit5/docs/current/user-guide/#running-tests).
+
+The usage has two annotations: `@MeecrowaveConfig` which remaps most of the configuration of Meecrowave and `@MonoMeecrowaveConfig`
+which is close to `MonoMeecrowave.Runner` in term of usage.
+
+[source,java]
+----
+@MeecrowaveConfig /*(some config)*/
+public class MeecrowaveConfigTest {
+    @ConfigurationInject
+    private Meecrowave.Builder config;
+
+    @Test
+    public void run() throws MalformedURLException {
+        final String base = "http://localhost:" + config.getHttpPort();
+        // asserts
+    }
+}
+----
+
+Or
+
+[source,java]
+----
+@MonoMeecrowaveConfig
+public class MeecrowaveConfigTest {
+    // ...
+}
+----
+
+== Arquillian Container
+
+Container dependency:
+
+[source,xml]
+----
+<dependency>
+  <groupId>org.apache.meecrowave</groupId>
+  <artifactId>meecrowave-arquillian</artifactId>
+  <version>${meecrowave.version}</version>
+</dependency>
+----
+
+For the configuration check link:{context_rootpath}/meecrowave-core/configuration.html[Core configuration].
+
+Here is a sample:
+
+[source,xml]
+----
+include::../../../../../target/generated-doc/ArquillianConfiguration.adoc[]
+----

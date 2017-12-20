@@ -1,0 +1,27 @@
+= Meecrowave Command Line Interface
+:jbake-date: 2016-10-24
+:jbake-type: page
+:jbake-status: published
+:jbake-meecrowavepdf:
+:jbake-meecrowavetitleicon: icon icon_puzzle_alt
+:jbake-meecrowavecolor: body-blue
+:icons: font
+
+
+Meecrowave provides a CLI (Command Line Interface) called `org.apache.meecrowave.runner.Cli`.
+
+It can be used to deploy the java classpath or a war. Here are the main options:
+
+include::../../../../../target/generated-doc/CliConfiguration.adoc[]
+
+Note that `help` command is supported as well.
+
+== Extending the CLI
+
+You can add your own CLI options implementing `org.apache.meecrowave.runner.Cli$Options`
+(just a marker interface, no logic to code) and use `@CliOption` to define fields
+as coming from the CLI arguments. To register your option bean just add it in `META-INF/services/org.apache.meecrowave.runner.Cli$Options`.
+
+TIP: `Meecrowave.Builder` provides a `getExtension(type)` which can be used to get this
+kind of extension. This is common and works in all modes (arquillian, JUnit, embedded etc...)
+replacing the arguments by properties on `Meecrowave.Builder` instance.

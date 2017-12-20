@@ -1,0 +1,164 @@
+= Meecrowave Configuration
+:jbake-date: 2016-10-24
+:jbake-type: page
+:jbake-status: published
+:jbake-meecrowavepdf:
+:jbake-meecrowavetitleicon: icon icon_puzzle_alt
+:jbake-meecrowavecolor: body-blue
+:icons: font
+
+Meecrowave configuration is centralized in `org.apache.meecrowave.Meecrowave$Builder` class.
+
+Here are the main properties:
+
+include::../../../../../target/generated-doc/Configuration.adoc[]
+
+NOTE: the class also provides some helper methods for programamtic use case like `randomHttpPort()`
+to automatically set an available port to `httpPort`.
+
+You can also write a `Consumer<Builder>` to configure programmatically the `Builder`
+and make it active using `addCustomizer(Consumer<Builder>)`.
+
+Example:
+
+[source,java]
+----
+new Meecrowave(new Builder() {{
+        randomHttpPort();
+        setTomcatScanning(false);
+        setTomcatAutoSetup(false);
+        setRealm(new JAASRealm());
+        user("admin", "secret");
+     }})
+    .bake()
+    .await();
+----
+
+== CDI SE API
+
+CDI 2.0 introduces a "SE API" for CDI. It looks like:
+
+[source,java]
+----
+try (final SeContainer container = SeContainerInitializer.newInstance()
+        .disableDiscovery()
+        .addBeanClasses(Configured.class)
+        .initialize()) {
+    // your main
+}
+----
+
+Meecrowave inherits from OpenWebBeans SE API implementation and therefore this SE API will work out of the box.
+
+It is implemented as a `bake()` and you can still access the `Builder` configuration or even `Meecrowave` itself if needed:
+
+[source,java]
+----
+try (final SeContainer container = SeContainerInitializer.newInstance()
+        .disableDiscovery()
+        .addBeanClasses(Configured.class)
+        .initialize()) {
+
+    // use the configuration to access extensions, custom config or even server port
+    Meecrowave.Builder config = container.select(Meecrowave.Builder.class).get();
+    int port = config.getHttpPort();
+
+    // default wait implementation relying on tomcat one
+    container.select(Meecrowave.class).get().await(); // wait for the program to be killed (tomcat.await() equivalent)
+
+}
+----
+
+All the configuration of meecrowave is still available using properties:
+
+[source,java]
+----
+try (final SeContainer container = SeContainerInitializer.newInstance()
+     .addProperty("nameOfTheProperty", instanceInTheRightType)
+     .initialize()) {
+    container.select(Meecrowave.class).get().await();
+}
+----
+
+The type should match the type expected by the `Builder` instance. Note you can also just pass directly a `Builder` instance as value
+(the property name is not important) if you want something preconfigured:
+
+[source,java]
+----
+try (final SeContainer container = SeContainerInitializer.newInstance()
+     .addProperty("meecrowaveConfiguration", new Meecrowave.Builder().randomPort())
+     .initialize()) {
+    container.select(Meecrowave.class).get().await();
+}
+----
+
+== Automatic configuration
+
+The `org.apache.meecrowave.Meecrowave$Builder` class also provides `loadFromProperties(Properties)`
+and `loadFrom(String)`. The last one uses the parameter to locate a propertiers file (file path or at classpath)
+and delegate the processing to the first one.
+
+`loadFromProperties(Propertiers)` loads the configuraton from the properties. The matching is alsmot
+1-1 with previous table excepted for these entries:
+
+- if `httpPort` is `-1` then `randomHttpPort` is called
+- `properties.x=y` will set the property (`properties` entry) `x` with the value `y`
+- `users.x=y` will create the user `x` with the password `y`
+- `roles.x=y` will create the role `x` with the users `y` (comma separated if multiple users)
+- `cxf.servlet.params.x=y` will force the CXF servlet init parameter `x` to be `y`
+- `connector.x=y` will pass the property `x` to be `y` on the connector
+- `connector.attributes.x=y` will use the property `x` with value `y` to create the connector (set a property on the instance of ̀`org.apache.catalina.connector.Connector`)
+- `realm=y` will create an instance of `y` (qualified name of the class) as `realm`
+- `realm.x=y` will set `x` property to `y` - needs previous property to be set
+- `login=` will create a custom `org.apache.meecrowave.Meecrowave$LoginConfigBuilder`
+- `login.x=y` will customize previous instance with `x` property
+- `securityConstraint=` will create a custom `org.apache.meecrowave.Meecrowave$SecurityConstaintBuilder`
+- `securityConstraint.x=y` will customize previous instance with `x` property
+- `configurationCustomizer=y` will create an instance of `y` to customize the configuration
+- `configurationCustomizer.x=y` will set `x` to `y` for the customizer
+
+TIP: out of the box, any `Builder` instance will read `meecrowave.properties`. `meecrowave.properties` uses CLI
+names (without the leading `--`). See link:{context_rootpath}/meecrowave-core/cli.html[CLI] page for the list.
+
+== Logging
+
+Meecrowave relies by default on Log4j2 (see http://logging.apache.org/log4j/2.x/). By default it uses an internal
+configuration which is overriden by standard log4j mecanism.
+
+== Passwords/Secrets
+
+For the configuration requiring to be ciphered you can implement `org.apache.meecrowave.service.ValueTransformer`:
+
+[source]
+----
+public class MyTransformer implements ValueTransformer {
+    @Override
+    public String name() {
+        return "mine";
+    }
+
+    @Override
+    public String apply(final String encodedPassword) {
+        return ....;
+    }
+}
+----
+
+NOTE: this code being executed before the container starts you can't use CDI there.
+
+To register your implementation just put the fully qualified name of your transformer in `META-INF/services/org.apache.meecrowave.service.ValueTransformer`.
+
+Then to use it set the value to `decode:mine:encodedvalue`. General pattern is: `decode:<transformer name>:<value before decryption>`.
+
+Note that by default the same ciphering algorithm than in TomEE is available (Static3DES).
+
+This syntax is usable on the command line and in `meecrowave.properties`.
+
+== Programmatic customization
+
+`org.apache.meecrowave.Meecrowave$ConfigurationCustomizer` can be used to customize the configuration
+programmatically before startup. It will take the `Builder` as parameter and you can change it at that moment.
+
+`org.apache.meecrowave.Meecrowave$InstanceCustomizer` can be used to customize the configuration
+programmatically before startup. It will take the `Tomcat` as parameter and you can change it at that moment. This
+is very useful to automatically add valves and things like that.
