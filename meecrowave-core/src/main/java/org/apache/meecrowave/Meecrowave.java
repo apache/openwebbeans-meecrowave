@@ -63,6 +63,7 @@ import org.apache.tomcat.util.descriptor.web.LoginConfig;
 import org.apache.tomcat.util.descriptor.web.SecurityCollection;
 import org.apache.tomcat.util.descriptor.web.SecurityConstraint;
 import org.apache.tomcat.util.modeler.Registry;
+
 import org.apache.tomcat.util.net.SSLHostConfig;
 import org.apache.webbeans.config.WebBeansContext;
 import org.apache.xbean.finder.ResourceFinder;
@@ -114,11 +115,11 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
-
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptySet;
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toSet;
 
 public class Meecrowave implements AutoCloseable {
     private final Builder configuration;
@@ -549,38 +550,39 @@ public class Meecrowave implements AutoCloseable {
             final Connector httpsConnector = createConnector();
             httpsConnector.setPort(configuration.httpsPort);
             httpsConnector.setSecure(true);
+            httpsConnector.setScheme("https");
             httpsConnector.setProperty("SSLEnabled", "true");
-            httpsConnector.setProperty("sslProtocol", configuration.sslProtocol);
-
+            if (configuration.sslProtocol != null) {
+            	httpsConnector.setProperty("sslProtocol", configuration.sslProtocol);
+            }
+            if (configuration.properties.getProperty("connector.sslhostconfig.hostName") != null) {
+                httpsConnector.setAttribute("defaultSSLHostConfigName", configuration.properties.getProperty("connector.sslhostconfig.hostName"));
+            }
             if (configuration.keystoreFile != null) {
-                httpsConnector.setAttribute("keystoreFile", configuration.keystoreFile);
+            	configuration.property("connector.sslhostconfig.certificateKeystoreFile", configuration.keystoreFile);
             }
             if (configuration.keystorePass != null) {
-                httpsConnector.setAttribute("keystorePass", configuration.keystorePass);
+            	configuration.property("connector.sslhostconfig.certificateKeystorePassword", configuration.keystorePass);
             }
-            httpsConnector.setAttribute("keystoreType", configuration.keystoreType);
+            configuration.property("connector.sslhostconfig.certificateKeystoreType", configuration.keystoreType);
             if (configuration.clientAuth != null) {
                 httpsConnector.setAttribute("clientAuth", configuration.clientAuth);
             }
 
             if (configuration.keyAlias != null) {
-                httpsConnector.setAttribute("keyAlias", configuration.keyAlias);
+                configuration.property("connector.sslhostconfig.certificateKeyAlias", configuration.keyAlias);
             }
-
+            if (configuration.http2) {
+            	httpsConnector.addUpgradeProtocol(new Http2Protocol());
+            }
+            buildSslHostConfig().forEach(sslHostConfig  -> httpsConnector.addSslHostConfig(sslHostConfig));
+            if (configuration.defaultSSLHostConfigName != null) {
+                httpsConnector.setAttribute("defaultSSLHostConfigName", configuration.defaultSSLHostConfigName);
+            }
             tomcat.getService().addConnector(httpsConnector);
-
             if (configuration.skipHttp) {
                 tomcat.setConnector(httpsConnector);
             }
-        }
-
-        if (configuration.http2) {
-            final Connector c = configuration.ssl ?
-                    tomcat.getService().findConnectors()[tomcat.getService().findConnectors().length - 1] :
-                    ofNullable(tomcat.getRawConnector()).orElse(tomcat.getService().findConnectors()[0]);
-
-            c.addUpgradeProtocol(new Http2Protocol());
-            c.addSslHostConfig(buildSslHostConfig());
         }
 
         for (final Connector c : configuration.connectors) {
@@ -646,7 +648,6 @@ public class Meecrowave implements AutoCloseable {
         }
         return this;
     }
-
 
     /**
      * Store away the current system property for restoring it later
@@ -716,16 +717,38 @@ public class Meecrowave implements AutoCloseable {
         }
     }
 
-    private SSLHostConfig buildSslHostConfig() {
-        final ObjectRecipe recipe = new ObjectRecipe(SSLHostConfig.class);
+    private List<SSLHostConfig> buildSslHostConfig() {
+    	final List<SSLHostConfig> sslHostConfigs = new ArrayList<>();
+    	// Configures default SSLHostConfig
+        final ObjectRecipe defaultSslHostConfig = new ObjectRecipe(SSLHostConfig.class);
         for (final String key : configuration.properties.stringPropertyNames()) {
-            if (!key.startsWith("connector.sslhostconfig.")) {
-                continue;
+            if (key.startsWith("connector.sslhostconfig.") && key.split("\\.").length == 3) {
+                final String substring = key.substring("connector.sslhostconfig.".length());
+                defaultSslHostConfig.setProperty(substring, configuration.properties.getProperty(key));
             }
-            final String substring = key.substring("connector.sslhostconfig.".length());
-            recipe.setProperty(substring, configuration.properties.getProperty(key));
         }
-        return SSLHostConfig.class.cast(recipe.create());
+        if (!defaultSslHostConfig.getProperties().isEmpty()) {
+        	sslHostConfigs.add(SSLHostConfig.class.cast(defaultSslHostConfig.create()));
+        }
+        // Allows to add N Multiple SSLHostConfig elements not including the default one.
+        Set<Integer> itemNumbers = configuration.properties.stringPropertyNames()
+        						.stream()
+        						.filter(key -> (key.startsWith("connector.sslhostconfig.") && key.split("\\.").length == 4))
+        						.map(key -> Integer.parseInt(key.split("\\.")[2]))
+        						.collect(toSet());
+        itemNumbers.forEach(itemNumber -> {
+        	final ObjectRecipe recipe = new ObjectRecipe(SSLHostConfig.class);
+            for (final String key : configuration.properties.stringPropertyNames()) {
+                if (key.startsWith("connector.sslhostconfig." + itemNumber)) {
+                    final String keyName = key.split("\\.")[3];
+                    recipe.setProperty(keyName, configuration.properties.getProperty(key));
+                }
+            }
+            if (!recipe.getProperties().isEmpty()) {
+            	sslHostConfigs.add(SSLHostConfig.class.cast(recipe.create()));
+            }
+        });
+        return sslHostConfigs;
     }
 
     protected void beforeStart() {
@@ -1127,6 +1150,9 @@ public class Meecrowave implements AutoCloseable {
 
         @CliOption(name = "jaxws-support-if-present", description = "Should @WebService CDI beans be deployed if cxf-rt-frontend-jaxws is in the classpath.")
         private boolean jaxwsSupportIfAvailable = true;
+        
+        @CliOption(name = "default-ssl-hostconfig-name", description = "The name of the default SSLHostConfig that will be used for secure https connections.")
+        private String defaultSSLHostConfigName;
 
         private final Map<Class<?>, Object> extensions = new HashMap<>();
         private final Collection<Consumer<Tomcat>> instanceCustomizers = new ArrayList<>();
@@ -1685,6 +1711,15 @@ public class Meecrowave implements AutoCloseable {
             }
             return this;
         }
+        
+        public Builder randomHttpsPort() {
+            try (final ServerSocket serverSocket = new ServerSocket(0)) {
+                this.httpsPort = serverSocket.getLocalPort();
+            } catch (final IOException e) {
+                throw new IllegalStateException(e);
+            }
+            return this;
+        }
 
         public Builder loadFrom(final String resource) {
             try (final InputStream is = findStream(resource)) {
@@ -1816,6 +1851,14 @@ public class Meecrowave implements AutoCloseable {
         public void setUseLog4j2JulLogManager(final boolean useLog4j2JulLogManager) {
             this.useLog4j2JulLogManager = useLog4j2JulLogManager;
         }
+
+        public String getDefaultSSLHostConfigName() {
+			return defaultSSLHostConfigName;
+		}
+
+		public void setDefaultSSLHostConfigName(String defaultSSLHostConfigName) {
+			this.defaultSSLHostConfigName = defaultSSLHostConfigName;
+		}
 
         public void loadFromProperties(final Properties config) {
             // filtering properties with system properties or themself

@@ -36,5 +36,6 @@
     <module>app-groovy</module>
     <module>beanvalidation</module>
     <module>webservices</module>
+    <module>ssl</module>
   </modules>
 </project>
