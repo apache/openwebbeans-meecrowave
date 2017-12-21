@@ -21,6 +21,7 @@ package org.apache.meecrowave.tests.ssl;
 
 import static org.junit.Assert.assertEquals;
 
+import java.nio.file.Paths;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import javax.ws.rs.client.ClientBuilder;
@@ -52,8 +53,8 @@ import org.junit.Test;
  */
 
 public class TlsVirtualHostPropertiesTest {
-	private static final String keyStorePath1 = System.getProperty("user.dir") + "/src/main/resources/meecrowave.jks";
-	private static final String keyStorePath2 = System.getProperty("user.dir") + "/src/main/resources/meecrowave_second_host.jks";
+	private static final String keyStorePath1 = Paths.get("").toAbsolutePath() + "/target/classes/meecrowave.jks";
+	private static final String keyStorePath2 = Paths.get("").toAbsolutePath() + "/target/classes/meecrowave_second_host.jks";
 	
 	static {
 		System.setProperty("javax.net.ssl.trustStore", keyStorePath2); 

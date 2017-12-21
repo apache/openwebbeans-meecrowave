@@ -21,6 +21,7 @@ package org.apache.meecrowave.tests.ssl;
 
 import static org.junit.Assert.assertEquals;
 
+import java.nio.file.Paths;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import javax.ws.rs.client.ClientBuilder;
@@ -46,7 +47,7 @@ import org.junit.Test;
  */
 
 public class SslDefaultConfigurationTest {
-	private static final String keyStorePath = System.getProperty("user.dir") + "/src/main/resources/meecrowave.jks";
+	private static final String keyStorePath = Paths.get("").toAbsolutePath() + "/target/classes/meecrowave.jks";
 	
 	static {
 		System.setProperty("javax.net.ssl.trustStore", keyStorePath); 
@@ -54,7 +55,7 @@ public class SslDefaultConfigurationTest {
 	}
 	
 	public static final Properties p = new Properties() {{
-		setProperty("connector.sslhostconfig.truststoreFile", "../../target/classes/meecrowave.jks");
+		setProperty("connector.sslhostconfig.truststoreFile", keyStorePath);
 		setProperty("connector.sslhostconfig.truststorePassword", "meecrowave");
 	}};
 		
