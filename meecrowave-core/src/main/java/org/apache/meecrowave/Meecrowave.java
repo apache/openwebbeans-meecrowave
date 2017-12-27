@@ -98,6 +98,10 @@ import java.net.ServerSocket;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collection;
@@ -575,7 +579,30 @@ public class Meecrowave implements AutoCloseable {
             if (configuration.http2) {
             	httpsConnector.addUpgradeProtocol(new Http2Protocol());
             }
-            buildSslHostConfig().forEach(sslHostConfig  -> httpsConnector.addSslHostConfig(sslHostConfig));
+            final List<SSLHostConfig> buildSslHostConfig = buildSslHostConfig();
+            for (SSLHostConfig sslHostConf : buildSslHostConfig) {
+            	if (isCertificateFromClasspath(sslHostConf.getCertificateKeystoreFile())) {
+					copyCertificate(sslHostConf.getCertificateKeystoreFile());
+					sslHostConf.setCertificateKeystoreFile(base.getAbsolutePath() + "/conf/" + sslHostConf.getCertificateKeystoreFile());
+            	}
+            	if (isCertificateFromClasspath(sslHostConf.getCertificateKeyFile())) {
+            		copyCertificate(sslHostConf.getCertificateKeyFile());
+            		sslHostConf.setCertificateKeyFile(base.getAbsolutePath() + "/conf/" + sslHostConf.getCertificateKeyFile());
+            		copyCertificate(sslHostConf.getCertificateFile());
+            		sslHostConf.setCertificateFile(base.getAbsolutePath() + "/conf/" + sslHostConf.getCertificateFile());
+            	}
+            	if (isCertificateFromClasspath(sslHostConf.getTruststoreFile())) {
+            		copyCertificate(sslHostConf.getTruststoreFile());
+            		sslHostConf.setTruststoreFile(base.getAbsolutePath() + "/conf/" + sslHostConf.getTruststoreFile());
+            	}
+            	if (isCertificateFromClasspath(sslHostConf.getCertificateChainFile())) {
+            		copyCertificate(sslHostConf.getCertificateChainFile());
+            		sslHostConf.setCertificateChainFile(base.getAbsolutePath() + "/conf/" + sslHostConf.getCertificateChainFile());
+            	}
+			}
+            
+            buildSslHostConfig.forEach(sslHostConfig  -> httpsConnector.addSslHostConfig(sslHostConfig));
+
             if (configuration.defaultSSLHostConfigName != null) {
                 httpsConnector.setAttribute("defaultSSLHostConfigName", configuration.defaultSSLHostConfigName);
             }
@@ -648,6 +675,23 @@ public class Meecrowave implements AutoCloseable {
         }
         return this;
     }
+
+	private boolean isCertificateFromClasspath(String certificate) {
+		return certificate != null && !certificate.startsWith("/") && !certificate.startsWith(".");
+	}
+    
+	private void copyCertificate(String certificate) {
+		try {
+			final Path dstFile = Paths.get(base.getAbsolutePath() + "/conf/" + certificate);
+			InputStream resourceAsStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(certificate);
+			if (resourceAsStream == null) {
+				resourceAsStream = new FileInputStream(new File((this.getClass().getResource("/").toString().replaceAll("file:", "") + "/" + certificate)));
+			}
+		   	Files.copy(resourceAsStream, dstFile, StandardCopyOption.REPLACE_EXISTING);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
 
     /**
      * Store away the current system property for restoring it later

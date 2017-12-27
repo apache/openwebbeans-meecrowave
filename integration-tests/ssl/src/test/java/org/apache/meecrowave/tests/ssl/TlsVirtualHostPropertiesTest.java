@@ -21,16 +21,10 @@ package org.apache.meecrowave.tests.ssl;
 
 import static org.junit.Assert.assertEquals;
 
-import java.nio.file.Paths;
 import java.util.Properties;
-import java.util.concurrent.TimeUnit;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.core.MediaType;
 
 import org.apache.meecrowave.Meecrowave;
 import org.apache.meecrowave.Meecrowave.Builder;
-import org.apache.meecrowave.junit.MeecrowaveRule;
-import org.junit.ClassRule;
 import org.junit.Test;
 
 /*
@@ -53,13 +47,8 @@ import org.junit.Test;
  */
 
 public class TlsVirtualHostPropertiesTest {
-	private static final String keyStorePath1 = Paths.get("").toAbsolutePath() + "/target/classes/meecrowave.jks";
-	private static final String keyStorePath2 = Paths.get("").toAbsolutePath() + "/target/classes/meecrowave_second_host.jks";
-	
-	static {
-		System.setProperty("javax.net.ssl.trustStore", keyStorePath2); 
-		System.setProperty("javax.net.ssl.trustStorePassword", "meecrowave");
-	}
+	private static final String keyStorePath1 = "meecrowave.jks";
+	private static final String keyStorePath2 = "meecrowave_second_host.jks";
 	
 	public static final Properties p = new Properties() {{
 		setProperty("connector.attributes.maxThreads", "10");
@@ -79,12 +68,12 @@ public class TlsVirtualHostPropertiesTest {
 		setProperty("connector.sslhostconfig.1.sslProtocol", "TLSv1.2");
 		setProperty("connector.sslhostconfig.1.hostName", "meecrowave-localhost");
 		
-		setProperty("connector.sslhostconfig.2.certificateKeystoreFile", keyStorePath2);
-		setProperty("connector.sslhostconfig.2.certificateKeystoreType", "JKS");
-		setProperty("connector.sslhostconfig.2.certificateKeystorePassword", "meecrowave");
-		setProperty("connector.sslhostconfig.2.certificateKeyAlias", "meecrowave");
-		setProperty("connector.sslhostconfig.2.sslProtocol", "TLSv1.2");
-		setProperty("connector.sslhostconfig.2.hostName", "meecrowave-localhost1");
+		setProperty("connector.sslhostconfig.2.hostName", "meecrowave-localhost2");
+		setProperty("connector.sslhostconfig.2.certificateKeyFile", "meecrowave.key.pem");
+		setProperty("connector.sslhostconfig.2.certificateFile", "meecrowave.cert.pem");
+		setProperty("connector.sslhostconfig.2.certificateChainFile", "ca-chain.cert.pem");
+		setProperty("connector.sslhostconfig.2.protocols", "TLSv1.2");
+	
 	}};
     
     @Test
@@ -99,15 +88,7 @@ public class TlsVirtualHostPropertiesTest {
 					setProperties(p);
 				}}).bake()) {
     	assertEquals(3, CONTAINER.getTomcat().getService().findConnectors()[0].findSslHostConfigs().length);
-    	String response = 
-    			ClientBuilder.newBuilder()
-			    			 .connectTimeout(5, TimeUnit.SECONDS)
-			    			 .readTimeout(5, TimeUnit.SECONDS)
-			    			 .build()
-    						 .target("https://localhost:" + CONTAINER.getConfiguration().getHttpsPort() + "/hello")
-    						 .request(MediaType.TEXT_PLAIN)
-							 .get(String.class);
-		assertEquals("Hello", response);
+    	assertEquals("Hello", TestSetup.callJaxrsService(CONTAINER.getConfiguration().getHttpsPort()));		
 		}
     }
 }
