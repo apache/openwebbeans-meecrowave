@@ -680,7 +680,7 @@ public class Meecrowave implements AutoCloseable {
 		return certificate != null && !(new File(certificate).exists()) 
 				&& !(Paths.get(System.getProperty("user.home"))
 						.resolve(".keystore")
-						.toString().equalsIgnoreCase(certificate));
+						.toString().equalsIgnoreCase(Paths.get(certificate).toString()));
 	}
     
 	private void copyCertificateToConfDir(String certificate) {
