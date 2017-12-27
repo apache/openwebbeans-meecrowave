@@ -579,7 +579,7 @@ public class Meecrowave implements AutoCloseable {
             	httpsConnector.addUpgradeProtocol(new Http2Protocol());
             }
             final List<SSLHostConfig> buildSslHostConfig = buildSslHostConfig();
-            for (SSLHostConfig sslHostConf : buildSslHostConfig) {
+            buildSslHostConfig.forEach(sslHostConf -> {
             	if (isCertificateFromClasspath(sslHostConf.getCertificateKeystoreFile())) {
 					copyCertificateToConfDir(sslHostConf.getCertificateKeystoreFile());
 					sslHostConf.setCertificateKeystoreFile(base.getAbsolutePath() + "/conf/" + sslHostConf.getCertificateKeystoreFile());
@@ -598,7 +598,7 @@ public class Meecrowave implements AutoCloseable {
             		copyCertificateToConfDir(sslHostConf.getCertificateChainFile());
             		sslHostConf.setCertificateChainFile(base.getAbsolutePath() + "/conf/" + sslHostConf.getCertificateChainFile());
             	}
-			}
+			});
             
             buildSslHostConfig.forEach(sslHostConfig  -> httpsConnector.addSslHostConfig(sslHostConfig));
 
@@ -676,19 +676,31 @@ public class Meecrowave implements AutoCloseable {
     }
 
 	private boolean isCertificateFromClasspath(String certificate) {
-		return certificate != null && !certificate.startsWith("/") && !certificate.startsWith(".");
+		return certificate != null && !(new File(certificate).exists()) 
+				&& !(Paths.get(System.getProperty("user.home"))
+						.resolve(".keystore")
+						.toString().equalsIgnoreCase(certificate));
 	}
     
 	private void copyCertificateToConfDir(String certificate) {
+		InputStream resourceAsStream = null;
 		try {
 			final Path dstFile = Paths.get(base.getAbsolutePath() + "/conf/" + certificate);
-			InputStream resourceAsStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(certificate);
+			resourceAsStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(certificate);
 			if (resourceAsStream == null) {
 				resourceAsStream = new FileInputStream(new File((this.getClass().getResource("/").toString().replaceAll("file:", "") + "/" + certificate)));
 			}
 		   	Files.copy(resourceAsStream, dstFile, StandardCopyOption.REPLACE_EXISTING);
 		} catch (IOException e) {
-			e.printStackTrace();
+			throw new IllegalStateException(e);
+		} finally {
+			if (resourceAsStream != null) {
+				try {
+					resourceAsStream.close();
+				} catch (IOException e) {
+					throw new IllegalStateException(e);
+				}
+			}
 		}
 	}
 

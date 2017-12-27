@@ -23,18 +23,7 @@ import static org.junit.Assert.assertEquals;
 
 import java.nio.file.Paths;
 import java.util.Properties;
-import java.util.concurrent.TimeUnit;
 
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.core.MediaType;
-
-import org.apache.cxf.configuration.jsse.TLSClientParameters;
-import org.apache.cxf.jaxrs.client.WebClient;
-import org.apache.cxf.transport.http.HTTPConduit;
-import org.apache.meecrowave.Meecrowave;
 import org.apache.meecrowave.Meecrowave.Builder;
 import org.apache.meecrowave.junit.MeecrowaveRule;
 import org.junit.ClassRule;
@@ -43,8 +32,8 @@ import org.junit.Test;
 /*
  * Creates the following connector
  * <Connector port="8443" protocol="HTTP/1.1" SSLEnabled="true" scheme="https" secure="true"
-	sslDefaultHost="localhost">
-	<SSLHostConfig honorCipherOrder="false" hostName="localhost">
+	sslDefaultHost="_default_">
+	<SSLHostConfig honorCipherOrder="false" hostName="_default_">
 		<Certificate certificateKeystoreFile="meecrowave.jks" 
 					 certificateKeystorePassword="meecrowave" 
 					 certificateKeyAlias="meecrowave" 
@@ -54,16 +43,20 @@ import org.junit.Test;
 </Connector>
  */
 public class SslHostConfigPropertiesTest {
-	private static final String keyStorePath = "meecrowave.jks";
+	private static final String keyStorePath = "meecrowave_first_host.jks";
+	
+	static {
+		System.setProperty("javax.net.ssl.trustStore", Paths.get("").toAbsolutePath() + "/target/classes/meecrowave_trust.jks"); 
+		System.setProperty("javax.net.ssl.trustStorePassword", "meecrowave");
+	}
 	
 	public static final Properties p = new Properties() {{
-		setProperty("connector.sslhostconfig.truststoreFile", keyStorePath);
+		setProperty("connector.sslhostconfig.truststoreFile", "meecrowave_trust.jks");
 		setProperty("connector.sslhostconfig.truststorePassword", "meecrowave");
 		setProperty("connector.sslhostconfig.certificateKeystoreFile", keyStorePath);
 		setProperty("connector.sslhostconfig.certificateKeystoreType", "JKS");
 		setProperty("connector.sslhostconfig.certificateKeystorePassword", "meecrowave");
 		setProperty("connector.sslhostconfig.certificateKeyAlias", "meecrowave");
-		setProperty("connector.sslhostconfig.hostName", "localhost");
 	}};
 		
 	@ClassRule
