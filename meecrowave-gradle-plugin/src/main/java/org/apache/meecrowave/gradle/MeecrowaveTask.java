@@ -340,6 +340,10 @@ public class MeecrowaveTask extends DefaultTask {
     @Optional
     private boolean jaxwsSupportIfAvailable = true;
 
+    @Input
+    @Optional
+    private String defaultSSLHostConfigName;
+
     @TaskAction
     public void bake() {
         fixConfig();
@@ -1171,5 +1175,13 @@ public class MeecrowaveTask extends DefaultTask {
 
     public void setJaxwsSupportIfAvailable(final boolean jaxwsSupportIfAvailable) {
         this.jaxwsSupportIfAvailable = jaxwsSupportIfAvailable;
+    }
+
+    public String getDefaultSSLHostConfigName() {
+        return defaultSSLHostConfigName;
+    }
+
+    public void setDefaultSSLHostConfigName(final String defaultSSLHostConfigName) {
+        this.defaultSSLHostConfigName = defaultSSLHostConfigName;
     }
 }
