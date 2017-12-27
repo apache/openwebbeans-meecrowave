@@ -284,6 +284,9 @@ public class MeecrowaveRunMojo extends AbstractMojo {
     @Parameter(property = "meecrowave.jaxws-support", defaultValue = "true")
     private boolean jaxwsSupportIfAvailable;
 
+    @Parameter(property = "meecrowave.default-ssl-hostconfig-name")
+    private String defaultSSLHostConfigName;
+
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         if (skip) {

@@ -95,6 +95,7 @@ public class MeecrowaveExtension {
     private boolean jaxrsAutoActivateBeanValidation = true;
     private String meecrowaveProperties = "meecrowave.properties";
     private boolean jaxwsSupportIfAvailable = true;
+    private String defaultSSLHostConfigName;
 
     public boolean isJaxwsSupportIfAvailable() {
         return jaxwsSupportIfAvailable;
@@ -655,4 +656,13 @@ public class MeecrowaveExtension {
     public void setWatcherBouncing(final int watcherBouncing) {
         this.watcherBouncing = watcherBouncing;
     }
+
+	public String getDefaultSSLHostConfigName() {
+		return defaultSSLHostConfigName;
+	}
+
+	public void setDefaultSSLHostConfigName(String defaultSSLHostConfigName) {
+		this.defaultSSLHostConfigName = defaultSSLHostConfigName;
+	}
+    
 }
