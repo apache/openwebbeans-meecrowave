@@ -63,7 +63,6 @@ import org.apache.tomcat.util.descriptor.web.LoginConfig;
 import org.apache.tomcat.util.descriptor.web.SecurityCollection;
 import org.apache.tomcat.util.descriptor.web.SecurityConstraint;
 import org.apache.tomcat.util.modeler.Registry;
-
 import org.apache.tomcat.util.net.SSLHostConfig;
 import org.apache.webbeans.config.WebBeansContext;
 import org.apache.xbean.finder.ResourceFinder;
@@ -582,21 +581,21 @@ public class Meecrowave implements AutoCloseable {
             final List<SSLHostConfig> buildSslHostConfig = buildSslHostConfig();
             for (SSLHostConfig sslHostConf : buildSslHostConfig) {
             	if (isCertificateFromClasspath(sslHostConf.getCertificateKeystoreFile())) {
-					copyCertificate(sslHostConf.getCertificateKeystoreFile());
+					copyCertificateToConfDir(sslHostConf.getCertificateKeystoreFile());
 					sslHostConf.setCertificateKeystoreFile(base.getAbsolutePath() + "/conf/" + sslHostConf.getCertificateKeystoreFile());
             	}
             	if (isCertificateFromClasspath(sslHostConf.getCertificateKeyFile())) {
-            		copyCertificate(sslHostConf.getCertificateKeyFile());
+            		copyCertificateToConfDir(sslHostConf.getCertificateKeyFile());
             		sslHostConf.setCertificateKeyFile(base.getAbsolutePath() + "/conf/" + sslHostConf.getCertificateKeyFile());
-            		copyCertificate(sslHostConf.getCertificateFile());
+            		copyCertificateToConfDir(sslHostConf.getCertificateFile());
             		sslHostConf.setCertificateFile(base.getAbsolutePath() + "/conf/" + sslHostConf.getCertificateFile());
             	}
             	if (isCertificateFromClasspath(sslHostConf.getTruststoreFile())) {
-            		copyCertificate(sslHostConf.getTruststoreFile());
+            		copyCertificateToConfDir(sslHostConf.getTruststoreFile());
             		sslHostConf.setTruststoreFile(base.getAbsolutePath() + "/conf/" + sslHostConf.getTruststoreFile());
             	}
             	if (isCertificateFromClasspath(sslHostConf.getCertificateChainFile())) {
-            		copyCertificate(sslHostConf.getCertificateChainFile());
+            		copyCertificateToConfDir(sslHostConf.getCertificateChainFile());
             		sslHostConf.setCertificateChainFile(base.getAbsolutePath() + "/conf/" + sslHostConf.getCertificateChainFile());
             	}
 			}
@@ -680,7 +679,7 @@ public class Meecrowave implements AutoCloseable {
 		return certificate != null && !certificate.startsWith("/") && !certificate.startsWith(".");
 	}
     
-	private void copyCertificate(String certificate) {
+	private void copyCertificateToConfDir(String certificate) {
 		try {
 			final Path dstFile = Paths.get(base.getAbsolutePath() + "/conf/" + certificate);
 			InputStream resourceAsStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(certificate);
