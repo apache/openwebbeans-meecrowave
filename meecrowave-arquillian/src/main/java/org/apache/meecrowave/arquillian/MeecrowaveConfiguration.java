@@ -104,6 +104,7 @@ public class MeecrowaveConfiguration implements ContainerConfiguration {
     private boolean jaxrsAutoActivateBeanValidation = true;
     private String meecrowaveProperties = "meecrowave.properties";
     private boolean jaxwsSupportIfAvailable = true;
+    private String defaultSSLHostConfigName;
 
     // configurable cause when set to Local arquillian bypass some protocol configuration cause of container default
     private String arquillianProtocol = "Servlet 3.1";
@@ -766,4 +767,13 @@ public class MeecrowaveConfiguration implements ContainerConfiguration {
     public void setJaxwsSupportIfAvailable(final boolean jaxwsSupportIfAvailable) {
         this.jaxwsSupportIfAvailable = jaxwsSupportIfAvailable;
     }
+
+	public String getDefaultSSLHostConfigName() {
+		return defaultSSLHostConfigName;
+	}
+
+	public void setDefaultSSLHostConfigName(String defaultSSLHostConfigName) {
+		this.defaultSSLHostConfigName = defaultSSLHostConfigName;
+	}
+    
 }
