@@ -20,6 +20,7 @@ package org.apache.meecrowave;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptySet;
+import static java.util.Locale.ROOT;
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
@@ -57,8 +58,10 @@ import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -677,11 +680,13 @@ public class Meecrowave implements AutoCloseable {
         return this;
     }
 
-    private boolean isCertificateFromClasspath(String certificate) {
+    private boolean isCertificateFromClasspath(final String certificate) {
+        final BiPredicate<String, String> equals = System.getProperty("os.name", "ignore").toLowerCase(ROOT).contains("win") ?
+                String::equalsIgnoreCase : String::equals;
         return certificate != null && !(new File(certificate).exists()) 
-                && !(Paths.get(System.getProperty("user.home"))
-                          .resolve(".keystore")
-                          .toString().equalsIgnoreCase(certificate));
+                && !equals.test(
+                        Paths.get(System.getProperty("user.home")).resolve(".keystore").toAbsolutePath().normalize().toString(),
+                        Paths.get(certificate).toAbsolutePath().normalize().toString());
     }
     
     private void copyCertificateToConfDir(String certificate) {
