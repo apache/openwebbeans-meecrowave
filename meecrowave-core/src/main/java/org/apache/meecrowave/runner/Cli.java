@@ -18,7 +18,9 @@
  */
 package org.apache.meecrowave.runner;
 
+import org.apache.catalina.Server;
 import org.apache.catalina.connector.Connector;
+import org.apache.catalina.core.StandardServer;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
@@ -47,8 +49,10 @@ import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 
 @Vetoed
-public class Cli implements Runnable {
+public class Cli implements Runnable, AutoCloseable {
     private final String[] args;
+    private volatile Meecrowave instance;
+    private volatile boolean closed;
 
     public Cli(final String[] args) {
         this.args = args;
@@ -63,6 +67,13 @@ public class Cli implements Runnable {
         final Meecrowave.Builder builder = parsedCommand.getBuilder();
         final CommandLine line = parsedCommand.getLine();
         try (final Meecrowave meecrowave = new Meecrowave(builder)) {
+            synchronized (this) {
+                if (closed) {
+                    return;
+                }
+                this.instance = meecrowave;
+            }
+
             final String ctx = line.getOptionValue("context", "");
             final String fixedCtx = !ctx.isEmpty() && !ctx.startsWith("/") ? '/' + ctx : ctx;
             final String war = line.getOptionValue("webapp");
@@ -78,6 +89,20 @@ public class Cli implements Runnable {
 
     protected void doWait(final Meecrowave meecrowave, final CommandLine line) {
         meecrowave.getTomcat().getServer().await();
+    }
+
+    @Override
+    public synchronized void close() {
+        if (closed) {
+            return;
+        }
+        this.closed = true;
+        if (instance != null) {
+            final Server server = instance.getTomcat().getServer();
+            if (StandardServer.class.isInstance(server)) {
+                StandardServer.class.cast(server).stopAwait();
+            }
+        }
     }
 
     public static void main(final String[] args) {
