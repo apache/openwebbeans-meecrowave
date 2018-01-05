@@ -20,7 +20,6 @@ package org.apache.meecrowave.junit5;
 
 import javax.enterprise.context.spi.CreationalContext;
 
-import org.apache.meecrowave.Meecrowave;
 import org.apache.meecrowave.testing.Injector;
 import org.apache.meecrowave.testing.MonoBase;
 import org.junit.jupiter.api.extension.AfterEachCallback;
@@ -33,18 +32,20 @@ public class MonoMeecrowaveExtension implements BeforeAllCallback, BeforeEachCal
     private static final ExtensionContext.Namespace NAMESPACE = ExtensionContext.Namespace.create(MonoMeecrowaveExtension.class.getName());
 
     @Override
-    public void beforeAll(final ExtensionContext context) throws Exception {
-        context.getStore(NAMESPACE).put(Meecrowave.Builder.class.getName(), BASE.startIfNeeded());
+    public void beforeAll(final ExtensionContext context) {
+        context.getStore(NAMESPACE).put(MonoBase.Instance.class.getName(), BASE.startIfNeeded());
     }
 
     @Override
-    public void beforeEach(final ExtensionContext context) throws Exception {
+    public void beforeEach(final ExtensionContext context) {
         context.getStore(NAMESPACE).put(CreationalContext.class.getName(), Injector.inject(context.getTestInstance().orElse(null)));
-        Injector.injectConfig(Meecrowave.Builder.class.cast(context.getStore(NAMESPACE).get(Meecrowave.Builder.class.getName())), context.getTestInstance().orElse(null));
+        Injector.injectConfig(
+                MonoBase.Instance.class.cast(context.getStore(NAMESPACE).get(MonoBase.Instance.class.getName())).getConfiguration(),
+                context.getTestInstance().orElse(null));
     }
 
     @Override
-    public void afterEach(final ExtensionContext context) throws Exception {
+    public void afterEach(final ExtensionContext context) {
         CreationalContext.class.cast(context.getStore(NAMESPACE).get(CreationalContext.class.getName())).release();
     }
 }
