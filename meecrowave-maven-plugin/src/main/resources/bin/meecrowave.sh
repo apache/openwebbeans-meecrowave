@@ -219,7 +219,7 @@ JAVA_OPTS="$JAVA_OPTS $JSSE_OPTS"
 
 # Register custom URL handlers
 # Do this here so custom URL handles (specifically 'war:...') can be used in the security policy
-JAVA_OPTS="$JAVA_OPTS -Djava.protocol.handler.pkgs=org.apache.MEECROWAVE.webresources"
+JAVA_OPTS="$JAVA_OPTS -Djava.protocol.handler.pkgs=org.apache.tomcat.webresources"
 
 # Set juli LogManager config file if it is present and an override has not been issued
 if [ -z "$LOGGING_CONFIG" ]; then
@@ -242,8 +242,8 @@ fi
 umask $UMASK
 
 # Uncomment the following line to make the umask available when using the
-# org.apache.MEECROWAVE.security.SecurityListener
-#JAVA_OPTS="$JAVA_OPTS -Dorg.apache.MEECROWAVE.security.SecurityListener.UMASK=`umask`"
+# org.apache.tomcat.security.SecurityListener
+#JAVA_OPTS="$JAVA_OPTS -Dorg.apache.tomcat.security.SecurityListener.UMASK=`umask`"
 
 if [ -z "$USE_NOHUP" ]; then
     if $hpux; then
