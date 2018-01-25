@@ -835,7 +835,7 @@ public class Meecrowave implements AutoCloseable {
     }
 
     @Override
-    public void close() {
+    public synchronized void close() {
         if (tomcat == null) {
             return;
         }
@@ -860,6 +860,8 @@ public class Meecrowave implements AutoCloseable {
             } catch (final LifecycleException e) {
                 throw new IllegalStateException(e);
             } finally {
+                tomcat = null; // ensure we can call close() N times and not have side effects
+                contexts.clear();
                 if (clearCatalinaSystemProperties) {
                     Stream.of("catalina.base", "catalina.home").forEach(System::clearProperty);
                 }
