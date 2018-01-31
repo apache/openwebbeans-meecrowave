@@ -14,9 +14,6 @@ import org.apache.johnzon.jaxrs.JsrMessageBodyReader;
 import org.apache.johnzon.jaxrs.JsrMessageBodyWriter;
 import org.apache.johnzon.jaxrs.jsonb.jaxrs.JsonbJaxrsProvider;
 import org.apache.meecrowave.Meecrowave;
-import org.apache.webbeans.config.WebBeansContext;
-import org.apache.webbeans.proxy.InterceptorDecoratorProxyFactory;
-import org.apache.webbeans.proxy.NormalScopeProxyFactory;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -45,8 +42,6 @@ import static java.util.stream.Collectors.toList;
 @ApplicationScoped
 public class MeecrowaveBus implements Bus {
     private final Bus delegate = new ExtensionManagerBus();
-    private NormalScopeProxyFactory normalScopeProxyFactory;
-    private InterceptorDecoratorProxyFactory interceptorDecoratorProxyFactory;
 
     protected MeecrowaveBus() {
         // no-op: for proxies
@@ -54,11 +49,9 @@ public class MeecrowaveBus implements Bus {
 
     @Inject
     public MeecrowaveBus(final ServletContext context) {
-        WebBeansContext webBeansContext = WebBeansContext.currentInstance();
-        normalScopeProxyFactory = webBeansContext.getNormalScopeProxyFactory();
-        interceptorDecoratorProxyFactory = webBeansContext.getInterceptorDecoratorProxyFactory();
-
+        final ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
         setProperty(ClassUnwrapper.class.getName(), (ClassUnwrapper) this::getRealClass);
+        setExtension(contextClassLoader, ClassLoader.class); // ServletController locks on the classloader otherwise
 
         final Meecrowave.Builder builder = Meecrowave.Builder.class.cast(context.getAttribute("meecrowave.configuration"));
         if (builder != null && builder.isJaxrsProviderSetup()) {
@@ -89,7 +82,6 @@ public class MeecrowaveBus implements Bus {
 
             if (builder.isJaxrsAutoActivateBeanValidation()) {
                 try { // we don't need the jaxrsbeanvalidationfeature since bean validation cdi extension handles it normally
-                    final ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
                     contextClassLoader.loadClass("javax.validation.Validation");
                     final Object instance = contextClassLoader.loadClass("org.apache.cxf.jaxrs.validation.ValidationExceptionMapper")
                                                        .getConstructor().newInstance();
