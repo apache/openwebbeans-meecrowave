@@ -52,7 +52,7 @@
     <tomcat.version>9.0.4</tomcat.version>
     <openwebbeans.version>2.0.4-SNAPSHOT</openwebbeans.version>
     <cxf.version>3.2.1</cxf.version>
-    <johnzon.version>1.1.5</johnzon.version>
+    <johnzon.version>1.1.6-SNAPSHOT</johnzon.version>
     <log4j2.version>2.10.0</log4j2.version>
     <deltaspike.version>1.8.0</deltaspike.version>
     <jaxb.version>2.2.11</jaxb.version>
