@@ -18,14 +18,42 @@ import org.apache.meecrowave.Meecrowave;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.inject.Named;
-import javax.json.Json;
+import javax.json.JsonArray;
+import javax.json.JsonArrayBuilder;
+import javax.json.JsonBuilderFactory;
+import javax.json.JsonMergePatch;
+import javax.json.JsonNumber;
+import javax.json.JsonObject;
+import javax.json.JsonObjectBuilder;
+import javax.json.JsonPatch;
+import javax.json.JsonPatchBuilder;
+import javax.json.JsonPointer;
+import javax.json.JsonReader;
+import javax.json.JsonReaderFactory;
+import javax.json.JsonString;
 import javax.json.JsonStructure;
+import javax.json.JsonValue;
+import javax.json.JsonWriter;
+import javax.json.JsonWriterFactory;
+import javax.json.bind.Jsonb;
+import javax.json.bind.JsonbBuilder;
+import javax.json.spi.JsonProvider;
 import javax.json.stream.JsonGenerator;
+import javax.json.stream.JsonGeneratorFactory;
+import javax.json.stream.JsonParser;
+import javax.json.stream.JsonParserFactory;
 import javax.servlet.ServletContext;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.ext.Provider;
+
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.Reader;
+import java.io.Writer;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -68,17 +96,42 @@ public class MeecrowaveBus implements Bus {
                                         }
                                     })
                                     .collect(Collectors.<Object>toList()))
-                            .orElseGet(() -> Stream.<Object>of(
-                                    new ConfiguredJsonbJaxrsProvider(
-                                            builder.getJsonbEncoding(), builder.isJsonbNulls(),
-                                            builder.isJsonbIJson(), builder.isJsonbPrettify(),
-                                            builder.getJsonbBinaryStrategy(), builder.getJsonbNamingStrategy(),
-                                            builder.getJsonbOrderStrategy()),
-                                    new ConfiguredJsrProvider(
-                                            builder.getJsonpBufferStrategy(), builder.getJsonpMaxStringLen(),
-                                            builder.getJsonpMaxReadBufferLen(), builder.getJsonpMaxWriteBufferLen(),
-                                            builder.isJsonpSupportsComment(), builder.isJsonpPrettify()))
-                                    .collect(toList()));
+                            .orElseGet(() -> {
+                                // ensure both providers share the same memory reuse logic
+                                final JsonProvider provider = JsonProvider.provider();
+                                final JsonReaderFactory readerFactory = provider.createReaderFactory(
+                                        new HashMap<String, Object>() {{
+                                            put(JsonParserFactoryImpl.SUPPORTS_COMMENTS, builder.isJsonpSupportsComment());
+                                            of(builder.getJsonpMaxStringLen()).filter(v -> v > 0)
+                                                            .ifPresent(s -> put(JsonParserFactoryImpl.MAX_STRING_LENGTH,
+                                                                    s));
+                                            of(builder.getJsonpMaxReadBufferLen()).filter(v -> v > 0)
+                                                                .ifPresent(s -> put(JsonParserFactoryImpl.BUFFER_LENGTH,
+                                                                        s));
+                                            ofNullable(builder.getJsonpBufferStrategy()).ifPresent(
+                                                    s -> put(AbstractJsonFactory.BUFFER_STRATEGY, s));
+                                        }});
+                                final JsonWriterFactory writerFactory = provider.createWriterFactory(
+                                        new HashMap<String, Object>() {{
+                                            put(JsonGenerator.PRETTY_PRINTING, builder.isJsonpPrettify());
+                                            of(builder.getJsonpMaxWriteBufferLen()).filter(v -> v > 0)
+                                                                 .ifPresent(v -> put(
+                                                                         JsonGeneratorFactoryImpl
+                                                                                 .GENERATOR_BUFFER_LENGTH,
+                                                                         v));
+                                            ofNullable(builder.getJsonpBufferStrategy()).ifPresent(
+                                                    s -> put(AbstractJsonFactory.BUFFER_STRATEGY, s));
+                                        }});
+                                return Stream.<Object>of(
+                                        new ConfiguredJsonbJaxrsProvider(
+                                                builder.getJsonbEncoding(), builder.isJsonbNulls(),
+                                                builder.isJsonbIJson(), builder.isJsonbPrettify(),
+                                                builder.getJsonbBinaryStrategy(), builder.getJsonbNamingStrategy(),
+                                                builder.getJsonbOrderStrategy(),
+                                                new DelegateJsonProvider(provider, readerFactory, writerFactory)),
+                                        new ConfiguredJsrProvider(readerFactory, writerFactory))
+                                        .collect(toList());
+                            });
 
             if (builder.isJaxrsAutoActivateBeanValidation()) {
                 try { // we don't need the jaxrsbeanvalidationfeature since bean validation cdi extension handles it normally
@@ -218,17 +271,20 @@ public class MeecrowaveBus implements Bus {
     @Produces({MediaType.APPLICATION_JSON, "*/*+json"})
     @Consumes({MediaType.APPLICATION_JSON, "*/*+json"})
     public static class ConfiguredJsonbJaxrsProvider<T> extends JsonbJaxrsProvider<T> {
+        private final JsonProvider provider;
+
         private ConfiguredJsonbJaxrsProvider(final String encoding,
                                              final boolean nulls,
                                              final boolean iJson,
                                              final boolean pretty,
                                              final String binaryStrategy,
                                              final String namingStrategy,
-                                             final String orderStrategy) {
+                                             final String orderStrategy,
+                                             final JsonProvider provider) {
             // ATTENTION this is only a workaround for MEECROWAVE-49 and shall get removed after Johnzon has a fix for it!
             // We add byte[] to the ignored types.
             super(Arrays.asList("[B"));
-
+            this.provider = provider;
             ofNullable(encoding).ifPresent(this::setEncoding);
             ofNullable(namingStrategy).ifPresent(this::setPropertyNamingStrategy);
             ofNullable(orderStrategy).ifPresent(this::setPropertyOrderStrategy);
@@ -237,25 +293,193 @@ public class MeecrowaveBus implements Bus {
             setIJson(iJson);
             setPretty(pretty);
         }
+
+        protected Jsonb createJsonb() {
+            return JsonbBuilder.newBuilder()
+                               .withProvider(provider)
+                               .withConfig(config).build();
+        }
     }
 
     @Provider
     @Produces({MediaType.APPLICATION_JSON, "application/*+json"})
     @Consumes({MediaType.APPLICATION_JSON, "application/*+json"})
     public static class ConfiguredJsrProvider extends DelegateProvider<JsonStructure> { // TODO: probably wire the encoding in johnzon
-        private ConfiguredJsrProvider(final String bufferStrategy, final int maxStringLen,
-                                      final int maxReadBufferLen, final int maxWriteBufferLen,
-                                      final boolean supportsComment, final boolean pretty) {
-            super(new JsrMessageBodyReader(Json.createReaderFactory(new HashMap<String, Object>() {{
-                put(JsonParserFactoryImpl.SUPPORTS_COMMENTS, supportsComment);
-                of(maxStringLen).filter(v -> v > 0).ifPresent(s -> put(JsonParserFactoryImpl.MAX_STRING_LENGTH, s));
-                of(maxReadBufferLen).filter(v -> v > 0).ifPresent(s -> put(JsonParserFactoryImpl.BUFFER_LENGTH, s));
-                ofNullable(bufferStrategy).ifPresent(s -> put(AbstractJsonFactory.BUFFER_STRATEGY, s));
-            }}), false), new JsrMessageBodyWriter(Json.createWriterFactory(new HashMap<String, Object>() {{
-                put(JsonGenerator.PRETTY_PRINTING, pretty);
-                of(maxWriteBufferLen).filter(v -> v > 0).ifPresent(v -> put(JsonGeneratorFactoryImpl.GENERATOR_BUFFER_LENGTH, v));
-                ofNullable(bufferStrategy).ifPresent(s -> put(AbstractJsonFactory.BUFFER_STRATEGY, s));
-            }}), false));
+        private ConfiguredJsrProvider(final JsonReaderFactory readerFactory,
+                                      final JsonWriterFactory writerFactory) {
+            super(new JsrMessageBodyReader(readerFactory, false), new JsrMessageBodyWriter(writerFactory, false));
+        }
+    }
+
+    private static class DelegateJsonProvider extends JsonProvider {
+        private final JsonReaderFactory readerFactory;
+        private final JsonWriterFactory writerFactory;
+        private final JsonProvider provider;
+
+        private DelegateJsonProvider(final JsonProvider provider, final JsonReaderFactory readerFactory, final JsonWriterFactory writerFactory) {
+            this.provider = provider;
+            this.readerFactory = readerFactory;
+            this.writerFactory = writerFactory;
+        }
+
+        @Override
+        public JsonWriterFactory createWriterFactory(final Map<String, ?> config) {
+            return writerFactory;
+        }
+
+        @Override
+        public JsonReaderFactory createReaderFactory(final Map<String, ?> config) {
+            return readerFactory;
+        }
+
+        @Override
+        public JsonParser createParser(final Reader reader) {
+            return provider.createParser(reader);
+        }
+
+        @Override
+        public JsonParser createParser(final InputStream in) {
+            return provider.createParser(in);
+        }
+
+        @Override
+        public JsonParserFactory createParserFactory( final Map<String, ?> config) {
+            return provider.createParserFactory(config);
+        }
+
+        @Override
+        public JsonGenerator createGenerator(final Writer writer) {
+            return provider.createGenerator(writer);
+        }
+
+        @Override
+        public JsonGenerator createGenerator(final OutputStream out) {
+            return provider.createGenerator(out);
+        }
+
+        @Override
+        public JsonGeneratorFactory createGeneratorFactory(final Map<String, ?> config) {
+            return provider.createGeneratorFactory(config);
+        }
+
+        @Override
+        public JsonReader createReader(final Reader reader) {
+            return provider.createReader(reader);
+        }
+
+        @Override
+        public JsonReader createReader(final InputStream in) {
+            return provider.createReader(in);
+        }
+
+        @Override
+        public JsonWriter createWriter(final Writer writer) {
+            return provider.createWriter(writer);
+        }
+
+        @Override
+        public JsonWriter createWriter(final OutputStream out) {
+            return provider.createWriter(out);
+        }
+
+        @Override
+        public JsonObjectBuilder createObjectBuilder() {
+            return provider.createObjectBuilder();
+        }
+
+        @Override
+        public JsonObjectBuilder createObjectBuilder(final JsonObject jsonObject) {
+            return provider.createObjectBuilder(jsonObject);
+        }
+
+        @Override
+        public JsonObjectBuilder createObjectBuilder(final Map<String, Object> map) {
+            return provider.createObjectBuilder(map);
+        }
+
+        @Override
+        public JsonArrayBuilder createArrayBuilder() {
+            return provider.createArrayBuilder();
+        }
+
+        @Override
+        public JsonArrayBuilder createArrayBuilder(final JsonArray initialData) {
+            return provider.createArrayBuilder(initialData);
+        }
+
+        @Override
+        public JsonArrayBuilder createArrayBuilder(final Collection<?> initialData) {
+            return provider.createArrayBuilder(initialData);
+        }
+
+        @Override
+        public JsonPointer createPointer(final String path) {
+            return provider.createPointer(path);
+        }
+
+        @Override
+        public JsonBuilderFactory createBuilderFactory(final Map<String, ?> config) {
+            return provider.createBuilderFactory(config);
+        }
+
+        @Override
+        public JsonString createValue(final String value) {
+            return provider.createValue(value);
+        }
+
+        @Override
+        public JsonNumber createValue(final int value) {
+            return provider.createValue(value);
+        }
+
+        @Override
+        public JsonNumber createValue(final long value) {
+            return provider.createValue(value);
+        }
+
+        @Override
+        public JsonNumber createValue(final double value) {
+            return provider.createValue(value);
+        }
+
+        @Override
+        public JsonNumber createValue(final BigDecimal value) {
+            return provider.createValue(value);
+        }
+
+        @Override
+        public JsonNumber createValue(final BigInteger value) {
+            return provider.createValue(value);
+        }
+
+        @Override
+        public JsonPatch createPatch(final JsonArray array) {
+            return provider.createPatch(array);
+        }
+
+        @Override
+        public JsonPatch createDiff(final JsonStructure source, final JsonStructure target) {
+            return provider.createDiff(source, target);
+        }
+
+        @Override
+        public JsonPatchBuilder createPatchBuilder() {
+            return provider.createPatchBuilder();
+        }
+
+        @Override
+        public JsonPatchBuilder createPatchBuilder(final JsonArray initialData) {
+            return provider.createPatchBuilder(initialData);
+        }
+
+        @Override
+        public JsonMergePatch createMergePatch(final JsonValue patch) {
+            return provider.createMergePatch(patch);
+        }
+
+        @Override
+        public JsonMergePatch createMergeDiff(final JsonValue source, final JsonValue target) {
+            return provider.createMergeDiff(source, target);
         }
     }
 }
