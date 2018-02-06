@@ -318,7 +318,7 @@ public class CxfCdiAutoSetup implements ServletContainerInitializer {
 
             // just logging the endpoints
             final LogFacade log = new LogFacade(CxfCdiAutoSetup.class.getName());
-            String transportId = sc.getInitParameter(TRANSPORT_ID);
+            final String transportId = sc.getInitParameter(TRANSPORT_ID);
             final DestinationRegistry registry = getDestinationRegistryFromBusOrDefault(transportId);
             prefixes = registry.getDestinations().stream()
                     .filter(ServletDestination.class::isInstance)
