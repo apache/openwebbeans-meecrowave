@@ -37,6 +37,7 @@ public class KnownClassesFilter implements Filter { // one easy and efficient so
 
     private final Filter delegateAccept;
     private final Filter delegateSkip;
+    private boolean skipAll = false;
 
     public KnownClassesFilter() {
         final Set<String> excluded = new HashSet<>();
@@ -173,6 +174,9 @@ public class KnownClassesFilter implements Filter { // one easy and efficient so
     public void init(final Meecrowave.Builder config) {
         forced = buildArray(config.getScanningPackageIncludes()).orElse(forced);
         skipped = buildArray(config.getScanningPackageExcludes()).orElse(skipped);
+
+        // if we only got one skip and this is '*' then we skip all packages
+       skipAll = skipped.length == 1 && "*".equals(skipped[0]);
     }
 
     private Optional<String[]> buildArray(final String config) {
@@ -189,9 +193,13 @@ public class KnownClassesFilter implements Filter { // one easy and efficient so
             return true;
         }
 
-        // skip has the same logic than forced + the fact that if we have some forced packaged we skip all others
-        // this is not symmetric but often what is desired
-        if ((skipped != null && skipped.length > 0 && startsWith(skipped, name)) || (skipped != null && skipped.length == 0 && forced != null && forced.length > 0)) {
+        // in case skipped = '*' we skip all and do not delegate
+        if (skipAll) {
+            return false;
+        }
+
+        // skip has the same logic than forced
+        if (skipped != null && skipped.length > 0 && startsWith(skipped, name)) {
             return false;
         }
 

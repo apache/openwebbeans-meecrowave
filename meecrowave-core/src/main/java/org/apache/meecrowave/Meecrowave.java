@@ -1286,6 +1286,10 @@ public class Meecrowave implements AutoCloseable {
             return scanningPackageIncludes;
         }
 
+        /**
+         * Define some package names (startsWith) which must get scanned for beans.
+         * This rule get's applied before {@link #setScanningPackageExcludes(String)}
+         */
         public void setScanningPackageIncludes(final String scanningPackageIncludes) {
             this.scanningPackageIncludes = scanningPackageIncludes;
         }
@@ -1294,6 +1298,13 @@ public class Meecrowave implements AutoCloseable {
             return scanningPackageExcludes;
         }
 
+        /**
+         * Define some package names (startsWith) which must <em>NOT</em> get scanned for beans.
+         * This rule get's applied after {@link #setScanningPackageIncludes(String)}.
+         *
+         * Defining just a '*' will be a marker for skipping all not-included packages.
+         * Otherwise we will defer to the standard OpenWebBeans class Filter mechanism.
+         */
         public void setScanningPackageExcludes(final String scanningPackageExcludes) {
             this.scanningPackageExcludes = scanningPackageExcludes;
         }
@@ -1303,7 +1314,20 @@ public class Meecrowave implements AutoCloseable {
             return this;
         }
 
+        /**
+         * Only scan the very packages given (startsWith).
+         * This will exclude <em>all</em> other packages from bean scanning
+         */
         public Builder includePackages(final String packages) {
+            this.setScanningPackageIncludes(packages);
+            this.setScanningPackageExcludes("*");
+            return this;
+        }
+
+        /**
+         * Scan the very packages given (startsWith) <em>in addition</em> to the default rules.
+         */
+        public Builder withPackages(final String packages) {
             this.setScanningPackageIncludes(packages);
             return this;
         }
