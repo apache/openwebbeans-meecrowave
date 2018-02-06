@@ -254,10 +254,10 @@ public class MeecrowaveRunMojo extends AbstractMojo {
     @Parameter(property = "meecrowave.jsonb-order-strategy")
     private String jsonbOrderStrategy;
 
-    @Parameter(property = "meecrowave.scanning-exclude")
+    @Parameter(property = "meecrowave.scanning-include")
     private String scanningIncludes;
 
-    @Parameter(property = "meecrowave.scanning-include")
+    @Parameter(property = "meecrowave.scanning-exclude")
     private String scanningExcludes;
 
     @Parameter(property = "meecrowave.scanning-package-include")
