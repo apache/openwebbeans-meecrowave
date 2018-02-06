@@ -302,8 +302,8 @@ public class OWBTomcatWebScannerService extends WebScannerService {
         }
 
         final Filter userFilter = webBeansContext().getService(Filter.class);
-        if (KnowClassesFilter.class.isInstance(userFilter)) {
-            KnowClassesFilter.class.cast(userFilter).init(config);
+        if (KnownClassesFilter.class.isInstance(userFilter)) {
+            KnownClassesFilter.class.cast(userFilter).init(config);
         }
     }
 

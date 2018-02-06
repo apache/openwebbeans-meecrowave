@@ -28,7 +28,7 @@ import java.util.stream.Stream;
 
 import static java.util.Optional.ofNullable;
 
-public class KnowClassesFilter implements Filter { // one easy and efficient solution for fatjars
+public class KnownClassesFilter implements Filter { // one easy and efficient solution for fatjars
     private static final String[] EMPTY_ARRAY = new String[0];
 
     // this has to be configured from the root config
@@ -38,7 +38,7 @@ public class KnowClassesFilter implements Filter { // one easy and efficient sol
     private final Filter delegateAccept;
     private final Filter delegateSkip;
 
-    public KnowClassesFilter() {
+    public KnownClassesFilter() {
         final Set<String> excluded = new HashSet<>();
         excluded.add("com.codehale.metrics");
         excluded.add("com.ctc.wstx");

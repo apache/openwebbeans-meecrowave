@@ -22,7 +22,7 @@ import org.apache.meecrowave.Meecrowave;
 import org.apache.meecrowave.logging.jul.Log4j2Logger;
 import org.apache.meecrowave.logging.openwebbeans.Log4j2LoggerFactory;
 import org.apache.meecrowave.logging.tomcat.Log4j2Log;
-import org.apache.meecrowave.openwebbeans.KnowClassesFilter;
+import org.apache.meecrowave.openwebbeans.KnownClassesFilter;
 import org.apache.meecrowave.openwebbeans.OWBTomcatWebScannerService;
 import org.apache.openwebbeans.se.OWBContainer;
 import org.apache.openwebbeans.se.OWBInitializer;
@@ -106,7 +106,7 @@ public class MeecrowaveSeContainerInitializer extends OWBInitializer {
     @Override
     protected void addCustomServices(final Map<String, Object> services) {
         final Set<String> forced = this.scannerService.configuredClasses().stream().map(Class::getName).collect(toSet());
-        services.put(Filter.class.getName(), new KnowClassesFilter() { // override it to make programmatic configuration working OOTB
+        services.put(Filter.class.getName(), new KnownClassesFilter() { // override it to make programmatic configuration working OOTB
             @Override
             public boolean accept(final String name) {
                 return forced.contains(name) || super.accept(name);
