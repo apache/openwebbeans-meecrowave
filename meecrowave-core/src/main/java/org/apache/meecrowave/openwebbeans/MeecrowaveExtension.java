@@ -18,9 +18,10 @@
  */
 package org.apache.meecrowave.openwebbeans;
 
-import org.apache.meecrowave.cxf.JAXRSFieldInjectionInterceptor;
-import org.apache.meecrowave.cxf.MeecrowaveBus;
-import org.apache.webbeans.container.AnnotatedTypeWrapper;
+import java.lang.annotation.Annotation;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.stream.Stream;
 
 import javax.enterprise.event.Observes;
 import javax.enterprise.inject.spi.AnnotatedType;
@@ -29,12 +30,14 @@ import javax.enterprise.inject.spi.BeforeBeanDiscovery;
 import javax.enterprise.inject.spi.Extension;
 import javax.enterprise.inject.spi.ProcessAnnotatedType;
 import javax.ws.rs.Path;
-import java.lang.annotation.Annotation;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.stream.Stream;
+
+import org.apache.meecrowave.cxf.JAXRSFieldInjectionInterceptor;
+import org.apache.meecrowave.cxf.MeecrowaveBus;
+import org.apache.webbeans.container.AnnotatedTypeWrapper;
+import org.apache.webbeans.portable.AnnotatedElementFactory;
 
 public class MeecrowaveExtension implements Extension {
+
     void addBeansFromJava(@Observes final BeforeBeanDiscovery bbd, final BeanManager bm) {
         // stream not really needed but here for the pattern in case we need other beans
         Stream.of(MeecrowaveBus.class).forEach(type -> bbd.addAnnotatedType(bm.createAnnotatedType(type)));
@@ -49,10 +52,13 @@ public class MeecrowaveExtension implements Extension {
     }
 
     private static class JAXRSFIeldInjectionAT<T> extends AnnotatedTypeWrapper<T> {
+
         private final Set<Annotation> annotations;
 
         private JAXRSFIeldInjectionAT(final Extension extension, final AnnotatedType<T> original) {
-            super(extension, original);
+            super(extension, original,
+                    AnnotatedTypeWrapper.class.isInstance(original) ? AnnotatedTypeWrapper.class.cast(original).getId()
+                            : getDefaultId(extension, original));
             this.annotations = new HashSet<>(original.getAnnotations().size() + 1);
             this.annotations.addAll(original.getAnnotations());
             this.annotations.add(JAXRSFieldInjectionInterceptor.Binding.INSTANCE);
@@ -65,12 +71,18 @@ public class MeecrowaveExtension implements Extension {
 
         @Override
         public <T1 extends Annotation> T1 getAnnotation(final Class<T1> t1Class) {
-            return t1Class == JAXRSFieldInjectionInterceptor.Binding.class ? t1Class.cast(JAXRSFieldInjectionInterceptor.Binding.INSTANCE) : super.getAnnotation(t1Class);
+            return t1Class == JAXRSFieldInjectionInterceptor.Binding.class
+                    ? t1Class.cast(JAXRSFieldInjectionInterceptor.Binding.INSTANCE)
+                    : super.getAnnotation(t1Class);
         }
 
         @Override
         public boolean isAnnotationPresent(final Class<? extends Annotation> aClass) {
             return JAXRSFieldInjectionInterceptor.Binding.class == aClass || super.isAnnotationPresent(aClass);
+        }
+
+        private static <T> String getDefaultId(final Extension extension, final AnnotatedType<T> original) {
+            return extension.getClass().getName() + original + AnnotatedElementFactory.OWB_DEFAULT_KEY;
         }
     }
 }
