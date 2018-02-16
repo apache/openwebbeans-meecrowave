@@ -77,9 +77,9 @@ public class MeecrowaveBus implements Bus {
 
     @Inject
     public MeecrowaveBus(final ServletContext context) {
-        final ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
         setProperty(ClassUnwrapper.class.getName(), (ClassUnwrapper) this::getRealClass);
-        setExtension(contextClassLoader, ClassLoader.class); // ServletController locks on the classloader otherwise
+
+        //X broken, breaks Paralell Tomcat classloader setExtension(contextClassLoader, ClassLoader.class); // ServletController locks on the classloader otherwise
 
         final Meecrowave.Builder builder = Meecrowave.Builder.class.cast(context.getAttribute("meecrowave.configuration"));
         if (builder != null && builder.isJaxrsProviderSetup()) {
@@ -135,6 +135,7 @@ public class MeecrowaveBus implements Bus {
 
             if (builder.isJaxrsAutoActivateBeanValidation()) {
                 try { // we don't need the jaxrsbeanvalidationfeature since bean validation cdi extension handles it normally
+                    final ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
                     contextClassLoader.loadClass("javax.validation.Validation");
                     final Object instance = contextClassLoader.loadClass("org.apache.cxf.jaxrs.validation.ValidationExceptionMapper")
                                                        .getConstructor().newInstance();
