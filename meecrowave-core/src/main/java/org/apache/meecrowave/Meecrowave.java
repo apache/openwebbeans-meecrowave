@@ -61,7 +61,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -97,10 +96,12 @@ import org.apache.catalina.startup.Tomcat;
 import org.apache.commons.lang3.text.StrLookup;
 import org.apache.commons.lang3.text.StrSubstitutor;
 import org.apache.coyote.http2.Http2Protocol;
+import org.apache.cxf.BusFactory;
 import org.apache.cxf.jaxrs.utils.InjectionUtils;
 import org.apache.johnzon.core.BufferStrategy;
 import org.apache.meecrowave.api.StartListening;
 import org.apache.meecrowave.api.StopListening;
+import org.apache.meecrowave.cxf.ConfigurableBus;
 import org.apache.meecrowave.cxf.CxfCdiAutoSetup;
 import org.apache.meecrowave.io.IO;
 import org.apache.meecrowave.logging.jul.Log4j2Logger;
@@ -137,6 +138,7 @@ public class Meecrowave implements AutoCloseable {
     }
 
     private final Builder configuration;
+    protected ConfigurableBus clientBus;
     protected File base;
     protected final File ownedTempDir;
     protected InternalTomcat tomcat;
@@ -149,6 +151,7 @@ public class Meecrowave implements AutoCloseable {
 
     public Meecrowave() {
         this(new Builder());
+        this.clientBus = new ConfigurableBus();
     }
 
     public Meecrowave(final Builder builder) {
@@ -648,6 +651,13 @@ public class Meecrowave implements AutoCloseable {
 
         beforeStart();
 
+
+        if (configuration.initializeClientBus && BusFactory.getDefaultBus(false) == null) {
+            clientBus.initProviders(configuration,
+                    ofNullable(Thread.currentThread().getContextClassLoader()).orElseGet(ClassLoader::getSystemClassLoader));
+            BusFactory.setDefaultBus(clientBus);
+        }
+
         try {
             if (!initialized) {
                 tomcat.init();
@@ -856,6 +866,9 @@ public class Meecrowave implements AutoCloseable {
             } catch (final IOException e) {
                 new LogFacade(Meecrowave.class.getName()).error(e.getMessage(), e);
             }
+        }
+        if (BusFactory.getDefaultBus(false) == clientBus) {
+            BusFactory.setDefaultBus(null);
         }
         try {
             contexts.values().forEach(Runnable::run);
@@ -1226,6 +1239,9 @@ public class Meecrowave implements AutoCloseable {
         @CliOption(name = "default-ssl-hostconfig-name", description = "The name of the default SSLHostConfig that will be used for secure https connections.")
         private String defaultSSLHostConfigName;
 
+        @CliOption(name = "cxf-initialize-client-bus", description = "Should the client bus be set. If false the server one will likely be reused.")
+        private boolean initializeClientBus;
+
         private final Map<Class<?>, Object> extensions = new HashMap<>();
         private final Collection<Consumer<Tomcat>> instanceCustomizers = new ArrayList<>();
 
@@ -1246,6 +1262,14 @@ public class Meecrowave implements AutoCloseable {
                     throw new IllegalArgumentException(e);
                 }
             }));
+        }
+
+        public boolean isInitializeClientBus() {
+            return initializeClientBus;
+        }
+
+        public void setInitializeClientBus(final boolean initializeClientBus) {
+            this.initializeClientBus = initializeClientBus;
         }
 
         public boolean isJaxwsSupportIfAvailable() {
