@@ -151,12 +151,12 @@ public class Meecrowave implements AutoCloseable {
 
     public Meecrowave() {
         this(new Builder());
-        this.clientBus = new ConfigurableBus();
     }
 
     public Meecrowave(final Builder builder) {
         this.configuration = builder;
         this.ownedTempDir = new File(configuration.tempDir, "meecrowave_" + System.nanoTime());
+        this.clientBus = new ConfigurableBus();
     }
 
     public Builder getConfiguration() {
