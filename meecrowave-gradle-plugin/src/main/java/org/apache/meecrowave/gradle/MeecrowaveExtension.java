@@ -40,6 +40,7 @@ public class MeecrowaveExtension {
     private boolean quickSession;
     private boolean skipHttp;
     private boolean ssl;
+    private boolean initializeClientBus = true;
     private String keystoreFile;
     private String keystorePass;
     private String keystoreType;
@@ -664,5 +665,12 @@ public class MeecrowaveExtension {
     public void setDefaultSSLHostConfigName(String defaultSSLHostConfigName) {
         this.defaultSSLHostConfigName = defaultSSLHostConfigName;
     }
-    
+
+    public boolean isInitializeClientBus() {
+        return initializeClientBus;
+    }
+
+    public void setInitializeClientBus(final boolean initializeClientBus) {
+        this.initializeClientBus = initializeClientBus;
+    }
 }

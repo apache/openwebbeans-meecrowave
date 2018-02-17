@@ -118,6 +118,10 @@ public class MeecrowaveTask extends DefaultTask {
 
     @Input
     @Optional
+    private boolean initializeClientBus = true;
+
+    @Input
+    @Optional
     private boolean injectServletContainerInitializer = true;
 
     @Input
@@ -1183,5 +1187,13 @@ public class MeecrowaveTask extends DefaultTask {
 
     public void setDefaultSSLHostConfigName(final String defaultSSLHostConfigName) {
         this.defaultSSLHostConfigName = defaultSSLHostConfigName;
+    }
+
+    public boolean isInitializeClientBus() {
+        return initializeClientBus;
+    }
+
+    public void setInitializeClientBus(final boolean initializeClientBus) {
+        this.initializeClientBus = initializeClientBus;
     }
 }

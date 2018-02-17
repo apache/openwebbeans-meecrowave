@@ -57,6 +57,7 @@ public class MeecrowaveConfiguration implements ContainerConfiguration {
     private String sslProtocol;
     private String webXml;
     private boolean http2;
+    private boolean initializeClientBus = true;
     private String tempDir = new File(System.getProperty("java.io.tmpdir"), "meecrowave_" + System.nanoTime()).getAbsolutePath();
     private boolean webResourceCached = true;
     private String conf;
@@ -775,5 +776,12 @@ public class MeecrowaveConfiguration implements ContainerConfiguration {
     public void setDefaultSSLHostConfigName(String defaultSSLHostConfigName) {
         this.defaultSSLHostConfigName = defaultSSLHostConfigName;
     }
-    
+
+    public boolean isInitializeClientBus() {
+        return initializeClientBus;
+    }
+
+    public void setInitializeClientBus(final boolean initializeClientBus) {
+        this.initializeClientBus = initializeClientBus;
+    }
 }

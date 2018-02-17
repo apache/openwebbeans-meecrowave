@@ -190,6 +190,9 @@ public class MeecrowaveRunMojo extends AbstractMojo {
     @Parameter(property = "meecrowave.shutdown-hook", defaultValue = "true")
     private boolean useShutdownHook;
 
+    @Parameter(property = "meecrowave.initialiaze-client-bus", defaultValue = "true")
+    private boolean initializeClientBus;
+
     @Parameter
     private List<String> jsCustomizers;
 
