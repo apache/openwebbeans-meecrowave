@@ -156,7 +156,6 @@ public class Meecrowave implements AutoCloseable {
     public Meecrowave(final Builder builder) {
         this.configuration = builder;
         this.ownedTempDir = new File(configuration.tempDir, "meecrowave_" + System.nanoTime());
-        this.clientBus = new ConfigurableBus();
     }
 
     public Builder getConfiguration() {
@@ -653,9 +652,9 @@ public class Meecrowave implements AutoCloseable {
 
 
         if (configuration.initializeClientBus && BusFactory.getDefaultBus(false) == null) {
+            clientBus = new ConfigurableBus();
             clientBus.initProviders(configuration,
                     ofNullable(Thread.currentThread().getContextClassLoader()).orElseGet(ClassLoader::getSystemClassLoader));
-            BusFactory.setDefaultBus(clientBus);
         }
 
         try {
@@ -867,9 +866,6 @@ public class Meecrowave implements AutoCloseable {
                 new LogFacade(Meecrowave.class.getName()).error(e.getMessage(), e);
             }
         }
-        if (BusFactory.getDefaultBus(false) == clientBus) {
-            BusFactory.setDefaultBus(null);
-        }
         try {
             contexts.values().forEach(Runnable::run);
         } finally {
@@ -879,6 +875,9 @@ public class Meecrowave implements AutoCloseable {
             } catch (final LifecycleException e) {
                 throw new IllegalStateException(e);
             } finally {
+                if (BusFactory.getDefaultBus(false) == clientBus) { // after if runnables or listeners trigger CXF
+                    BusFactory.setDefaultBus(null);
+                }
                 tomcat = null; // ensure we can call close() N times and not have side effects
                 contexts.clear();
                 if (clearCatalinaSystemProperties) {
@@ -1240,7 +1239,7 @@ public class Meecrowave implements AutoCloseable {
         private String defaultSSLHostConfigName;
 
         @CliOption(name = "cxf-initialize-client-bus", description = "Should the client bus be set. If false the server one will likely be reused.")
-        private boolean initializeClientBus;
+        private boolean initializeClientBus = true;
 
         private final Map<Class<?>, Object> extensions = new HashMap<>();
         private final Collection<Consumer<Tomcat>> instanceCustomizers = new ArrayList<>();
