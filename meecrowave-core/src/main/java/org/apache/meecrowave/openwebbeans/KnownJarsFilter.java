@@ -200,6 +200,7 @@ public class KnownJarsFilter implements JarScanFilter {
         add("jul-to-slf4j-");
         add("juli-");
         add("junit-");
+        add("junit5-");
         add("kahadb-");
         add("kotlin-runtime");
         add("leveldb");
