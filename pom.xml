@@ -32,7 +32,7 @@
   <packaging>pom</packaging>
 
   <name>Meecrowave</name>
-  <description>A small Tomcat/OWB/CXF based server @ ASF</description>
+  <description>A small Tomcat/OWB/CXF/Johnzon/log4j2 based server @ ASF</description>
 
   <scm>
     <connection>scm:svn:http://svn.apache.org/repos/asf/openwebbeans/meecrowave/trunk</connection>
