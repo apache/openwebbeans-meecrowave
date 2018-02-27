@@ -32,6 +32,10 @@
     For modules requiring custom classpaths.
   </description>
 
+  <properties>
+    <deploy.skip>true</deploy.skip> <!-- as default we don't deploy our integration-test modules upstream -->
+  </properties>
+
   <modules>
     <module>app-groovy</module>
     <module>beanvalidation</module>
@@ -39,4 +43,16 @@
     <module>ssl</module>
     <module>sse</module>
   </modules>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-deploy-plugin</artifactId>
+        <configuration>
+          <skip>${deploy.skip}</skip>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
 </project>
