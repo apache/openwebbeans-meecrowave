@@ -124,4 +124,11 @@
     </repository>
   </repositories>
 -->
+  <repositories>
+
+    <repository>
+      <id>johnzon-staging</id>
+      <url>https://repository.apache.org/content/repositories/orgapachejohnzon-1025</url>
+    </repository>
+  </repositories>
 </project>

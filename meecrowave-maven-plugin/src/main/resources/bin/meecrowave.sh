@@ -209,7 +209,6 @@ if $cygwin; then
   MEECROWAVE_BASE=`cygpath --absolute --windows "$MEECROWAVE_BASE"`
   MEECROWAVE_TMPDIR=`cygpath --absolute --windows "$MEECROWAVE_TMPDIR"`
   CLASSPATH=`cygpath --path --windows "$CLASSPATH"`
-  JAVA_ENDORSED_DIRS=`cygpath --path --windows "$JAVA_ENDORSED_DIRS"`
 fi
 
 if [ -z "$JSSE_OPTS" ] ; then
@@ -291,17 +290,30 @@ if [ "$1" = "jpda" ] ; then
   shift
 fi
 
-if [ -f "$MEECROWAVE_BASE"/conf/log4j2.xml ]; then
-  MEECROWAVE_OPTS="$MEECROWAVE_OPTS -Dlog4j.configurationFile="$MEECROWAVE_BASE"/conf/log4j2.xml"
+MEECROWAVE_LOG4J2_PATH="$MEECROWAVE_BASE"/conf/log4j2.xml
+if [ -f "$MEECROWAVE_LOG4J2_PATH" ]; then
+  if $cygwin; then
+    MEECROWAVE_LOG4J2_PATH=`cygpath --absolute --windows "$MEECROWAVE_LOG4J2_PATH"`
+  fi
+  MEECROWAVE_OPTS="$MEECROWAVE_OPTS "-Dlog4j.configurationFile=\"$MEECROWAVE_LOG4J2_PATH\"""
 fi
 
-if [ -f "$MEECROWAVE_BASE"/conf/meecrowave.properties ]; then
-  MEECROWAVE_ARGS="$MEECROWAVE_ARGS --meecrowave-properties="$MEECROWAVE_BASE"/conf/meecrowave.properties"
+MEECROWAVE_PROPERTIES_PATH="$MEECROWAVE_BASE"/conf/meecrowave.properties
+if [ -f "$MEECROWAVE_PROPERTIES_PATH" ]; then
+  if $cygwin; then
+    MEECROWAVE_PROPERTIES_PATH=`cygpath --absolute --windows "$MEECROWAVE_PROPERTIES_PATH"`
+  fi
+  MEECROWAVE_ARGS="$MEECROWAVE_ARGS --meecrowave-properties="\"$MEECROWAVE_PROPERTIES_PATH\"""
 fi
-if [ -f "$MEECROWAVE_BASE"/conf/server.xml ]; then
-  MEECROWAVE_ARGS="$MEECROWAVE_ARGS --server-xml="$MEECROWAVE_BASE"/conf/server.xml"
+
+MEECROWAVE_SERVERXML_PATH="$MEECROWAVE_BASE"/conf/server.xml
+if [ -f "$MEECROWAVE_SERVERXML_PATH" ]; then
+  if $cygwin; then
+    MEECROWAVE_SERVERXML_PATH=`cygpath --absolute --windows "$MEECROWAVE_SERVERXML_PATH"`
+  fi
+  MEECROWAVE_ARGS="$MEECROWAVE_ARGS --server-xml="\"$MEECROWAVE_SERVERXML_PATH\"""
 fi
-MEECROWAVE_ARGS="$MEECROWAVE_ARGS --tmp-dir="$MEECROWAVE_TMPDIR""
+MEECROWAVE_ARGS="$MEECROWAVE_ARGS --tmp-dir="\"$MEECROWAVE_TMPDIR\"""
 
 if [ "$1" = "run" ]; then
 

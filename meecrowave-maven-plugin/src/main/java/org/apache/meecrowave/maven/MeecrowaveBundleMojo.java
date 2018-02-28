@@ -71,6 +71,7 @@ import java.util.Properties;
 import java.util.stream.Stream;
 import java.util.zip.GZIPOutputStream;
 
+import static java.util.Arrays.asList;
 import static java.util.Locale.ENGLISH;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
@@ -173,12 +174,16 @@ public class MeecrowaveBundleMojo extends AbstractMojo {
         Stream.of("bin", "conf", "logs", "lib").forEach(i -> new File(distroFolder, i).mkdirs());
 
         // TODO: add .bat support
-        try (final BufferedReader reader = new BufferedReader(new InputStreamReader(Thread.currentThread().getContextClassLoader().getResourceAsStream("bin/meecrowave.sh")))) {
-            write(new File(distroFolder, "bin/meecrowave.sh"), StrSubstitutor.replace(reader.lines().collect(joining("\n")), new HashMap<String, String>() {{
-                put("main", main);
-            }}));
-        } catch (final IOException e) {
-            throw new MojoExecutionException(e.getMessage(), e);
+        for (final String ext : asList("sh", "bat")) {
+            try (final BufferedReader reader = new BufferedReader(new InputStreamReader(
+                    Thread.currentThread().getContextClassLoader().getResourceAsStream("bin/meecrowave." + ext)))) {
+                write(new File(distroFolder, "bin/meecrowave." + ext), StrSubstitutor.replace(reader.lines().collect(joining("\n")),
+                        new HashMap<String, String>() {{
+                            put("main", main);
+                        }}));
+            } catch (final IOException e) {
+                throw new MojoExecutionException(e.getMessage(), e);
+            }
         }
 
         copyProvidedFiles(distroFolder);
@@ -194,7 +199,7 @@ public class MeecrowaveBundleMojo extends AbstractMojo {
             addLib(distroFolder, app);
         }
         if (enforceCommonsCli && !includedArtifacts.contains("commons-cli")) {
-            addLib(distroFolder, resolve("commons-cli", "commons-cli", "1.3.1", ""));
+            addLib(distroFolder, resolve("commons-cli", "commons-cli", "1.4", ""));
         }
         if (libs != null) {
             libs.forEach(l -> {
