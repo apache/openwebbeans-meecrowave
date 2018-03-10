@@ -66,6 +66,8 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.ext.Provider;
 
 import org.apache.cxf.bus.extension.ExtensionManagerBus;
+import org.apache.cxf.bus.managers.ClientLifeCycleManagerImpl;
+import org.apache.cxf.endpoint.ClientLifeCycleManager;
 import org.apache.johnzon.core.AbstractJsonFactory;
 import org.apache.johnzon.core.JsonGeneratorFactoryImpl;
 import org.apache.johnzon.core.JsonParserFactoryImpl;
@@ -147,6 +149,15 @@ public class ConfigurableBus extends ExtensionManagerBus {
         }
     }
 
+    public void addClientLifecycleListener() {
+        ClientLifeCycleManager manager = getExtension(ClientLifeCycleManager.class);
+        if (manager == null) {
+            manager = new ClientLifeCycleManagerImpl();
+            setExtension(manager, ClientLifeCycleManager.class);
+        }
+        manager.registerListener(new MeecrowaveClientLifecycleListener());
+    }
+
     @Provider
     @Produces({MediaType.APPLICATION_JSON, "*/*+json"})
     @Consumes({MediaType.APPLICATION_JSON, "*/*+json"})
@@ -172,6 +183,10 @@ public class ConfigurableBus extends ExtensionManagerBus {
             setNullValues(nulls);
             setIJson(iJson);
             setPretty(pretty);
+        }
+
+        public Jsonb getProvider() {
+            return delegate.get();
         }
 
         protected Jsonb createJsonb() {

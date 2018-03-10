@@ -103,6 +103,7 @@ import org.apache.meecrowave.api.StartListening;
 import org.apache.meecrowave.api.StopListening;
 import org.apache.meecrowave.cxf.ConfigurableBus;
 import org.apache.meecrowave.cxf.CxfCdiAutoSetup;
+import org.apache.meecrowave.cxf.MeecrowaveClientLifecycleListener;
 import org.apache.meecrowave.io.IO;
 import org.apache.meecrowave.logging.jul.Log4j2Logger;
 import org.apache.meecrowave.logging.log4j2.Log4j2Shutdown;
@@ -655,6 +656,7 @@ public class Meecrowave implements AutoCloseable {
             clientBus = new ConfigurableBus();
             clientBus.initProviders(configuration,
                     ofNullable(Thread.currentThread().getContextClassLoader()).orElseGet(ClassLoader::getSystemClassLoader));
+            clientBus.addClientLifecycleListener();
         }
 
         try {
