@@ -25,9 +25,15 @@
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
-  <artifactId>sample</artifactId>
-  <name>Meecrowave Sample</name>
+  <artifactId>samples</artifactId>
+  <packaging>pom</packaging>
+  <name>Meecrowave Samples</name>
   <description>A project showing some of the meecrowave features.</description>
+
+  <modules>
+    <module>rest-trivial</module>
+    <module>rest</module>
+  </modules>
 
   <dependencies>
     <dependency>
