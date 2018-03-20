@@ -135,6 +135,10 @@
       <version>${cxf.version}</version>
       <exclusions>
         <exclusion>
+          <groupId>javax.inject</groupId>
+          <artifactId>javax.inject</artifactId>
+        </exclusion>
+        <exclusion>
           <groupId>javax.enterprise</groupId>
           <artifactId>cdi-api</artifactId>
         </exclusion>
@@ -176,7 +180,7 @@
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <version>${junit.version}</version>
-      <scope>provided</scope>
+      <scope>test</scope>
     </dependency>
   </dependencies>
 
