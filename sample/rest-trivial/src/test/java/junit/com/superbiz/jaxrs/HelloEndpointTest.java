@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.superbiz.jaxrs;
+package junit.com.superbiz.jaxrs;
 
 import org.apache.meecrowave.Meecrowave;
 import org.apache.meecrowave.junit.MonoMeecrowave;
@@ -32,21 +32,19 @@ import static org.junit.Assert.assertEquals;
 
 @RunWith(MonoMeecrowave.Runner.class)
 public class HelloEndpointTest {
-    @ConfigurationInject
-    private Meecrowave.Builder configuration;
+  @ConfigurationInject
+  private Meecrowave.Builder configuration;
 
-    @Test
-    public void hello() {
-        final Client client = ClientBuilder.newClient();
-        try {
-            assertEquals("me", client.target("http://localhost:" + configuration.getHttpPort())
-                    .path("api/hello")
-                    .queryParam("name", "me")
-                    .request(APPLICATION_JSON_TYPE)
-                    .get(HelloEndpoint.Hello.class)
-                    .getName());
-        } finally {
-            client.close();
-        }
+  @Test
+  public void hello() {
+    final Client client = ClientBuilder.newClient();
+    try {
+      assertEquals("Hello World", client.target("http://localhost:" + configuration.getHttpPort())
+                                        .path("api/hello")
+                                        .request(APPLICATION_JSON_TYPE)
+                                        .get(String.class));
+    } finally {
+      client.close();
     }
+  }
 }
