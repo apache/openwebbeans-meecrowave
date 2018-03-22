@@ -32,19 +32,19 @@ import static org.junit.Assert.assertEquals;
 
 @RunWith(MonoMeecrowave.Runner.class)
 public class HelloEndpointTest {
-  @ConfigurationInject
-  private Meecrowave.Builder configuration;
+    @ConfigurationInject
+    private Meecrowave.Builder configuration;
 
-  @Test
-  public void hello() {
-    final Client client = ClientBuilder.newClient();
-    try {
-      assertEquals("Hello World", client.target("http://localhost:" + configuration.getHttpPort())
-                                        .path("api/hello")
-                                        .request(APPLICATION_JSON_TYPE)
-                                        .get(String.class));
-    } finally {
-      client.close();
+    @Test
+    public void hello() {
+        final Client client = ClientBuilder.newClient();
+        try {
+            assertEquals("Hello World", client.target("http://localhost:" + configuration.getHttpPort())
+                    .path("api/hello")
+                    .request(APPLICATION_JSON_TYPE)
+                    .get(String.class));
+        } finally {
+            client.close();
+        }
     }
-  }
 }

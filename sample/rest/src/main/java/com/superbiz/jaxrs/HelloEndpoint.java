@@ -33,33 +33,33 @@ import static java.util.Optional.ofNullable;
 @Path("hello")
 @ApplicationScoped
 public class HelloEndpoint {
-  @Inject
-  private Defaults defaults;
+    @Inject
+    private Defaults defaults;
 
-  @GET
-  @Produces(MediaType.APPLICATION_JSON)
-  public Hello sayHi(@QueryParam("name") final String name) {
-    return new Hello(ofNullable(name)
-                         .orElse(defaults.getName()));
-  }
-
-  public static class Hello {
-    private String name;
-
-    public Hello() {
-      // no-op
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    public Hello sayHi(@QueryParam("name") final String name) {
+        return new Hello(ofNullable(name)
+                .orElse(defaults.getName()));
     }
 
-    private Hello(final String name) {
-      this.name = name;
-    }
+    public static class Hello {
+        private String name;
 
-    public String getName() {
-      return name;
-    }
+        public Hello() {
+            // no-op
+        }
 
-    public void setName(final String name) {
-      this.name = name;
+        private Hello(final String name) {
+            this.name = name;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(final String name) {
+            this.name = name;
+        }
     }
-  }
 }
