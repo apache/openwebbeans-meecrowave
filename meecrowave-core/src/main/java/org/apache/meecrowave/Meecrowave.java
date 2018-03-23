@@ -97,7 +97,6 @@ import org.apache.commons.text.StrLookup;
 import org.apache.commons.text.StrSubstitutor;
 import org.apache.coyote.http2.Http2Protocol;
 import org.apache.cxf.BusFactory;
-import org.apache.cxf.jaxrs.utils.InjectionUtils;
 import org.apache.johnzon.core.BufferStrategy;
 import org.apache.meecrowave.api.StartListening;
 import org.apache.meecrowave.api.StopListening;
@@ -133,11 +132,6 @@ import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
 public class Meecrowave implements AutoCloseable {
-    static {
-        // todo: remove if cxf fixes it for 3.2.3
-        InjectionUtils.STANDARD_CONTEXT_CLASSES.removeIf(s -> s.startsWith("javax.servlet."));
-    }
-
     private final Builder configuration;
     protected ConfigurableBus clientBus;
     protected File base;
