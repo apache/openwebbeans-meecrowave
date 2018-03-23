@@ -2,12 +2,10 @@
 
 = Apache Meecrowave
 
-Apache Meecrowave is a small Microprofile server (JAX-RS + CDI + JSON)
-fully based on Apache products.
+Apache Meecrowave is a small Microprofile server (JAX-RS + CDI + JSON) fully based on Apache products.
 
 == How to start
-If you want to start with your first *Hello World* you have to add the following
-dependencies to your `pom.xml`.
+If you want to start with your first *Hello World* you have to add the following dependencies to your `pom.xml`.
 
 ```xml
  <properties>
@@ -59,19 +57,15 @@ dependencies to your `pom.xml`.
   </dependencies>
 ```
 
-This is not very convenient, means that an aggregating jar will be created soon
-to minimize thee amount of dependencies you have to declare.
+This is not very convenient, means that an aggregating jar will be created soon to minimize thee amount of dependencies you have to declare.
 The project itself should be used with Java8 as the minimum JDK-version.
 
-To work with the latest SNAPSHOT, you can clone the repo and
-make a ```mvn clean install```.
+To work with the latest SNAPSHOT, you can clone the repo and make a ```mvn clean install```.
 
 == Hello World - REST - trivial
 Let´s start with an minimal REST Endpoint.
-The only result you can get is a *Hello World*. Additionally
-there is a class called ```HelloApplication``` to make sure
-your path will start with **/api/**
-
+The only result you can get is a *Hello World*.
+Additionally there is a class called ```HelloApplication``` to make sure your path will start with **/api/**
 
 ```java
 @Dependent
@@ -94,12 +88,10 @@ public class HelloEndpoint {
 You can start writing your first test , now.
 Using junit4, the test class should annotated with ```@RunWith(MonoMeecrowave.Runner.class)```
 The Container start and stop will be managed for you.
-To have access to the dynamic data, like the random used port,
-use the the injected ```Meecrowave.Builder````.
+To have access to the dynamic data, like the random used port, use the the injected ```Meecrowave.Builder````.
 
 The test-request itself is written like a normal request.
 This example is using the class ```javax.ws.rs.client.ClientBuilder```.
-
 
 ```java
 @RunWith(MonoMeecrowave.Runner.class)
