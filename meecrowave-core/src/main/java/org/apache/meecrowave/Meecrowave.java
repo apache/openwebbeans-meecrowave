@@ -993,7 +993,7 @@ public class Meecrowave implements AutoCloseable {
         if (dir != null) {
             final File dirFile = new File(dir);
             if (dirFile.exists()) {
-                if (base.exists() && configuration.deleteBaseOnStartup) {
+                if (base != null && base.exists() && configuration.deleteBaseOnStartup) {
                     IO.delete(base);
                 }
                 return dir;
