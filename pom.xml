@@ -162,13 +162,6 @@
     </plugins>
   </build>
 
-  <repositories>
-    <repository>
-      <id>cxf-staging</id>
-      <url>https://repository.apache.org/content/repositories/orgapachecxf-1115/</url>
-    </repository>
-  </repositories>
-
 <!-- only needed when under development
   <repositories>
     <repository>
