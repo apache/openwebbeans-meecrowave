@@ -403,12 +403,11 @@ public class Meecrowave implements AutoCloseable {
 
             postTask = () -> {
                 new Log4j2Shutdown().shutodwn();
-                systemPropsToRestore.entrySet().forEach(entry -> {
-                    if (entry.getValue() == null) {
-                        System.clearProperty(entry.getKey());
-                    }
-                    else {
-                        System.setProperty(entry.getKey(), entry.getValue());
+                systemPropsToRestore.forEach((key, value) -> {
+                    if (value == null) {
+                        System.clearProperty(key);
+                    } else {
+                        System.setProperty(key, value);
                     }
                 });
             };
