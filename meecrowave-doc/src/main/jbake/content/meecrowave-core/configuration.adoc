@@ -13,7 +13,7 @@ Here are the main properties:
 
 include::../../../../../target/generated-doc/Configuration.adoc[]
 
-NOTE: the class also provides some helper methods for programamtic use case like `randomHttpPort()`
+NOTE: the class also provides some helper methods for programmatic use case like `randomHttpPort()`
 to automatically set an available port to `httpPort`.
 
 You can also write a `Consumer<Builder>` to configure programmatically the `Builder`
@@ -123,7 +123,7 @@ names (without the leading `--`). See link:{context_rootpath}/meecrowave-core/cl
 == Logging
 
 Meecrowave relies by default on Log4j2 (see http://logging.apache.org/log4j/2.x/). By default it uses an internal
-configuration which is overriden by standard log4j mecanism.
+configuration which is overridden by standard log4j mechanism.
 
 == Passwords/Secrets
 
