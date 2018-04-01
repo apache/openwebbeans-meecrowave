@@ -1,3 +1,120 @@
+
+
 = Apache Meecrowave
 
 Apache Meecrowave is a small Microprofile server (JAX-RS + CDI + JSON) fully based on Apache products.
+
+== How to start
+If you want to start with your first *Hello World* you have to add the following dependencies to your `pom.xml`.
+
+```xml
+ <properties>
+    <meecrowave.version>1.2.1</meecrowave.version>
+    <tomcat-servlet-api.version>9.0.5</tomcat-servlet-api.version>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.apache.geronimo.specs</groupId>
+      <artifactId>geronimo-atinject_1.0_spec</artifactId>
+      <version>1.0</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.geronimo.specs</groupId>
+      <artifactId>geronimo-jcdi_2.0_spec</artifactId>
+      <version>1.0</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.geronimo.specs</groupId>
+      <artifactId>geronimo-jaxrs_2.0_spec</artifactId>
+      <version>1.0-alpha-1</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.geronimo.specs</groupId>
+      <artifactId>geronimo-json_1.1_spec</artifactId>
+      <version>1.0</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-api</artifactId>
+      <version>2.9.1</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.tomcat</groupId>
+      <artifactId>tomcat-servlet-api</artifactId>
+      <version>${tomcat-servlet-api.version}</version>
+    </dependency>
+  </dependencies>
+```
+
+This is not very convenient, means that an aggregating jar will be created soon to minimize thee amount of dependencies you have to declare.
+The project itself should be used with Java8 as the minimum JDK-version.
+
+To work with the latest SNAPSHOT, you can clone the repo and make a ```mvn clean install```.
+
+== Hello World - REST - trivial
+Let´s start with an minimal REST Endpoint.
+The only result you can get is a *Hello World*.
+Additionally there is a class called ```HelloApplication``` to make sure your path will start with **/api/**
+
+```java
+@Dependent
+@ApplicationPath("api")
+public class HelloApplication extends Application {
+}
+
+@Path("hello")
+@ApplicationScoped
+public class HelloEndpoint {
+
+  @GET
+  @Produces(MediaType.APPLICATION_JSON)
+  public String sayHi() {
+    return "Hello World";
+  }
+}
+```
+
+You can start writing your first test , now.
+Using junit4, the test class should annotated with ```@RunWith(MonoMeecrowave.Runner.class)```
+The Container start and stop will be managed for you.
+To have access to the dynamic data, like the random used port, use the the injected ```Meecrowave.Builder````.
+
+The test-request itself is written like a normal request.
+This example is using the class ```javax.ws.rs.client.ClientBuilder```.
+
+```java
+@RunWith(MonoMeecrowave.Runner.class)
+public class HelloEndpointTest {
+  @ConfigurationInject
+  private Meecrowave.Builder configuration;
+
+  @Test
+  public void hello() {
+    final Client client = ClientBuilder.newClient();
+    try {
+      assertEquals("Hello World", client.target("http://localhost:" + configuration.getHttpPort())
+                                        .path("api/hello")
+                                        .request(APPLICATION_JSON_TYPE)
+                                        .get(String.class));
+    } finally {
+      client.close();
+    }
+  }
+}
+```
+
+
+
+
+
