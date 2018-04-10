@@ -98,16 +98,19 @@ The `org.apache.meecrowave.Meecrowave$Builder` class also provides `loadFromProp
 and `loadFrom(String)`. The last one uses the parameter to locate a propertiers file (file path or at classpath)
 and delegate the processing to the first one.
 
-`loadFromProperties(Propertiers)` loads the configuraton from the properties. The matching is alsmot
-1-1 with previous table excepted for these entries:
+`loadFromProperties(Propertiers)` loads the configuraton from the properties.
+
+The matching is alsmot 1-1 with previous table excepted for these entries:
 
 - if `httpPort` is `-1` then `randomHttpPort` is called
 - `properties.x=y` will set the property (`properties` entry) `x` with the value `y`
 - `users.x=y` will create the user `x` with the password `y`
 - `roles.x=y` will create the role `x` with the users `y` (comma separated if multiple users)
 - `cxf.servlet.params.x=y` will force the CXF servlet init parameter `x` to be `y`
-- `connector.x=y` will pass the property `x` to be `y` on the connector
+- `connector.x=y` will pass the property `x` to be `y` on the connector.
+ See the https://tomcat.apache.org/tomcat-9.0-doc/config/http.html[Apache Tomcat 9 Connector Documentation]
 - `connector.attributes.x=y` will use the property `x` with value `y` to create the connector (set a property on the instance of ̀`org.apache.catalina.connector.Connector`)
+ See the Connector attributes referenced in the  https://tomcat.apache.org/tomcat-9.0-doc/config/http.html[Apache Tomcat 9 Connector Documentation]
 - `realm=y` will create an instance of `y` (qualified name of the class) as `realm`
 - `realm.x=y` will set `x` property to `y` - needs previous property to be set
 - `login=` will create a custom `org.apache.meecrowave.Meecrowave$LoginConfigBuilder`
@@ -117,8 +120,10 @@ and delegate the processing to the first one.
 - `configurationCustomizer=y` will create an instance of `y` to customize the configuration
 - `configurationCustomizer.x=y` will set `x` to `y` for the customizer
 
-TIP: out of the box, any `Builder` instance will read `meecrowave.properties`. `meecrowave.properties` uses CLI
-names (without the leading `--`). See link:{context_rootpath}/meecrowave-core/cli.html[CLI] page for the list.
+TIP: Out of the box, any `Builder` instance will read `meecrowave.properties`.
+`meecrowave.properties` uses CLI names (without the leading `--`).
+See link:{context_rootpath}/meecrowave-core/cli.html[CLI] page for the list.
+
 
 == Logging
 
