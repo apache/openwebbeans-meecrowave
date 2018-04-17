@@ -50,7 +50,7 @@
 
     <junit.version>4.12</junit.version>
     <tomcat.version>9.0.7</tomcat.version>
-    <openwebbeans.version>2.0.4</openwebbeans.version>
+    <openwebbeans.version>2.0.5-SNAPSHOT</openwebbeans.version>
     <cxf.version>3.2.4</cxf.version>
     <johnzon.version>1.1.7</johnzon.version>
     <log4j2.version>2.11.0</log4j2.version>
@@ -163,6 +163,7 @@
   </build>
 
 <!-- only needed when under development
+-->
   <repositories>
     <repository>
       <id>asf-snapshot</id>
@@ -175,5 +176,4 @@
       </snapshots>
     </repository>
   </repositories>
--->
 </project>
