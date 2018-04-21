@@ -18,17 +18,26 @@
  */
 package org.apache.meecrowave.openwebbeans;
 
-import org.apache.webbeans.corespi.security.SimpleSecurityService;
+import java.security.Principal;
+import java.util.function.Supplier;
 
 import javax.enterprise.inject.spi.BeanManager;
 import javax.enterprise.inject.spi.CDI;
 import javax.servlet.http.HttpServletRequest;
-import java.security.Principal;
+
+import org.apache.webbeans.config.WebBeansContext;
+import org.apache.webbeans.corespi.security.SimpleSecurityService;
 
 public class MeecrowaveSecurityService extends SimpleSecurityService {
+    private final boolean useWrapper;
+
+    public MeecrowaveSecurityService(final WebBeansContext context) {
+        useWrapper = "true".equalsIgnoreCase(context.getOpenWebBeansConfiguration()
+                .getProperty("org.apache.webbeans.component.PrincipalBean.proxy", "true"));
+    }
     @Override // reason of that class
     public Principal getCurrentPrincipal() {
-        return new MeecrowavePrincipal();
+        return useWrapper ? new MeecrowavePrincipal() : getUserPrincipal();
     }
 
     // ensure it is contextual
@@ -39,12 +48,20 @@ public class MeecrowaveSecurityService extends SimpleSecurityService {
         }
 
         private Principal unwrap() {
-            final BeanManager beanManager = CDI.current().getBeanManager();
-            return HttpServletRequest.class.cast(
-                    beanManager.getReference(
-                            beanManager.resolve(beanManager.getBeans(HttpServletRequest.class)), HttpServletRequest.class,
-                            beanManager.createCreationalContext(null)))
-                    .getUserPrincipal();
+            return getUserPrincipal();
         }
+    }
+
+    private static Principal getUserPrincipal() {
+        final BeanManager beanManager = CDI.current().getBeanManager();
+        final HttpServletRequest request = HttpServletRequest.class.cast(
+                beanManager.getReference(
+                        beanManager.resolve(beanManager.getBeans(HttpServletRequest.class)), HttpServletRequest.class,
+                        beanManager.createCreationalContext(null)));
+        final Object supplier = request.getAttribute(Principal.class.getName() + ".supplier");
+        if (supplier != null) {
+            return ((Supplier<Principal>) supplier).get();
+        }
+        return request.getUserPrincipal();
     }
 }
