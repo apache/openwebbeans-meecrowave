@@ -290,6 +290,12 @@ public class MeecrowaveRunMojo extends AbstractMojo {
     @Parameter(property = "meecrowave.default-ssl-hostconfig-name")
     private String defaultSSLHostConfigName;
 
+    @Parameter(property = "meecrowave.session-timeout")
+    private Integer webSessionTimeout;
+
+    @Parameter(property = "meecrowave.session-cookie-config")
+    private String webSessionCookieConfig;
+
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         if (skip) {

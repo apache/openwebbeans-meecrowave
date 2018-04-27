@@ -33,6 +33,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.StringReader;
 import java.io.Writer;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.Field;
@@ -72,6 +73,7 @@ import javax.enterprise.inject.spi.BeanManager;
 import javax.enterprise.inject.spi.CDI;
 import javax.enterprise.inject.spi.InjectionTarget;
 import javax.servlet.ServletContainerInitializer;
+import javax.servlet.SessionCookieConfig;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
@@ -102,7 +104,6 @@ import org.apache.meecrowave.api.StartListening;
 import org.apache.meecrowave.api.StopListening;
 import org.apache.meecrowave.cxf.ConfigurableBus;
 import org.apache.meecrowave.cxf.CxfCdiAutoSetup;
-import org.apache.meecrowave.cxf.MeecrowaveClientLifecycleListener;
 import org.apache.meecrowave.io.IO;
 import org.apache.meecrowave.logging.jul.Log4j2Logger;
 import org.apache.meecrowave.logging.log4j2.Log4j2Shutdown;
@@ -313,6 +314,35 @@ public class Meecrowave implements AutoCloseable {
         ctx.addLifecycleListener(new MeecrowaveContextConfig(configuration, meta.docBase != null, meecrowaveInitializer));
         ctx.addLifecycleListener(event -> {
             switch (event.getType()) {
+                case Lifecycle.BEFORE_START_EVENT:
+                    if (configuration.getWebSessionCookieConfig() != null) {
+                        final Properties p = new Properties();
+                        try {
+                            p.load(new StringReader(configuration.getWebSessionCookieConfig()));
+                        } catch (final IOException e) {
+                            throw new IllegalArgumentException(e);
+                        }
+                        if (p.containsKey("domain")) {
+                            ctx.setSessionCookieDomain(p.getProperty("domain"));
+                        }
+                        if (p.containsKey("path")) {
+                            ctx.setSessionCookiePath(p.getProperty("path"));
+                        }
+                        if (p.containsKey("name")) {
+                            ctx.setSessionCookieName(p.getProperty("name"));
+                        }
+                        if (p.containsKey("use-trailing-slash")) {
+                            ctx.setSessionCookiePathUsesTrailingSlash(Boolean.parseBoolean(p.getProperty("use-trailing-slash")));
+                        }
+                        if (p.containsKey("http-only")) {
+                            ctx.setUseHttpOnly(Boolean.parseBoolean(p.getProperty("http-only")));
+                        }
+                        if (p.containsKey("secured")) {
+                            final SessionCookieConfig sessionCookieConfig = ctx.getServletContext().getSessionCookieConfig();
+                            sessionCookieConfig.setSecure(Boolean.parseBoolean(p.getProperty("secured")));
+                        }
+                    }
+                    break;
                 case Lifecycle.AFTER_START_EVENT:
                     ctx.getResources().setCachingAllowed(configuration.webResourceCached);
                     break;
@@ -338,7 +368,7 @@ public class Meecrowave implements AutoCloseable {
         ctx.addServletContainerInitializer(meecrowaveInitializer, emptySet());
 
         if (configuration.isUseTomcatDefaults()) {
-            ctx.setSessionTimeout(30);
+            ctx.setSessionTimeout(configuration.getWebSessionTimeout() != null ? configuration.getWebSessionTimeout() : 30);
             ctx.addWelcomeFile("index.html");
             ctx.addWelcomeFile("index.htm");
             try {
@@ -353,6 +383,8 @@ public class Meecrowave implements AutoCloseable {
             } catch (final NoSuchFieldException | IllegalAccessException e) {
                 throw new IllegalStateException("Incompatible Tomcat", e);
             }
+        } else if (configuration.getWebSessionTimeout() != null) {
+            ctx.setSessionTimeout(configuration.getWebSessionTimeout());
         }
 
         ofNullable(meta.consumer).ifPresent(c -> c.accept(ctx));
@@ -1198,6 +1230,12 @@ public class Meecrowave implements AutoCloseable {
         @CliOption(name = "scanning-package-exclude", description = "A forced exclude list of packages names (comma separated values)")
         private String scanningPackageExcludes;
 
+        @CliOption(name = "web-session-timeout", description = "Force the session timeout for webapps")
+        private Integer webSessionTimeout;
+
+        @CliOption(name = "web-session-cookie-config", description = "Force the cookie-config, it uses a properties syntax with the keys being the web.xml tag names.")
+        private String webSessionCookieConfig;
+
         @CliOption(name = "tomcat-default", description = "Should Tomcat default be set (session timeout, mime mapping etc...)")
         private boolean useTomcatDefaults = true;
 
@@ -1256,6 +1294,22 @@ public class Meecrowave implements AutoCloseable {
                     throw new IllegalArgumentException(e);
                 }
             }));
+        }
+
+        public Integer getWebSessionTimeout() {
+            return webSessionTimeout;
+        }
+
+        public void setWebSessionTimeout(final Integer webSessionTimeout) {
+            this.webSessionTimeout = webSessionTimeout;
+        }
+
+        public String getWebSessionCookieConfig() {
+            return webSessionCookieConfig;
+        }
+
+        public void setWebSessionCookieConfig(final String webSessionCookieConfig) {
+            this.webSessionCookieConfig = webSessionCookieConfig;
         }
 
         public boolean isInitializeClientBus() {
