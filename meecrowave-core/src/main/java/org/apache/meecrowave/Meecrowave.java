@@ -1033,8 +1033,16 @@ public class Meecrowave implements AutoCloseable {
             IO.mkdirs(dirFile);
             return dirFile.getAbsolutePath();
         }
+        List<String> lookupPaths = new ArrayList<>();
+        String mw_base = System.getProperty("meecrowave.base");
+        if (mw_base != null) {
+            lookupPaths.add(new File(mw_base, "temp").getAbsolutePath());
+        }
+        lookupPaths.add("target");
+        lookupPaths.add("build");
 
-        Optional<File> baseDir = Stream.of("target", "build")
+        new File(mw_base, "temp").getAbsolutePath();
+        Optional<File> baseDir = lookupPaths.stream()
                 .map(File::new)
                 .filter(File::isDirectory)
                 .findFirst();
