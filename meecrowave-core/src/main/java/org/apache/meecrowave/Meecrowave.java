@@ -1021,7 +1021,7 @@ public class Meecrowave implements AutoCloseable {
     }
 
     private String newBaseDir() {
-        final String dir = configuration.dir;
+        String dir = configuration.dir;
         if (dir != null) {
             final File dirFile = new File(dir);
             if (dirFile.exists()) {
@@ -1033,25 +1033,20 @@ public class Meecrowave implements AutoCloseable {
             IO.mkdirs(dirFile);
             return dirFile.getAbsolutePath();
         }
-        List<String> lookupPaths = new ArrayList<>();
-        String mw_base = System.getProperty("meecrowave.base");
-        if (mw_base != null) {
-            lookupPaths.add(new File(mw_base, "temp").getAbsolutePath());
+
+        final String base = System.getProperty("meecrowave.base");
+        if (base != null && new File(base).exists()) {
+            return new File(base).getAbsolutePath();
         }
+
+        final List<String> lookupPaths = new ArrayList<>();
         lookupPaths.add("target");
         lookupPaths.add("build");
-
-        new File(mw_base, "temp").getAbsolutePath();
-        Optional<File> baseDir = lookupPaths.stream()
-                .map(File::new)
-                .filter(File::isDirectory)
-                .findFirst();
-        File file;
-        if (baseDir.isPresent()) {
-            file = new File(baseDir.get(), "meecrowave-" + System.nanoTime());
-        } else {
-            file = ownedTempDir;
-        }
+        final File file = lookupPaths.stream()
+                          .map(File::new)
+                          .filter(File::isDirectory)
+                          .findFirst()
+                          .map(file1 -> new File(file1, "meecrowave-" + System.nanoTime())).orElse(ownedTempDir);
         IO.mkdirs(file);
         return file.getAbsolutePath();
     }
