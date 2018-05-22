@@ -20,6 +20,7 @@ package org.apache.meecrowave;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptySet;
+import static java.util.Comparator.comparing;
 import static java.util.Locale.ROOT;
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toList;
@@ -85,9 +86,11 @@ import org.apache.catalina.Lifecycle;
 import org.apache.catalina.LifecycleException;
 import org.apache.catalina.LifecycleState;
 import org.apache.catalina.Manager;
+import org.apache.catalina.Pipeline;
 import org.apache.catalina.Realm;
 import org.apache.catalina.Server;
 import org.apache.catalina.Service;
+import org.apache.catalina.Valve;
 import org.apache.catalina.connector.Connector;
 import org.apache.catalina.core.StandardContext;
 import org.apache.catalina.core.StandardHost;
@@ -129,6 +132,7 @@ import org.apache.tomcat.util.net.SSLHostConfig;
 import org.apache.webbeans.config.WebBeansContext;
 import org.apache.xbean.finder.ResourceFinder;
 import org.apache.xbean.recipe.ObjectRecipe;
+import org.apache.xbean.recipe.Option;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
@@ -571,7 +575,13 @@ public class Meecrowave implements AutoCloseable {
             tomcat.setHost(host);
         }
 
-        ofNullable(configuration.getTomcatAccessLogPattern()).ifPresent(pattern -> tomcat.getHost().getPipeline().addValve(new LoggingAccessLogPattern(pattern)));
+        ofNullable(configuration.getTomcatAccessLogPattern())
+                .ifPresent(pattern -> tomcat.getHost().getPipeline().addValve(new LoggingAccessLogPattern(pattern)));
+        final List<Valve> valves = buildValves();
+        if (!valves.isEmpty()) {
+            final Pipeline pipeline = tomcat.getHost().getPipeline();
+            valves.forEach(pipeline::addValve);
+        }
 
         if (configuration.realm != null) {
             tomcat.getEngine().setRealm(configuration.realm);
@@ -822,10 +832,45 @@ public class Meecrowave implements AutoCloseable {
         }
     }
 
+    /**
+     * Syntax uses:
+     * <code>
+     *     valves.myValve1._className = org.apache.meecrowave.tomcat.LoggingAccessLogPattern
+     *     valves.myValve1._order = 0
+     *
+     *     valves.myValve1._className = SSOVa
+     *     valves.myValve1._order = 1
+     *     valves.myValve1.showReportInfo = false
+     * </code>
+     *
+     * @return the list of valve from the properties.
+     */
+    private List<Valve> buildValves() {
+        final List<Valve> valves = new ArrayList<>();
+        configuration.properties.stringPropertyNames().stream()
+                                .filter(key -> key.startsWith("valves.") && key.endsWith("._className"))
+                                .sorted(comparing(key -> Integer.parseInt(configuration.properties
+                                        .getProperty(key.replaceFirst("\\._className$", "._order"), "0"))))
+                                .map(key -> key.split("\\."))
+                                .filter(parts -> parts.length == 3)
+                                .forEach(key -> {
+            final String prefix = key[0] + '.' + key[1] + '.';
+            final ObjectRecipe recipe = newRecipe(configuration.properties.getProperty(prefix + key[2]));
+            configuration.properties.stringPropertyNames().stream()
+                    .filter(it -> it.startsWith(prefix) && !it.endsWith("._order") && !it.endsWith("._className"))
+                    .forEach(propKey -> {
+                        final String value = configuration.properties.getProperty(propKey);
+                        recipe.setProperty(propKey.substring(prefix.length()), value);
+                    });
+            valves.add(Valve.class.cast(recipe.create(Thread.currentThread().getContextClassLoader())));
+        });
+        return valves;
+    }
+
     private List<SSLHostConfig> buildSslHostConfig() {
         final List<SSLHostConfig> sslHostConfigs = new ArrayList<>();
         // Configures default SSLHostConfig
-        final ObjectRecipe defaultSslHostConfig = new ObjectRecipe(SSLHostConfig.class);
+        final ObjectRecipe defaultSslHostConfig = newRecipe(SSLHostConfig.class.getName());
         for (final String key : configuration.properties.stringPropertyNames()) {
             if (key.startsWith("connector.sslhostconfig.") && key.split("\\.").length == 3) {
                 final String substring = key.substring("connector.sslhostconfig.".length());
@@ -842,7 +887,7 @@ public class Meecrowave implements AutoCloseable {
                                 .map(key -> Integer.parseInt(key.split("\\.")[2]))
                                 .collect(toSet());
         itemNumbers.stream().sorted().forEach(itemNumber -> {
-            final ObjectRecipe recipe = new ObjectRecipe(SSLHostConfig.class);
+            final ObjectRecipe recipe = newRecipe(SSLHostConfig.class.getName());
             final String prefix = "connector.sslhostconfig." + itemNumber + '.';
             configuration.properties.stringPropertyNames().stream()
                                     .filter(k -> k.startsWith(prefix))
@@ -941,7 +986,7 @@ public class Meecrowave implements AutoCloseable {
         final Properties properties = configuration.properties;
         if (properties != null) {
             final Map<String, String> attributes = new HashMap<>();
-            final ObjectRecipe recipe = new ObjectRecipe(Connector.class);
+            final ObjectRecipe recipe = newRecipe(Connector.class.getName());
             for (final String key : properties.stringPropertyNames()) {
                 if (!key.startsWith("connector.")) {
                     continue;
@@ -1053,6 +1098,13 @@ public class Meecrowave implements AutoCloseable {
 
     public void await() {
         tomcat.getServer().await();
+    }
+
+    private static ObjectRecipe newRecipe(final String clazz) {
+        final ObjectRecipe recipe = new ObjectRecipe(clazz);
+        recipe.allow(Option.FIELD_INJECTION);
+        recipe.allow(Option.PRIVATE_PROPERTIES);
+        return recipe;
     }
 
     // this class holds all the built-in config,
@@ -2116,7 +2168,7 @@ public class Meecrowave implements AutoCloseable {
                 } else if (prop.startsWith("connector.")) { // created in container
                     property(prop, config.getProperty(prop));
                 } else if (prop.equals("realm")) {
-                    final ObjectRecipe recipe = new ObjectRecipe(config.getProperty(prop));
+                    final ObjectRecipe recipe = newRecipe(config.getProperty(prop));
                     for (final String realmConfig : config.stringPropertyNames()) {
                         if (realmConfig.startsWith("realm.")) {
                             recipe.setProperty(realmConfig.substring("realm.".length()), config.getProperty(realmConfig));
@@ -2124,7 +2176,7 @@ public class Meecrowave implements AutoCloseable {
                     }
                     this.realm = Realm.class.cast(recipe.create());
                 } else if (prop.equals("login")) {
-                    final ObjectRecipe recipe = new ObjectRecipe(LoginConfigBuilder.class.getName());
+                    final ObjectRecipe recipe = newRecipe(LoginConfigBuilder.class.getName());
                     for (final String nestedConfig : config.stringPropertyNames()) {
                         if (nestedConfig.startsWith("login.")) {
                             recipe.setProperty(nestedConfig.substring("login.".length()), config.getProperty(nestedConfig));
@@ -2132,7 +2184,7 @@ public class Meecrowave implements AutoCloseable {
                     }
                     loginConfig = LoginConfigBuilder.class.cast(recipe.create());
                 } else if (prop.equals("securityConstraint")) {
-                    final ObjectRecipe recipe = new ObjectRecipe(SecurityConstaintBuilder.class.getName());
+                    final ObjectRecipe recipe = newRecipe(SecurityConstaintBuilder.class.getName());
                     for (final String nestedConfig : config.stringPropertyNames()) {
                         if (nestedConfig.startsWith("securityConstraint.")) {
                             recipe.setProperty(nestedConfig.substring("securityConstraint.".length()), config.getProperty(nestedConfig));
@@ -2140,7 +2192,7 @@ public class Meecrowave implements AutoCloseable {
                     }
                     securityConstraints.add(SecurityConstaintBuilder.class.cast(recipe.create()));
                 } else if (prop.equals("configurationCustomizer")) {
-                    final ObjectRecipe recipe = new ObjectRecipe(properties.getProperty(prop));
+                    final ObjectRecipe recipe = newRecipe(prop);
                     for (final String nestedConfig : config.stringPropertyNames()) {
                         if (nestedConfig.startsWith(prop + '.')) {
                             recipe.setProperty(nestedConfig.substring(prop.length() + 2 /*dot*/), config.getProperty(nestedConfig));
