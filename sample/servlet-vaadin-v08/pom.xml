@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <parent>
+    <artifactId>samples</artifactId>
+    <groupId>org.apache.meecrowave</groupId>
+    <version>1.2.2-SNAPSHOT</version>
+  </parent>
+  <modelVersion>4.0.0</modelVersion>
+
+  <artifactId>samples-servlet-vaadin-v08</artifactId>
+  <name>Meecrowave Samples - Servlet (Vaadin - V08)</name>
+
+  <dependencyManagement>
+    <dependencies>
+      <!--Vaadin -->
+      <dependency>
+        <groupId>com.vaadin</groupId>
+        <artifactId>vaadin-bom</artifactId>
+        <version>8.4.2</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
+  <dependencies>
+
+    <!--Vaadin -->
+    <dependency>
+      <groupId>com.vaadin</groupId>
+      <artifactId>vaadin-server</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.vaadin</groupId>
+      <artifactId>vaadin-themes</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.vaadin</groupId>
+      <artifactId>vaadin-client-compiled</artifactId>
+    </dependency>
+
+
+    <!--TDD Extension for Meecrowave-->
+    <dependency>
+      <groupId>${project.parent.groupId}</groupId>
+      <artifactId>meecrowave-junit</artifactId>
+      <scope>test</scope>
+      <version>${project.parent.version}</version>
+    </dependency>
+  </dependencies>
+
+</project>
