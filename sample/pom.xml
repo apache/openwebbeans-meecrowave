@@ -34,8 +34,8 @@
     <modules>
         <module>rest-trivial</module>
         <module>rest</module>
-      <module>servlet-trivial</module>
-      <module>servlet-vaadin-v08</module>
+        <module>servlet-trivial</module>
+        <module>servlet-vaadin-v08</module>
         <module>servlet-vaadin-v10</module>
     </modules>
 
