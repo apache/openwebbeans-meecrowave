@@ -34,6 +34,7 @@
     <modules>
         <module>rest-trivial</module>
         <module>rest</module>
+      <module>servlet-trivial</module>
     </modules>
 
     <dependencies>
