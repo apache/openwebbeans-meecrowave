@@ -10,3 +10,21 @@ Here what it provides:
 3. in src/main/java/com/superbiz/configuration/Defaults some enrichment of the meecrowave Cli options for the application.
 
 To use it launch meecrowave main (org.apache.meecrowave.runner.Cli) with option `--app-default-name foo`.
+
+== Module rest
+== Module rest-trivial
+== Module servlet-trivial
+In this module you can see how a simple Servlet based app could be written.
+The Module also contains a test, that is consuming the Servlet.
+
+== Module servlet-vaadin-v08
+Based on a Servlet, a Vaadin (V8) web - application can be started with a few lines of code.
+The class contains all basic elements, like a servlet, a UI class.
+The Open Source Framework Vaadin version 8 is based on GWT.
+
+== Module servlet-vaadin-v10
+Event the Vaadin 10 (RC1) framework can be used with meecrowave.
+The basic project looks a little bit different, but it is even less code to write compared to the V8 (LTS)
+version.
+The Open Source Framework Vaadin version 10 is based on Web-Components.
+
