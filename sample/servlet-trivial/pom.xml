@@ -16,13 +16,6 @@
   <dependencies>
     <!--TDD Extension for Meecrowave-->
     <dependency>
-      <groupId>${project.parent.groupId}</groupId>
-      <artifactId>meecrowave-junit</artifactId>
-      <scope>test</scope>
-      <version>${project.parent.version}</version>
-    </dependency>
-
-    <dependency>
       <groupId>com.squareup.okhttp3</groupId>
       <artifactId>okhttp</artifactId>
       <scope>test</scope>
