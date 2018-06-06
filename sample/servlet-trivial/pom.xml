@@ -13,14 +13,4 @@
   <name>Meecrowave Samples - Servlet (trivial)</name>
 
 
-  <dependencies>
-    <!--TDD Extension for Meecrowave-->
-    <dependency>
-      <groupId>com.squareup.okhttp3</groupId>
-      <artifactId>okhttp</artifactId>
-      <scope>test</scope>
-    </dependency>
-
-  </dependencies>
-
 </project>
