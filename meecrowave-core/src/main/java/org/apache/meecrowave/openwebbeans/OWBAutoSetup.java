@@ -26,9 +26,11 @@ import org.apache.webbeans.configurator.BeanConfiguratorImpl;
 import org.apache.webbeans.container.BeanManagerImpl;
 import org.apache.webbeans.intercept.InterceptorsManager;
 import org.apache.webbeans.servlet.WebBeansConfigurationListener;
+import org.apache.webbeans.spi.ContextsService;
 import org.apache.webbeans.web.context.WebConversationFilter;
 
 import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.context.RequestScoped;
 import javax.enterprise.inject.spi.Bean;
 import javax.enterprise.inject.spi.Extension;
 import javax.enterprise.inject.spi.configurator.BeanConfigurator;
@@ -71,13 +73,19 @@ public class OWBAutoSetup implements ServletContainerInitializer {
         }
 
         private void doContextInitialized(final ServletContextEvent event) {
+            final WebBeansContext instance = WebBeansContext.getInstance();
             try {
-                final WebBeansContext instance = WebBeansContext.getInstance();
                 customizeContext(instance);
             } catch (final IllegalStateException ise) {
                 // lifecycle not supporting it
             }
-            super.contextInitialized(event);
+            final ContextsService contextsService = instance.getContextsService();
+            contextsService.startContext(RequestScoped.class, event);
+            try {
+                super.contextInitialized(event);
+            } finally {
+                contextsService.endContext(RequestScoped.class, event);
+            }
         }
 
         private void customizeContext(final WebBeansContext instance) {

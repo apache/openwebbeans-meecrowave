@@ -38,10 +38,9 @@ import javax.ws.rs.sse.SseEventSink;
 @ApplicationScoped
 public class NewsService {
 
-	AtomicInteger newsCounter = new AtomicInteger();
+	private final AtomicInteger newsCounter = new AtomicInteger();
 
 	@GET
-	@Path("/")
 	public Response news() {
 		JsonObject news = Json.createObjectBuilder().add("news", "online").build();
 		return Response.status(Response.Status.OK).entity(news).build();

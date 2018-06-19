@@ -214,6 +214,7 @@ public class KnownJarsFilter implements JarScanFilter {
         add("mbean-annotation-api-");
         add("meecrowave-maven-");
         add("meecrowave-gradle-");
+        add("meecrowave-specs-api-");
         add("mimepull-");
         add("mina-");
         add("mqtt-client-");
