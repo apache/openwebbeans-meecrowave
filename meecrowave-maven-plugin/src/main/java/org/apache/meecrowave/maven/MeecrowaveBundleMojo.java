@@ -18,37 +18,11 @@
  */
 package org.apache.meecrowave.maven;
 
-import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
-import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
-import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
-import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
-import org.apache.commons.lang3.text.StrSubstitutor;
-import org.apache.maven.artifact.Artifact;
-import org.apache.maven.model.Dependency;
-import org.apache.maven.plugin.AbstractMojo;
-import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.MojoFailureException;
-import org.apache.maven.plugin.logging.Log;
-import org.apache.maven.plugins.annotations.Component;
-import org.apache.maven.plugins.annotations.Mojo;
-import org.apache.maven.plugins.annotations.Parameter;
-import org.apache.maven.project.DefaultDependencyResolutionRequest;
-import org.apache.maven.project.DependencyResolutionException;
-import org.apache.maven.project.DependencyResolutionRequest;
-import org.apache.maven.project.MavenProject;
-import org.apache.maven.project.MavenProjectHelper;
-import org.apache.maven.project.ProjectDependenciesResolver;
-import org.eclipse.aether.RepositorySystem;
-import org.eclipse.aether.RepositorySystemSession;
-import org.eclipse.aether.artifact.DefaultArtifact;
-import org.eclipse.aether.graph.DependencyNode;
-import org.eclipse.aether.graph.DependencyVisitor;
-import org.eclipse.aether.impl.ArtifactResolver;
-import org.eclipse.aether.repository.LocalRepositoryManager;
-import org.eclipse.aether.repository.RemoteRepository;
-import org.eclipse.aether.resolution.ArtifactRequest;
-import org.eclipse.aether.resolution.ArtifactResolutionException;
-import org.eclipse.aether.resolution.ArtifactResult;
+import static java.util.Arrays.asList;
+import static java.util.Locale.ENGLISH;
+import static java.util.stream.Collectors.joining;
+import static java.util.stream.Collectors.toList;
+import static org.apache.maven.plugins.annotations.ResolutionScope.RUNTIME_PLUS_SYSTEM;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -71,11 +45,38 @@ import java.util.Properties;
 import java.util.stream.Stream;
 import java.util.zip.GZIPOutputStream;
 
-import static java.util.Arrays.asList;
-import static java.util.Locale.ENGLISH;
-import static java.util.stream.Collectors.joining;
-import static java.util.stream.Collectors.toList;
-import static org.apache.maven.plugins.annotations.ResolutionScope.RUNTIME_PLUS_SYSTEM;
+import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
+import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
+import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
+import org.apache.commons.lang3.text.StrSubstitutor;
+import org.apache.maven.artifact.Artifact;
+import org.apache.maven.model.Dependency;
+import org.apache.maven.plugin.AbstractMojo;
+import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.plugin.logging.Log;
+import org.apache.maven.plugins.annotations.Component;
+import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.Parameter;
+import org.apache.maven.project.DefaultDependencyResolutionRequest;
+import org.apache.maven.project.DependencyResolutionException;
+import org.apache.maven.project.DependencyResolutionRequest;
+import org.apache.maven.project.MavenProject;
+import org.apache.maven.project.MavenProjectHelper;
+import org.apache.maven.project.ProjectDependenciesResolver;
+import org.apache.maven.shared.dependency.graph.DependencyGraphBuilder;
+import org.eclipse.aether.RepositorySystem;
+import org.eclipse.aether.RepositorySystemSession;
+import org.eclipse.aether.artifact.DefaultArtifact;
+import org.eclipse.aether.graph.DependencyNode;
+import org.eclipse.aether.graph.DependencyVisitor;
+import org.eclipse.aether.impl.ArtifactResolver;
+import org.eclipse.aether.repository.LocalRepositoryManager;
+import org.eclipse.aether.repository.RemoteRepository;
+import org.eclipse.aether.resolution.ArtifactRequest;
+import org.eclipse.aether.resolution.ArtifactResolutionException;
+import org.eclipse.aether.resolution.ArtifactResult;
 
 @Mojo(name = "bundle", requiresDependencyResolution = RUNTIME_PLUS_SYSTEM)
 public class MeecrowaveBundleMojo extends AbstractMojo {
@@ -153,6 +154,9 @@ public class MeecrowaveBundleMojo extends AbstractMojo {
     @Component
     private ProjectDependenciesResolver dependenciesResolver;
 
+    @Component
+    private DependencyGraphBuilder graphBuilder;
+
     @Parameter(defaultValue = "${repositorySystemSession}")
     private RepositorySystemSession session;
 
@@ -203,42 +207,35 @@ public class MeecrowaveBundleMojo extends AbstractMojo {
         }
         if (libs != null) {
             libs.forEach(l -> {
-                final String[] c = l.split(":");
-                if (c.length != 3 && c.length != 4) {
-                    throw new IllegalArgumentException("libs syntax is groupId:artifactId:version[:classifier]");
+                final boolean transitive = l.endsWith("?transitive");
+                final String coords = transitive ? l.substring(0, l.length() - "?transitive".length()) : l;
+                final String[] c = coords.split(":");
+                if (c.length < 3 || c.length > 5) {
+                    throw new IllegalArgumentException("libs syntax is groupId:artifactId:version[:classifier][:type[?transitive]]");
                 }
-                addLib(distroFolder, resolve(c[0], c[1], c[2], c.length == 4 ? c[3] : ""));
+                if (!transitive) {
+                    addLib(distroFolder, resolve(c[0], c[1], c[2], c.length == 4 ? c[3] : ""));
+                } else {
+                    addTransitiveDependencies(distroFolder, includedArtifacts, new Dependency() {{
+                        setGroupId(c[0]);
+                        setArtifactId(c[1]);
+                        setVersion(c[2]);
+                        if (c.length == 4 && !"-".equals(c[3])) {
+                            setClassifier(c[3]);
+                        }
+                        if (c.length == 5) {
+                            setType(c[4]);
+                        }
+                    }});
+                }
             });
         }
         if (enforceMeecrowave && !includedArtifacts.contains("meecrowave-core")) {
-            final DependencyResolutionRequest request = new DefaultDependencyResolutionRequest();
-            request.setMavenProject(new MavenProject() {{
-                getDependencies().add(new Dependency() {{
-                    setGroupId("org.apache.meecrowave");
-                    setArtifactId("meecrowave-core");
-                    setVersion(findVersion());
-                }});
+            addTransitiveDependencies(distroFolder, includedArtifacts, new Dependency() {{
+                setGroupId("org.apache.meecrowave");
+                setArtifactId("meecrowave-core");
+                setVersion(findVersion());
             }});
-            request.setRepositorySession(session);
-            try {
-                dependenciesResolver.resolve(request).getDependencyGraph().accept(new DependencyVisitor() {
-                    @Override
-                    public boolean visitEnter(final DependencyNode node) {
-                        return true;
-                    }
-
-                    @Override
-                    public boolean visitLeave(final DependencyNode node) {
-                        final org.eclipse.aether.artifact.Artifact artifact = node.getArtifact();
-                        if (artifact != null && !includedArtifacts.contains(artifact.getArtifactId())) {
-                            addLib(distroFolder, artifact.getFile());
-                        }
-                        return true;
-                    }
-                });
-            } catch (final DependencyResolutionException e) {
-                throw new MojoExecutionException(e.getMessage(), e);
-            }
         }
 
         final Path prefix = skipArchiveRootFolder ? distroFolder.toPath() : distroFolder.getParentFile().toPath();
@@ -278,6 +275,33 @@ public class MeecrowaveBundleMojo extends AbstractMojo {
 
         if (!keepExplodedFolder) {
             delete(distroFolder);
+        }
+    }
+
+    private void addTransitiveDependencies(final File distroFolder, final Collection<String> includedArtifacts, final Dependency dependency) {
+        final DependencyResolutionRequest request = new DefaultDependencyResolutionRequest();
+        request.setMavenProject(new MavenProject() {{
+            getDependencies().add(dependency);
+        }});
+        request.setRepositorySession(session);
+        try {
+            dependenciesResolver.resolve(request).getDependencyGraph().accept(new DependencyVisitor() {
+                @Override
+                public boolean visitEnter(final DependencyNode node) {
+                    return true;
+                }
+
+                @Override
+                public boolean visitLeave(final DependencyNode node) {
+                    final org.eclipse.aether.artifact.Artifact artifact = node.getArtifact();
+                    if (artifact != null && !includedArtifacts.contains(artifact.getArtifactId())) {
+                        addLib(distroFolder, artifact.getFile());
+                    }
+                    return true;
+                }
+            });
+        } catch (final DependencyResolutionException e) {
+            throw new IllegalStateException(e.getMessage(), e);
         }
     }
 

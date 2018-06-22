@@ -45,12 +45,15 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Scanner;
 
 import static java.util.Collections.singletonList;
 import static java.util.Collections.singletonMap;
 import static java.util.Optional.ofNullable;
+import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toMap;
 import static org.apache.maven.plugins.annotations.ResolutionScope.RUNTIME_PLUS_SYSTEM;
 
 @Mojo(name = "run", requiresDependencyResolution = RUNTIME_PLUS_SYSTEM)
@@ -90,6 +93,9 @@ public class MeecrowaveRunMojo extends AbstractMojo {
 
     @Parameter
     private Map<String, String> properties;
+
+    @Parameter
+    private Map<String, String> systemProperties;
 
     @Parameter
     private Map<String, String> cxfServletParams;
@@ -302,6 +308,15 @@ public class MeecrowaveRunMojo extends AbstractMojo {
             getLog().warn("Mojo skipped");
             return;
         }
+        final Map<String, String> originalSystemProps;
+        if (systemProperties != null) {
+            originalSystemProps = systemProperties.keySet().stream()
+                                                  .filter(System.getProperties()::containsKey)
+                                                  .collect(toMap(identity(), System::getProperty));
+            systemProperties.forEach(System::setProperty);
+        } else {
+            originalSystemProps = null;
+        }
 
         final Thread thread = Thread.currentThread();
         final ClassLoader loader = thread.getContextClassLoader();
@@ -342,6 +357,16 @@ public class MeecrowaveRunMojo extends AbstractMojo {
                 }
             }
             thread.setContextClassLoader(loader);
+            if (originalSystemProps != null) {
+                systemProperties.keySet().forEach(k -> {
+                    final Optional<String> originalValue = ofNullable(originalSystemProps.get(k));
+                    if (originalValue.isPresent()) {
+                        System.setProperty(k, originalValue.get());
+                    } else {
+                        System.clearProperty(k);
+                    }
+                });
+            }
         }
     }
 
