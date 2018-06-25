@@ -348,6 +348,14 @@ public class MeecrowaveTask extends DefaultTask {
     @Optional
     private String defaultSSLHostConfigName;
 
+    @Input
+    @Optional
+    private Integer webSessionTimeout;
+
+    @Input
+    @Optional
+    private String webSessionCookieConfig;
+
     @TaskAction
     public void bake() {
         fixConfig();
@@ -1195,5 +1203,21 @@ public class MeecrowaveTask extends DefaultTask {
 
     public void setInitializeClientBus(final boolean initializeClientBus) {
         this.initializeClientBus = initializeClientBus;
+    }
+
+    public Integer getWebSessionTimeout() {
+        return webSessionTimeout;
+    }
+
+    public void setWebSessionTimeout(final Integer webSessionTimeout) {
+        this.webSessionTimeout = webSessionTimeout;
+    }
+
+    public String getWebSessionCookieConfig() {
+        return webSessionCookieConfig;
+    }
+
+    public void setWebSessionCookieConfig(final String webSessionCookieConfig) {
+        this.webSessionCookieConfig = webSessionCookieConfig;
     }
 }

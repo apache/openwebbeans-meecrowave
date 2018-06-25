@@ -127,7 +127,10 @@ public class EntityManagerContext implements AlterableContext {
         }
 
         private <T> void doDestroy(final Contextual<T> contextual, final BeanInstanceBag<T> bag) {
-            contextual.destroy(bag.beanInstance, bag.beanCreationalContext);
+            if ( bag.beanInstance !=null ) {
+                // check null here because in case of missconfiguration, this can raise an NPE and hide the original exception
+                contextual.destroy(bag.beanInstance, bag.beanCreationalContext);
+            }
             bag.beanCreationalContext.release();
         }
 

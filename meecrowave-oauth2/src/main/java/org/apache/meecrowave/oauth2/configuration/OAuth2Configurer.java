@@ -52,13 +52,13 @@ import org.apache.cxf.rs.security.oauth2.provider.JoseSessionTokenProvider;
 import org.apache.cxf.rs.security.oauth2.provider.OAuthDataProvider;
 import org.apache.cxf.rs.security.oauth2.provider.OAuthServiceException;
 import org.apache.cxf.rs.security.oauth2.services.AbstractTokenService;
+import org.apache.cxf.rs.security.oauth2.services.AccessTokenService;
 import org.apache.cxf.rs.security.oauth2.services.RedirectionBasedGrantService;
 import org.apache.cxf.rs.security.oauth2.utils.OAuthConstants;
 import org.apache.cxf.rs.security.oauth2.utils.OAuthUtils;
 import org.apache.meecrowave.Meecrowave;
 import org.apache.meecrowave.oauth2.data.RefreshTokenEnabledProvider;
 import org.apache.meecrowave.oauth2.provider.JCacheCodeDataProvider;
-import org.apache.meecrowave.oauth2.resource.OAuth2TokenService;
 
 import javax.annotation.PostConstruct;
 import javax.crypto.spec.SecretKeySpec;
@@ -100,7 +100,7 @@ public class OAuth2Configurer {
     @Inject
     private JCacheConfigurer jCacheConfigurer;
 
-    private Consumer<OAuth2TokenService> tokenServiceConsumer;
+    private Consumer<AccessTokenService> tokenServiceConsumer;
     private Consumer<RedirectionBasedGrantService> redirectionBasedGrantServiceConsumer;
     private Consumer<AbstractTokenService> abstractTokenServiceConsumer;
     private OAuth2Options configuration;
@@ -315,7 +315,7 @@ public class OAuth2Configurer {
         abstractTokenServiceConsumer.accept(service);
     }
 
-    public void accept(final OAuth2TokenService service) {
+    public void accept(final AccessTokenService service) {
         tokenServiceConsumer.accept(service);
     }
 

@@ -106,6 +106,8 @@ public class MeecrowaveConfiguration implements ContainerConfiguration {
     private String meecrowaveProperties = "meecrowave.properties";
     private boolean jaxwsSupportIfAvailable = true;
     private String defaultSSLHostConfigName;
+    private Integer webSessionTimeout;
+    private String webSessionCookieConfig;
 
     // configurable cause when set to Local arquillian bypass some protocol configuration cause of container default
     private String arquillianProtocol = "Servlet 3.1";
@@ -783,5 +785,21 @@ public class MeecrowaveConfiguration implements ContainerConfiguration {
 
     public void setInitializeClientBus(final boolean initializeClientBus) {
         this.initializeClientBus = initializeClientBus;
+    }
+
+    public Integer getWebSessionTimeout() {
+        return webSessionTimeout;
+    }
+
+    public void setWebSessionTimeout(final Integer webSessionTimeout) {
+        this.webSessionTimeout = webSessionTimeout;
+    }
+
+    public String getWebSessionCookieConfig() {
+        return webSessionCookieConfig;
+    }
+
+    public void setWebSessionCookieConfig(final String webSessionCookieConfig) {
+        this.webSessionCookieConfig = webSessionCookieConfig;
     }
 }

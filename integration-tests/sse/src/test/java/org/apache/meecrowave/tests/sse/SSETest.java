@@ -44,10 +44,8 @@ public class SSETest {
 	public static final MeecrowaveRule CONTAINER = new MeecrowaveRule(new Meecrowave.Builder()
 			.randomHttpPort()
 			.excludePackages("org.atmosphere")
-			.cxfServletParam("transportId", "http://cxf.apache.org/transports/http/sse")
 			//.cxfServletParam("jaxrs.scope", "singleton")
-			.cxfServletParam("org.atmosphere.container.JSR356AsyncSupport.mappingPath", "/*").
-			includePackages(NewsService.class.getPackage().getName()), "");
+			.includePackages(NewsService.class.getPackage().getName()), "");
 
 	public static final Client client = ClientBuilder.newBuilder().register(JsrProvider.class).build();
 

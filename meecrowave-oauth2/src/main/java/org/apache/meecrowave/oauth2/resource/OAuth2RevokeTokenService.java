@@ -18,12 +18,14 @@
  */
 package org.apache.meecrowave.oauth2.resource;
 
-import org.apache.cxf.rs.security.oauth2.common.Client;
-import org.apache.cxf.rs.security.oauth2.services.TokenRevocationService;
-import org.apache.meecrowave.oauth2.configuration.OAuth2Configurer;
+import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
+import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
-import javax.annotation.PostConstruct;
+import java.util.List;
+
+import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.context.RequestScoped;
+import javax.enterprise.inject.Typed;
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
@@ -31,38 +33,57 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
-import java.util.List;
 
-import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
-import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import org.apache.cxf.rs.security.oauth2.common.Client;
+import org.apache.cxf.rs.security.oauth2.services.TokenRevocationService;
+import org.apache.meecrowave.oauth2.configuration.OAuth2Configurer;
 
 @Path("revoke")
-@RequestScoped
-public class OAuth2RevokeTokenService extends TokenRevocationService implements OAuth2Application.Defaults {
+@ApplicationScoped
+public class OAuth2RevokeTokenService extends TokenRevocationService {
     @Inject
     private OAuth2Configurer configurer;
 
-    @PostConstruct
-    private void init() {
-        configurer.accept(this);
-    }
+    @Inject
+    private LayImpl delegate;
 
     @POST
     @Override
     @Consumes(APPLICATION_FORM_URLENCODED)
     @Produces(APPLICATION_JSON)
     public Response handleTokenRevocation(final MultivaluedMap<String, String> params) {
-        return super.handleTokenRevocation(params);
+        return getDelegate().handleTokenRevocation(params);
     }
 
-    @Override // don't fail without a client
-    protected Client getClientFromBasicAuthScheme(final MultivaluedMap<String, String> params) {
-        final List<String> authorization = getMessageContext().getHttpHeaders().getRequestHeader("Authorization");
-        if (authorization == null || authorization.isEmpty()) {
-            if (!configurer.getConfiguration().isForceClient()) {
-                return DEFAULT_CLIENT;
-            }
+    private TokenRevocationService getDelegate() {
+        delegate.setMessageContext(getMessageContext());
+        configurer.accept(delegate);
+        return delegate;
+    }
+
+    @RequestScoped
+    @Typed(LayImpl.class)
+    static class LayImpl extends TokenRevocationService implements OAuth2Application.Defaults {
+        @Inject
+        private OAuth2Configurer configurer;
+
+        @POST
+        @Override
+        @Consumes(APPLICATION_FORM_URLENCODED)
+        @Produces(APPLICATION_JSON)
+        public Response handleTokenRevocation(final MultivaluedMap<String, String> params) {
+            return super.handleTokenRevocation(params);
         }
-        return super.getClientFromBasicAuthScheme(params);
+
+        @Override // don't fail without a client
+        protected Client getClientFromBasicAuthScheme(final MultivaluedMap<String, String> params) {
+            final List<String> authorization = getMessageContext().getHttpHeaders().getRequestHeader("Authorization");
+            if (authorization == null || authorization.isEmpty()) {
+                if (!configurer.getConfiguration().isForceClient()) {
+                    return DEFAULT_CLIENT;
+                }
+            }
+            return super.getClientFromBasicAuthScheme(params);
+        }
     }
 }

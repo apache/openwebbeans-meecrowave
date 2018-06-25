@@ -97,6 +97,24 @@ public class MeecrowaveExtension {
     private String meecrowaveProperties = "meecrowave.properties";
     private boolean jaxwsSupportIfAvailable = true;
     private String defaultSSLHostConfigName;
+    private Integer webSessionTimeout;
+    private String webSessionCookieConfig;
+
+    public Integer getWebSessionTimeout() {
+        return webSessionTimeout;
+    }
+
+    public void setWebSessionTimeout(final Integer webSessionTimeout) {
+        this.webSessionTimeout = webSessionTimeout;
+    }
+
+    public String getWebSessionCookieConfig() {
+        return webSessionCookieConfig;
+    }
+
+    public void setWebSessionCookieConfig(final String webSessionCookieConfig) {
+        this.webSessionCookieConfig = webSessionCookieConfig;
+    }
 
     public boolean isJaxwsSupportIfAvailable() {
         return jaxwsSupportIfAvailable;

@@ -461,7 +461,7 @@ elif [ "$1" = "stop" ] ; then
       if [ -f "$MEECROWAVE_PID" ]; then
         PID=`cat "$MEECROWAVE_PID"`
         echo "Killing Meecrowave with the PID: $PID"
-        kill -0 $PID
+        kill -9 $PID
         while [ $KILL_SLEEP_INTERVAL -ge 0 ]; do
             kill -0 `cat "$MEECROWAVE_PID"` >/dev/null 2>&1
             if [ $? -gt 0 ]; then

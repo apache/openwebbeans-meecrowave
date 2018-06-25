@@ -20,6 +20,7 @@ package org.apache.meecrowave;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptySet;
+import static java.util.Comparator.comparing;
 import static java.util.Locale.ROOT;
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toList;
@@ -33,6 +34,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.StringReader;
 import java.io.Writer;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.Field;
@@ -53,6 +55,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.ServiceLoader;
 import java.util.Set;
@@ -72,6 +75,7 @@ import javax.enterprise.inject.spi.BeanManager;
 import javax.enterprise.inject.spi.CDI;
 import javax.enterprise.inject.spi.InjectionTarget;
 import javax.servlet.ServletContainerInitializer;
+import javax.servlet.SessionCookieConfig;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
@@ -82,9 +86,11 @@ import org.apache.catalina.Lifecycle;
 import org.apache.catalina.LifecycleException;
 import org.apache.catalina.LifecycleState;
 import org.apache.catalina.Manager;
+import org.apache.catalina.Pipeline;
 import org.apache.catalina.Realm;
 import org.apache.catalina.Server;
 import org.apache.catalina.Service;
+import org.apache.catalina.Valve;
 import org.apache.catalina.connector.Connector;
 import org.apache.catalina.core.StandardContext;
 import org.apache.catalina.core.StandardHost;
@@ -102,7 +108,6 @@ import org.apache.meecrowave.api.StartListening;
 import org.apache.meecrowave.api.StopListening;
 import org.apache.meecrowave.cxf.ConfigurableBus;
 import org.apache.meecrowave.cxf.CxfCdiAutoSetup;
-import org.apache.meecrowave.cxf.MeecrowaveClientLifecycleListener;
 import org.apache.meecrowave.io.IO;
 import org.apache.meecrowave.logging.jul.Log4j2Logger;
 import org.apache.meecrowave.logging.log4j2.Log4j2Shutdown;
@@ -127,6 +132,7 @@ import org.apache.tomcat.util.net.SSLHostConfig;
 import org.apache.webbeans.config.WebBeansContext;
 import org.apache.xbean.finder.ResourceFinder;
 import org.apache.xbean.recipe.ObjectRecipe;
+import org.apache.xbean.recipe.Option;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
@@ -313,6 +319,35 @@ public class Meecrowave implements AutoCloseable {
         ctx.addLifecycleListener(new MeecrowaveContextConfig(configuration, meta.docBase != null, meecrowaveInitializer));
         ctx.addLifecycleListener(event -> {
             switch (event.getType()) {
+                case Lifecycle.BEFORE_START_EVENT:
+                    if (configuration.getWebSessionCookieConfig() != null) {
+                        final Properties p = new Properties();
+                        try {
+                            p.load(new StringReader(configuration.getWebSessionCookieConfig()));
+                        } catch (final IOException e) {
+                            throw new IllegalArgumentException(e);
+                        }
+                        if (p.containsKey("domain")) {
+                            ctx.setSessionCookieDomain(p.getProperty("domain"));
+                        }
+                        if (p.containsKey("path")) {
+                            ctx.setSessionCookiePath(p.getProperty("path"));
+                        }
+                        if (p.containsKey("name")) {
+                            ctx.setSessionCookieName(p.getProperty("name"));
+                        }
+                        if (p.containsKey("use-trailing-slash")) {
+                            ctx.setSessionCookiePathUsesTrailingSlash(Boolean.parseBoolean(p.getProperty("use-trailing-slash")));
+                        }
+                        if (p.containsKey("http-only")) {
+                            ctx.setUseHttpOnly(Boolean.parseBoolean(p.getProperty("http-only")));
+                        }
+                        if (p.containsKey("secured")) {
+                            final SessionCookieConfig sessionCookieConfig = ctx.getServletContext().getSessionCookieConfig();
+                            sessionCookieConfig.setSecure(Boolean.parseBoolean(p.getProperty("secured")));
+                        }
+                    }
+                    break;
                 case Lifecycle.AFTER_START_EVENT:
                     ctx.getResources().setCachingAllowed(configuration.webResourceCached);
                     break;
@@ -338,7 +373,7 @@ public class Meecrowave implements AutoCloseable {
         ctx.addServletContainerInitializer(meecrowaveInitializer, emptySet());
 
         if (configuration.isUseTomcatDefaults()) {
-            ctx.setSessionTimeout(30);
+            ctx.setSessionTimeout(configuration.getWebSessionTimeout() != null ? configuration.getWebSessionTimeout() : 30);
             ctx.addWelcomeFile("index.html");
             ctx.addWelcomeFile("index.htm");
             try {
@@ -353,6 +388,8 @@ public class Meecrowave implements AutoCloseable {
             } catch (final NoSuchFieldException | IllegalAccessException e) {
                 throw new IllegalStateException("Incompatible Tomcat", e);
             }
+        } else if (configuration.getWebSessionTimeout() != null) {
+            ctx.setSessionTimeout(configuration.getWebSessionTimeout());
         }
 
         ofNullable(meta.consumer).ifPresent(c -> c.accept(ctx));
@@ -538,7 +575,13 @@ public class Meecrowave implements AutoCloseable {
             tomcat.setHost(host);
         }
 
-        ofNullable(configuration.getTomcatAccessLogPattern()).ifPresent(pattern -> tomcat.getHost().getPipeline().addValve(new LoggingAccessLogPattern(pattern)));
+        ofNullable(configuration.getTomcatAccessLogPattern())
+                .ifPresent(pattern -> tomcat.getHost().getPipeline().addValve(new LoggingAccessLogPattern(pattern)));
+        final List<Valve> valves = buildValves();
+        if (!valves.isEmpty()) {
+            final Pipeline pipeline = tomcat.getHost().getPipeline();
+            valves.forEach(pipeline::addValve);
+        }
 
         if (configuration.realm != null) {
             tomcat.getEngine().setRealm(configuration.realm);
@@ -789,10 +832,45 @@ public class Meecrowave implements AutoCloseable {
         }
     }
 
+    /**
+     * Syntax uses:
+     * <code>
+     *     valves.myValve1._className = org.apache.meecrowave.tomcat.LoggingAccessLogPattern
+     *     valves.myValve1._order = 0
+     *
+     *     valves.myValve1._className = SSOVa
+     *     valves.myValve1._order = 1
+     *     valves.myValve1.showReportInfo = false
+     * </code>
+     *
+     * @return the list of valve from the properties.
+     */
+    private List<Valve> buildValves() {
+        final List<Valve> valves = new ArrayList<>();
+        configuration.properties.stringPropertyNames().stream()
+                                .filter(key -> key.startsWith("valves.") && key.endsWith("._className"))
+                                .sorted(comparing(key -> Integer.parseInt(configuration.properties
+                                        .getProperty(key.replaceFirst("\\._className$", "._order"), "0"))))
+                                .map(key -> key.split("\\."))
+                                .filter(parts -> parts.length == 3)
+                                .forEach(key -> {
+            final String prefix = key[0] + '.' + key[1] + '.';
+            final ObjectRecipe recipe = newRecipe(configuration.properties.getProperty(prefix + key[2]));
+            configuration.properties.stringPropertyNames().stream()
+                    .filter(it -> it.startsWith(prefix) && !it.endsWith("._order") && !it.endsWith("._className"))
+                    .forEach(propKey -> {
+                        final String value = configuration.properties.getProperty(propKey);
+                        recipe.setProperty(propKey.substring(prefix.length()), value);
+                    });
+            valves.add(Valve.class.cast(recipe.create(Thread.currentThread().getContextClassLoader())));
+        });
+        return valves;
+    }
+
     private List<SSLHostConfig> buildSslHostConfig() {
         final List<SSLHostConfig> sslHostConfigs = new ArrayList<>();
         // Configures default SSLHostConfig
-        final ObjectRecipe defaultSslHostConfig = new ObjectRecipe(SSLHostConfig.class);
+        final ObjectRecipe defaultSslHostConfig = newRecipe(SSLHostConfig.class.getName());
         for (final String key : configuration.properties.stringPropertyNames()) {
             if (key.startsWith("connector.sslhostconfig.") && key.split("\\.").length == 3) {
                 final String substring = key.substring("connector.sslhostconfig.".length());
@@ -809,7 +887,7 @@ public class Meecrowave implements AutoCloseable {
                                 .map(key -> Integer.parseInt(key.split("\\.")[2]))
                                 .collect(toSet());
         itemNumbers.stream().sorted().forEach(itemNumber -> {
-            final ObjectRecipe recipe = new ObjectRecipe(SSLHostConfig.class);
+            final ObjectRecipe recipe = newRecipe(SSLHostConfig.class.getName());
             final String prefix = "connector.sslhostconfig." + itemNumber + '.';
             configuration.properties.stringPropertyNames().stream()
                                     .filter(k -> k.startsWith(prefix))
@@ -908,7 +986,7 @@ public class Meecrowave implements AutoCloseable {
         final Properties properties = configuration.properties;
         if (properties != null) {
             final Map<String, String> attributes = new HashMap<>();
-            final ObjectRecipe recipe = new ObjectRecipe(Connector.class);
+            final ObjectRecipe recipe = newRecipe(Connector.class.getName());
             for (final String key : properties.stringPropertyNames()) {
                 if (!key.startsWith("connector.")) {
                     continue;
@@ -988,7 +1066,7 @@ public class Meecrowave implements AutoCloseable {
     }
 
     private String newBaseDir() {
-        final String dir = configuration.dir;
+        String dir = configuration.dir;
         if (dir != null) {
             final File dirFile = new File(dir);
             if (dirFile.exists()) {
@@ -1001,16 +1079,32 @@ public class Meecrowave implements AutoCloseable {
             return dirFile.getAbsolutePath();
         }
 
-        final File file = new File(Stream.of(new File(System.getProperty("meecrowave.base", "."), "temp").getAbsolutePath(), "target", "build", ".")
-                .map(File::new)
-                .filter(File::isDirectory)
-                .findFirst().get(), "meecrowave-" + System.nanoTime());
+        final String base = System.getProperty("meecrowave.base");
+        if (base != null && new File(base).exists()) {
+            return new File(base).getAbsolutePath();
+        }
+
+        final List<String> lookupPaths = new ArrayList<>();
+        lookupPaths.add("target");
+        lookupPaths.add("build");
+        final File file = lookupPaths.stream()
+                          .map(File::new)
+                          .filter(File::isDirectory)
+                          .findFirst()
+                          .map(file1 -> new File(file1, "meecrowave-" + System.nanoTime())).orElse(ownedTempDir);
         IO.mkdirs(file);
         return file.getAbsolutePath();
     }
 
     public void await() {
         tomcat.getServer().await();
+    }
+
+    private static ObjectRecipe newRecipe(final String clazz) {
+        final ObjectRecipe recipe = new ObjectRecipe(clazz);
+        recipe.allow(Option.FIELD_INJECTION);
+        recipe.allow(Option.PRIVATE_PROPERTIES);
+        return recipe;
     }
 
     // this class holds all the built-in config,
@@ -1198,6 +1292,12 @@ public class Meecrowave implements AutoCloseable {
         @CliOption(name = "scanning-package-exclude", description = "A forced exclude list of packages names (comma separated values)")
         private String scanningPackageExcludes;
 
+        @CliOption(name = "web-session-timeout", description = "Force the session timeout for webapps")
+        private Integer webSessionTimeout;
+
+        @CliOption(name = "web-session-cookie-config", description = "Force the cookie-config, it uses a properties syntax with the keys being the web.xml tag names.")
+        private String webSessionCookieConfig;
+
         @CliOption(name = "tomcat-default", description = "Should Tomcat default be set (session timeout, mime mapping etc...)")
         private boolean useTomcatDefaults = true;
 
@@ -1256,6 +1356,22 @@ public class Meecrowave implements AutoCloseable {
                     throw new IllegalArgumentException(e);
                 }
             }));
+        }
+
+        public Integer getWebSessionTimeout() {
+            return webSessionTimeout;
+        }
+
+        public void setWebSessionTimeout(final Integer webSessionTimeout) {
+            this.webSessionTimeout = webSessionTimeout;
+        }
+
+        public String getWebSessionCookieConfig() {
+            return webSessionCookieConfig;
+        }
+
+        public void setWebSessionCookieConfig(final String webSessionCookieConfig) {
+            this.webSessionCookieConfig = webSessionCookieConfig;
         }
 
         public boolean isInitializeClientBus() {
@@ -2052,7 +2168,7 @@ public class Meecrowave implements AutoCloseable {
                 } else if (prop.startsWith("connector.")) { // created in container
                     property(prop, config.getProperty(prop));
                 } else if (prop.equals("realm")) {
-                    final ObjectRecipe recipe = new ObjectRecipe(config.getProperty(prop));
+                    final ObjectRecipe recipe = newRecipe(config.getProperty(prop));
                     for (final String realmConfig : config.stringPropertyNames()) {
                         if (realmConfig.startsWith("realm.")) {
                             recipe.setProperty(realmConfig.substring("realm.".length()), config.getProperty(realmConfig));
@@ -2060,7 +2176,7 @@ public class Meecrowave implements AutoCloseable {
                     }
                     this.realm = Realm.class.cast(recipe.create());
                 } else if (prop.equals("login")) {
-                    final ObjectRecipe recipe = new ObjectRecipe(LoginConfigBuilder.class.getName());
+                    final ObjectRecipe recipe = newRecipe(LoginConfigBuilder.class.getName());
                     for (final String nestedConfig : config.stringPropertyNames()) {
                         if (nestedConfig.startsWith("login.")) {
                             recipe.setProperty(nestedConfig.substring("login.".length()), config.getProperty(nestedConfig));
@@ -2068,7 +2184,7 @@ public class Meecrowave implements AutoCloseable {
                     }
                     loginConfig = LoginConfigBuilder.class.cast(recipe.create());
                 } else if (prop.equals("securityConstraint")) {
-                    final ObjectRecipe recipe = new ObjectRecipe(SecurityConstaintBuilder.class.getName());
+                    final ObjectRecipe recipe = newRecipe(SecurityConstaintBuilder.class.getName());
                     for (final String nestedConfig : config.stringPropertyNames()) {
                         if (nestedConfig.startsWith("securityConstraint.")) {
                             recipe.setProperty(nestedConfig.substring("securityConstraint.".length()), config.getProperty(nestedConfig));
@@ -2076,7 +2192,7 @@ public class Meecrowave implements AutoCloseable {
                     }
                     securityConstraints.add(SecurityConstaintBuilder.class.cast(recipe.create()));
                 } else if (prop.equals("configurationCustomizer")) {
-                    final ObjectRecipe recipe = new ObjectRecipe(properties.getProperty(prop));
+                    final ObjectRecipe recipe = newRecipe(prop);
                     for (final String nestedConfig : config.stringPropertyNames()) {
                         if (nestedConfig.startsWith(prop + '.')) {
                             recipe.setProperty(nestedConfig.substring(prop.length() + 2 /*dot*/), config.getProperty(nestedConfig));
