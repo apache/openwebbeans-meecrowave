@@ -170,9 +170,7 @@
       <id>cxf-staging</id>
       <url>https://repository.apache.org/content/repositories/orgapachecxf-1117/</url>
     </repository>
-  </repositories>
-<!-- only needed when under development
-  <repositories>
+    <!-- only needed when under development -->
     <repository>
       <id>asf-snapshot</id>
       <url>https://repository.apache.org/content/repositories/snapshots/</url>
@@ -183,6 +181,7 @@
         <enabled>true</enabled>
       </snapshots>
     </repository>
+    <!-- only needed when under development -->
   </repositories>
--->
+
 </project>
