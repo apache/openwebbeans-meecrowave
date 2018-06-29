@@ -77,7 +77,6 @@
     <module>integration-tests</module>
     <module>meecrowave-oauth2</module>
     <module>meecrowave-specs-api</module>
-    <module>sample</module>
   </modules>
 
   <dependencyManagement>
