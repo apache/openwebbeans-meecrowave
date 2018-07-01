@@ -20,7 +20,6 @@ package org.apache.meecrowave.cxf;
 
 import static org.junit.Assert.assertEquals;
 
-import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.Collection;
 
@@ -41,11 +40,10 @@ import org.junit.Test;
 
 public class MeecrowaveClientLifecycleListenerTest {
     @Test
-    public void autoClose() throws IOException, NoSuchFieldException, IllegalAccessException {
+    public void autoClose() throws NoSuchFieldException, IllegalAccessException {
         try (final Meecrowave meecrowave = new Meecrowave(new Meecrowave.Builder()
                 .randomHttpPort()
                 .includePackages(MeecrowaveClientLifecycleListenerTest.class.getName())).bake()) {
-            final JohnzonCdiExtension johnzonCdiExtension = CDI.current().select(JohnzonCdiExtension.class).get();
             final Field jsonbs = JohnzonCdiExtension.class.getDeclaredField("jsonbs");
             jsonbs.setAccessible(true);
             final BeanManager beanManager = CDI.current().getBeanManager();

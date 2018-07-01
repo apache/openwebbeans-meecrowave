@@ -22,10 +22,8 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicReference;
 
 import javax.enterprise.inject.spi.CDI;
-import javax.json.bind.Jsonb;
 
 import org.apache.cxf.endpoint.Client;
 import org.apache.cxf.endpoint.ClientLifeCycleListener;
@@ -42,6 +40,7 @@ import org.apache.meecrowave.logging.tomcat.LogFacade;
 public class MeecrowaveClientLifecycleListener implements ClientLifeCycleListener {
     private final Method getReadersWriters;
     private final Field delegate;
+    private final Field instance;
 
     public MeecrowaveClientLifecycleListener() {
         try {
@@ -54,6 +53,12 @@ public class MeecrowaveClientLifecycleListener implements ClientLifeCycleListene
             delegate = JsonbJaxrsProvider.class.getDeclaredField("delegate");
             delegate.setAccessible(true);
         } catch (final NoSuchFieldException e) {
+            throw new IllegalArgumentException("Incompatible johnzon version detected", e);
+        }
+        try {
+            instance = JsonbJaxrsProvider.class.getClassLoader().loadClass("org.apache.johnzon.jaxrs.jsonb.jaxrs.JsonbJaxrsProvider$ProvidedInstance").getDeclaredField("instance");
+            instance.setAccessible(true);
+        } catch (final ClassNotFoundException | NoSuchFieldException e) {
             throw new IllegalArgumentException("Incompatible johnzon version detected", e);
         }
     }
@@ -75,7 +80,7 @@ public class MeecrowaveClientLifecycleListener implements ClientLifeCycleListene
                     .map(JsonbJaxrsProvider.class::cast)
                     .map(p -> {
                         try {
-                            return ((AtomicReference<Jsonb>) delegate.get(p)).get();
+                            return instance.get(delegate.get(p));
                         } catch (final IllegalAccessException e) {
                             throw new IllegalStateException(e);
                         }

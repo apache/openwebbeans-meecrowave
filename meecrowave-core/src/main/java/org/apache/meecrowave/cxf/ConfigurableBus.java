@@ -162,7 +162,7 @@ public class ConfigurableBus extends ExtensionManagerBus {
     @Produces({MediaType.APPLICATION_JSON, "*/*+json"})
     @Consumes({MediaType.APPLICATION_JSON, "*/*+json"})
     public static class ConfiguredJsonbJaxrsProvider<T> extends JsonbJaxrsProvider<T> {
-        private final JsonProvider provider;
+        private final Jsonb jsonb;
 
         private ConfiguredJsonbJaxrsProvider(final String encoding,
                                              final boolean nulls,
@@ -175,7 +175,6 @@ public class ConfigurableBus extends ExtensionManagerBus {
             // ATTENTION this is only a workaround for MEECROWAVE-49 and shall get removed after Johnzon has a fix for it!
             // We add byte[] to the ignored types.
             super(singletonList("[B"));
-            this.provider = provider;
             ofNullable(encoding).ifPresent(this::setEncoding);
             ofNullable(namingStrategy).ifPresent(this::setPropertyNamingStrategy);
             ofNullable(orderStrategy).ifPresent(this::setPropertyOrderStrategy);
@@ -183,13 +182,15 @@ public class ConfigurableBus extends ExtensionManagerBus {
             setNullValues(nulls);
             setIJson(iJson);
             setPretty(pretty);
+            this.jsonb = JsonbBuilder.newBuilder()
+                    .withProvider(provider)
+                    .withConfig(config)
+                    .build();
         }
 
         @Override
         protected Jsonb createJsonb() {
-            return JsonbBuilder.newBuilder()
-                    .withProvider(provider)
-                    .withConfig(config).build();
+            return jsonb;
         }
     }
 
