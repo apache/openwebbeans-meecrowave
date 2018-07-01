@@ -18,6 +18,7 @@
  */
 package org.apache.meecrowave.cxf;
 
+import static java.util.Collections.singletonList;
 import static java.util.Optional.of;
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toList;
@@ -28,7 +29,6 @@ import java.io.Reader;
 import java.io.Writer;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -174,7 +174,7 @@ public class ConfigurableBus extends ExtensionManagerBus {
                                              final JsonProvider provider) {
             // ATTENTION this is only a workaround for MEECROWAVE-49 and shall get removed after Johnzon has a fix for it!
             // We add byte[] to the ignored types.
-            super(Arrays.asList("[B"));
+            super(singletonList("[B"));
             this.provider = provider;
             ofNullable(encoding).ifPresent(this::setEncoding);
             ofNullable(namingStrategy).ifPresent(this::setPropertyNamingStrategy);
@@ -185,10 +185,7 @@ public class ConfigurableBus extends ExtensionManagerBus {
             setPretty(pretty);
         }
 
-        public Jsonb getProvider() {
-            return delegate.get();
-        }
-
+        @Override
         protected Jsonb createJsonb() {
             return JsonbBuilder.newBuilder()
                     .withProvider(provider)
