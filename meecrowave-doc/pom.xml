@@ -32,6 +32,7 @@
   <properties>
     <jbake.http>false</jbake.http>
     <jbake.pdf>true</jbake.pdf>
+    <meecrowave.build.name>${project.groupId}.documentation</meecrowave.build.name>
   </properties>
 
   <dependencies>

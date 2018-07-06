@@ -28,6 +28,10 @@
   <artifactId>meecrowave-core</artifactId>
   <name>Meecrowave :: Core</name>
 
+  <properties>
+    <meecrowave.build.name>${project.groupId}.core</meecrowave.build.name>
+  </properties>
+
   <dependencies>
     <dependency>
       <groupId>org.apache.meecrowave</groupId>

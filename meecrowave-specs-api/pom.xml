@@ -28,6 +28,10 @@
   <artifactId>meecrowave-specs-api</artifactId>
   <name>Meecrowave :: Specs API</name>
 
+  <properties>
+    <meecrowave.build.name>${project.groupId}.specs</meecrowave.build.name>
+  </properties>
+
   <dependencies>
     <dependency>
       <groupId>org.apache.geronimo.specs</groupId>

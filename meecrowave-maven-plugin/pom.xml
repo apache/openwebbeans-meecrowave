@@ -31,6 +31,7 @@
 
   <properties>
     <maven.version>3.3.9</maven.version>
+    <meecrowave.build.name>${project.groupId}.maven</meecrowave.build.name>
   </properties>
 
   <dependencies>

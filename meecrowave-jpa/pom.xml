@@ -28,6 +28,10 @@
   <artifactId>meecrowave-jpa</artifactId>
   <name>Meecrowave :: JPA</name>
 
+  <properties>
+    <meecrowave.build.name>${project.groupId}.jpa</meecrowave.build.name>
+  </properties>
+
   <dependencies>
     <dependency>
       <groupId>org.apache.geronimo.specs</groupId>

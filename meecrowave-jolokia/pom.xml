@@ -30,6 +30,7 @@
 
   <properties>
     <jolokia.version>2.0.0-M3</jolokia.version>
+    <meecrowave.build.name>${project.groupId}.jolokia</meecrowave.build.name>
   </properties>
 
   <dependencies>

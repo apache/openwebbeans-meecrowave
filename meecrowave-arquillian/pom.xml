@@ -30,6 +30,7 @@
 
   <properties>
     <arquillian.version>1.1.13.Final</arquillian.version>
+    <meecrowave.build.name>${project.groupId}.arquillian</meecrowave.build.name>
   </properties>
 
   <dependencies>
