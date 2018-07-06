@@ -48,6 +48,12 @@
       <version>${junit5.version}</version>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>org.junit.vintage</groupId>
+      <artifactId>junit-vintage-engine</artifactId>
+      <version>${junit5.version}</version>
+      <scope>test</scope>
+    </dependency>
 
     <dependency>
       <groupId>org.apache.meecrowave</groupId>
@@ -57,7 +63,8 @@
   </dependencies>
 
   <properties>
-    <junit5.version>5.0.1</junit5.version>
+    <junit5.version>5.3.0-M1</junit5.version>
+    <meecrowave.build.name>${project.groupId}.junit</meecrowave.build.name>
   </properties>
 
   <build>
@@ -69,23 +76,6 @@
           <!-- cause of mono runner/rule -->
           <reuseForks>false</reuseForks>
         </configuration>
-        <dependencies>
-          <dependency>
-            <groupId>org.junit.platform</groupId>
-            <artifactId>junit-platform-surefire-provider</artifactId>
-            <version>1.0.1</version>
-          </dependency>
-          <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-engine</artifactId>
-            <version>${junit5.version}</version>
-          </dependency>
-          <dependency>
-            <groupId>org.junit.vintage</groupId>
-            <artifactId>junit-vintage-engine</artifactId>
-            <version>4.12.1</version>
-          </dependency>
-        </dependencies>
       </plugin>
     </plugins>
   </build>
