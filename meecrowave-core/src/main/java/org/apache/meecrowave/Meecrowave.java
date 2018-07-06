@@ -649,7 +649,7 @@ public class Meecrowave implements AutoCloseable {
                     sslHostConf.setCertificateChainFile(base.getAbsolutePath() + "/conf/" + sslHostConf.getCertificateChainFile());
                 }
             });
-            
+
             buildSslHostConfig.forEach(httpsConnector::addSslHostConfig);
 
             if (configuration.defaultSSLHostConfigName != null) {
@@ -682,6 +682,11 @@ public class Meecrowave implements AutoCloseable {
         }
 
         StreamSupport.stream(ServiceLoader.load(Meecrowave.InstanceCustomizer.class).spliterator(), false)
+                .peek(i -> {
+                    if (MeecrowaveAwareInstanceCustomizer.class.isInstance(i)) {
+                        MeecrowaveAwareInstanceCustomizer.class.cast(i).setMeecrowave(this);
+                    }
+                })
                 .forEach(c -> c.accept(tomcat));
         configuration.instanceCustomizers.forEach(c -> c.accept(tomcat));
 
@@ -736,12 +741,12 @@ public class Meecrowave implements AutoCloseable {
     private boolean isCertificateFromClasspath(final String certificate) {
         final BiPredicate<String, String> equals = System.getProperty("os.name", "ignore").toLowerCase(ROOT).contains("win") ?
                 String::equalsIgnoreCase : String::equals;
-        return certificate != null && !(new File(certificate).exists()) 
+        return certificate != null && !(new File(certificate).exists())
                 && !equals.test(
                         Paths.get(System.getProperty("user.home")).resolve(".keystore").toAbsolutePath().normalize().toString(),
                         Paths.get(certificate).toAbsolutePath().normalize().toString());
     }
-    
+
     private void copyCertificateToConfDir(String certificate) {
         InputStream resourceAsStream = null;
         try {
@@ -1329,7 +1334,7 @@ public class Meecrowave implements AutoCloseable {
 
         @CliOption(name = "jaxws-support-if-present", description = "Should @WebService CDI beans be deployed if cxf-rt-frontend-jaxws is in the classpath.")
         private boolean jaxwsSupportIfAvailable = true;
-        
+
         @CliOption(name = "default-ssl-hostconfig-name", description = "The name of the default SSLHostConfig that will be used for secure https connections.")
         private String defaultSSLHostConfigName;
 
@@ -1941,7 +1946,7 @@ public class Meecrowave implements AutoCloseable {
             }
             return this;
         }
-        
+
         public Builder randomHttpsPort() {
             try (final ServerSocket serverSocket = new ServerSocket(0)) {
                 this.httpsPort = serverSocket.getLocalPort();
@@ -2594,6 +2599,11 @@ public class Meecrowave implements AutoCloseable {
     }
 
     public interface InstanceCustomizer extends Consumer<Tomcat> {
+    }
+
+    // since it is too early to have CDI and lookup the instance we must set it manually
+    public interface MeecrowaveAwareInstanceCustomizer extends InstanceCustomizer {
+        void setMeecrowave(Meecrowave meecrowave);
     }
 
     private static final class MeecrowaveContainerLoader extends URLClassLoader {
