@@ -57,9 +57,16 @@ link:{context_rootpath}/meecrowave-jta/index.html[JTA module]
 == Meecrowave and OAuth2
 
 This is an experimental module integrating CXF OAuth2 server in Meecrowave
-through an embeddable dependency or a directly executable har.
+through an embeddable dependency or a directly executable jar.
 
 link:{context_rootpath}/meecrowave-oauth2/index.html[OAuth2 module]
+
+== Meecrowave Let's Encrypt
+
+This is an experimental module integrating with Let's Encrypt to provide you
+free and easy SSL support on your HTTPS connectors.
+
+link:{context_rootpath}/meecrowave-letsencrypt/index.html[Let's Encrypt module]
 
 == Going further
 

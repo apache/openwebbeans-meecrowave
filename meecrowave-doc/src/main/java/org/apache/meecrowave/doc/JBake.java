@@ -25,6 +25,7 @@ import org.apache.meecrowave.Meecrowave;
 import org.apache.meecrowave.doc.generator.ArquillianConfiguration;
 import org.apache.meecrowave.doc.generator.CliConfiguration;
 import org.apache.meecrowave.doc.generator.Configuration;
+import org.apache.meecrowave.doc.generator.LetsEncryptConfiguration;
 import org.apache.meecrowave.doc.generator.MavenConfiguration;
 import org.apache.meecrowave.doc.generator.OAuth2Configuration;
 import org.jbake.app.ConfigUtil;
@@ -70,6 +71,7 @@ public class JBake {
         new ArquillianConfiguration().run();
         new MavenConfiguration().run();
         new OAuth2Configuration().run();
+        new LetsEncryptConfiguration().run();
 
         final Runnable build = () -> {
             System.out.println("Building Meecrowave website in " + destination);

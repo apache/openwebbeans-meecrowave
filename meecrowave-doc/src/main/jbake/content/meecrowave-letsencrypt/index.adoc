@@ -1,0 +1,16 @@
+= Meecrowave Let's Encrypt Extension
+:jbake-date: 2018-07-05
+:jbake-type: page
+:jbake-status: published
+:jbake-meecrowavepdf:
+:jbake-meecrowavetitleicon: icon icon_shield
+:jbake-meecrowavecolor: body-blue
+:icons: font
+
+
+Meecrowave provides a Let's Encrypt integration which will grab the default tomcat connector
+and reload regularly its certificate based on Let's Encrypt protocol.
+
+You must configure the domain(s) to include during Let's Encrypt discussion to activate that feature.
+
+include::../../../../../target/generated-doc/LetsEncryptConfiguration.adoc[]
