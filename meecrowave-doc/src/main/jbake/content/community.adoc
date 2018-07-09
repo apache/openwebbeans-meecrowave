@@ -9,15 +9,15 @@
 
 For now please use OpenWebBeans mailing-lists, JIRA and IRC channel.
 
-See http://openwebbeans.apache.org/community.html[OpenWebBeans Community] page for more details.
+See https://openwebbeans.apache.org/community.html[OpenWebBeans Community] page for more details.
 
 == Source code
 
-Source code can be found at http://svn.apache.org/repos/asf/openwebbeans/meecrowave/trunk/
+Source code can be found at https://svn.apache.org/repos/asf/openwebbeans/meecrowave/trunk/
 
 [source]
 ----
-svn co http://svn.apache.org/repos/asf/openwebbeans/meecrowave/trunk/ meecrowave
+svn co https://svn.apache.org/repos/asf/openwebbeans/meecrowave/trunk/ meecrowave
 ----
 
 === Build it
@@ -27,4 +27,20 @@ To build the project just run maven:
 [source]
 ----
 mvn clean install
+----
+
+
+== Example Source Code
+
+The Apache Meecrowave community also hosts some examples which show how Meecrowave is to be used.
+Those examples are hosted in a separate repository and can be found at https://github.com/apache/openwebbeans-meecrowave-examples
+
+The github repo works fine for pull requests.
+Please use our official https://issues.apache.org/jira/projects/MEECROWAVE[Meecrowave Bug Tracker] for reporting bugs or enhancement requests.
+
+The cannonical repository hosted directly at the Apache Software Foundation intended to be used by committers is
+
+[source]
+----
+git clone https://gitbox.apache.org/repos/asf/openwebbeans-meecrowave-examples.git
 ----
