@@ -149,6 +149,7 @@ public class Meecrowave implements AutoCloseable {
     private final Map<String, Runnable> contexts = new HashMap<>();
     private Runnable postTask;
     private boolean clearCatalinaSystemProperties;
+    private boolean deleteBase;
 
     public Meecrowave() {
         this(new Builder());
@@ -967,7 +968,7 @@ public class Meecrowave implements AutoCloseable {
                 ofNullable(postTask).ifPresent(Runnable::run);
                 postTask = null;
                 try {
-                    if (base != null) {
+                    if (deleteBase && base != null) {
                         IO.delete(base);
                     }
 
@@ -1071,6 +1072,7 @@ public class Meecrowave implements AutoCloseable {
     }
 
     private String newBaseDir() {
+        deleteBase = false;
         String dir = configuration.dir;
         if (dir != null) {
             final File dirFile = new File(dir);
@@ -1089,6 +1091,7 @@ public class Meecrowave implements AutoCloseable {
             return new File(base).getAbsolutePath();
         }
 
+        deleteBase = true;
         final List<String> lookupPaths = new ArrayList<>();
         lookupPaths.add("target");
         lookupPaths.add("build");
