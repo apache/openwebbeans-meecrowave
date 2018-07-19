@@ -26,13 +26,13 @@ import org.apache.webbeans.configurator.BeanConfiguratorImpl;
 import org.apache.webbeans.container.BeanManagerImpl;
 import org.apache.webbeans.intercept.InterceptorsManager;
 import org.apache.webbeans.servlet.WebBeansConfigurationListener;
-import org.apache.webbeans.web.context.WebConversationFilter;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.spi.Bean;
 import javax.enterprise.inject.spi.Extension;
 import javax.enterprise.inject.spi.configurator.BeanConfigurator;
 import javax.servlet.DispatcherType;
+import javax.servlet.Filter;
 import javax.servlet.FilterRegistration;
 import javax.servlet.ServletContainerInitializer;
 import javax.servlet.ServletContext;
@@ -48,8 +48,14 @@ public class OWBAutoSetup implements ServletContainerInitializer {
         final Meecrowave.Builder builder = Meecrowave.Builder.class.cast(ctx.getAttribute("meecrowave.configuration"));
         final Meecrowave instance = Meecrowave.class.cast(ctx.getAttribute("meecrowave.instance"));
         if (builder.isCdiConversation()) {
-            final FilterRegistration.Dynamic filter = ctx.addFilter("owb-conversation", WebConversationFilter.class);
-            filter.addMappingForUrlPatterns(EnumSet.allOf(DispatcherType.class), false, "/*");
+            try {
+                final Class<? extends Filter> clazz = (Class<? extends Filter>) OWBAutoSetup.class.getClassLoader()
+                      .loadClass("org.apache.webbeans.web.context.WebConversationFilter");
+                final FilterRegistration.Dynamic filter = ctx.addFilter("owb-conversation", clazz);
+                filter.addMappingForUrlPatterns(EnumSet.allOf(DispatcherType.class), false, "/*");
+            } catch (final Exception e) {
+                // no-op
+            }
         }
 
         // eager boot to let injections work in listeners

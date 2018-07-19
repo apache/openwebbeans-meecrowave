@@ -20,11 +20,11 @@ package org.apache.meecrowave.openwebbeans;
 
 import org.apache.meecrowave.Meecrowave;
 import org.apache.meecrowave.logging.tomcat.LogFacade;
-import org.apache.openwebbeans.se.CDISeScannerService;
 import org.apache.tomcat.JarScanFilter;
 import org.apache.webbeans.config.WebBeansContext;
 import org.apache.webbeans.corespi.scanner.xbean.CdiArchive;
 import org.apache.webbeans.corespi.scanner.xbean.OwbAnnotationFinder;
+import org.apache.webbeans.spi.BdaScannerService;
 import org.apache.webbeans.spi.BeanArchiveService;
 import org.apache.webbeans.util.WebBeansUtil;
 import org.apache.webbeans.web.scanner.WebScannerService;
@@ -44,6 +44,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import static java.util.Optional.of;
@@ -53,7 +54,8 @@ import static org.apache.tomcat.JarScanType.PLUGGABILITY;
 
 public class OWBTomcatWebScannerService extends WebScannerService {
     private final LogFacade logger = new LogFacade(OWBTomcatWebScannerService.class.getName());
-    private final CDISeScannerService delegate;
+    private final BdaScannerService delegate;
+    private final Supplier<OwbAnnotationFinder> finderAccessor;
 
     protected JarScanFilter filter;
     private String jreBase;
@@ -65,12 +67,13 @@ public class OWBTomcatWebScannerService extends WebScannerService {
     private Consumer<File> fileVisitor;
 
     public OWBTomcatWebScannerService() {
-        this(null);
+        this(null, null);
     }
 
 
-    public OWBTomcatWebScannerService(final CDISeScannerService delegate) {
+    public OWBTomcatWebScannerService(final BdaScannerService delegate, final Supplier<OwbAnnotationFinder> finderAccessor) {
         this.delegate = delegate;
+        this.finderAccessor = finderAccessor;
     }
 
     @Override
@@ -82,8 +85,8 @@ public class OWBTomcatWebScannerService extends WebScannerService {
 
     @Override
     public OwbAnnotationFinder getFinder() {
-        if (delegate != null) {
-            return delegate.getFinder();
+        if (finderAccessor != null) {
+            return finderAccessor.get();
         }
         return super.getFinder();
     }

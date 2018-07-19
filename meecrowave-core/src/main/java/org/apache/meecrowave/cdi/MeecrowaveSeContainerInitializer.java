@@ -131,6 +131,6 @@ public class MeecrowaveSeContainerInitializer extends OWBInitializer {
 
     @Override
     protected ScannerService getScannerService() {
-        return new OWBTomcatWebScannerService(scannerService);
+        return new OWBTomcatWebScannerService(scannerService, scannerService::getFinder);
     }
 }

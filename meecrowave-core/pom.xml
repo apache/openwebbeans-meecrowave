@@ -59,12 +59,13 @@
       <artifactId>xbean-reflect</artifactId>
       <version>${xbean.version}</version>
     </dependency>
-    <dependency>
+    <dependency> <!-- it switches the SPI so don't deliver it if not needed -->
       <groupId>org.apache.openwebbeans</groupId>
       <artifactId>openwebbeans-se</artifactId>
       <version>${openwebbeans.version}</version>
+      <scope>provided</scope>
     </dependency>
-    <dependency>
+    <dependency> <!-- not that if a user adds owb-se this should get excluded -->
       <groupId>org.apache.openwebbeans</groupId>
       <artifactId>openwebbeans-web</artifactId>
       <version>${openwebbeans.version}</version>
