@@ -46,6 +46,7 @@ public class KnownJarsFilter implements JarScanFilter {
         add("antlr-");
         add("aopalliance-");
         add("ApacheJMeter");
+        add("apiguardian-");
         add("args4j-");
         add("arquillian-common");
         add("arquillian-config-");
