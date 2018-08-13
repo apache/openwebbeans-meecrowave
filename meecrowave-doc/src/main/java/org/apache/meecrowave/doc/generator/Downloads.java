@@ -45,7 +45,12 @@ import static java.util.stream.Collectors.toList;
 // helper to generate the download table content
 public class Downloads {
     private static final SAXParserFactory FACTORY = SAXParserFactory.newInstance();
-    private static final String MVN_BASE = "http://repo.maven.apache.org/maven2/";
+    private static final String MVN_BASE = "https://repo.maven.apache.org/maven2/";
+
+    private static final String DIST_RELEASE = "https://dist.apache.org/repos/dist/release/openwebbeans/meecrowave/";
+    private static final String ARCHIVE_RELEASE = "https://archive.apache.org/dist/openwebbeans/meecrowave/";
+    private static final String MIRROR_RELEASE = "http://www.apache.org/dyn/closer.lua/openwebbeans/meecrowave/";
+
     private static final long MEGA_RATIO = 1024 * 1024;
     private static final long KILO_RATIO = 1024;
 
@@ -107,7 +112,7 @@ public class Downloads {
                                 "|" + d.date +
                                 "|" + d.size +
                                 "|" + d.format +
-                                "| " + d.url + "[icon:download[] " + d.format + "] " + d.sha1 + "[icon:download[] sha1] " + d.md5 + "[icon:download[] md5] " + d.asc + "[icon:download[] asc]"));
+                                "| " + d.url + "[icon:download[] " + d.format + "] " + d.sha1 + "[icon:download[] sha1] " + d.asc + "[icon:download[] asc]"));
     }
 
     private static Download fillDownloadable(final Download download) {
@@ -123,7 +128,9 @@ public class Downloads {
                 return null;
             }
 
-            download.date = connection.getHeaderField("Last-Modified").replaceAll(" +", " ");
+            String lastMod = connection.getHeaderField("Last-Modified");
+            download.date = lastMod != null ? lastMod.replaceAll(" +", " ") : null;
+
             download.size = toSize(ofNullable(connection.getHeaderField("Content-Length"))
                     .map(Long::parseLong).orElse(0L), ofNullable(connection.getHeaderField("Accept-Ranges")).orElse("bytes"));
 
@@ -158,16 +165,44 @@ public class Downloads {
                 .map(a -> toDownload(artifactId, a.classifier, version.version, a.extension, artifactBase + (a.classifier.isEmpty() ? '.' + a.extension : ('-' + a.classifier + '.' + a.extension))));
     }
 
-    private static Download toDownload(final String artifactId, final String classifier, final String version, final String format, final String url) {
+    private static Download toDownload(final String artifactId, final String classifier, final String version, final String format, String artifactUrl) {
+        String url = DIST_RELEASE + version + "/" + artifactId + "-" + version + "-" + classifier + "." + format;
+        String downloadUrl;
+        if (urlExists(url)) {
+            downloadUrl = MIRROR_RELEASE + version + "/" + artifactId + "-" + version + "-" + classifier + "." + format;
+        }
+        else {
+            url = ARCHIVE_RELEASE + version + "/" + artifactId + "-" + version + "-" + classifier + "." + format;
+            if (urlExists(url)) {
+                downloadUrl = url;
+            }
+            else {
+                // falling back to Maven URL
+                downloadUrl = artifactUrl;
+            }
+        }
+
         return new Download(
                 WordUtils.capitalize(artifactId.replace('-', ' ')),
                 classifier,
                 version,
                 format,
-                url,
-                url + ".md5",
+                downloadUrl,
                 url + ".sha1",
                 url + ".asc");
+    }
+
+    private static boolean urlExists(String urlString) {
+        try {
+            URL url = new URL(urlString);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("HEAD");
+            conn.setUseCaches(false);
+            return conn.getResponseCode() == HttpURLConnection.HTTP_OK;
+        }
+        catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private static Stream<Version> toVersions(final String baseUrl) {
@@ -221,20 +256,18 @@ public class Downloads {
         private final String version;
         private final String format;
         private final String url;
-        private final String md5;
         private final String sha1;
         private final String asc;
         private String date;
         private String size;
 
         public Download(final String name, final String classifier, final String version,
-                        final String format, final String url, final String md5, final String sha1, final String asc) {
+                        final String format, final String url, final String sha1, final String asc) {
             this.name = name;
             this.classifier = classifier;
             this.version = version;
             this.format = format;
             this.url = url;
-            this.md5 = md5;
             this.sha1 = sha1;
             this.asc = asc;
         }
