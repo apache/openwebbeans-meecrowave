@@ -9,50 +9,14 @@ If you want to start with your first *Hello World* you have to add the following
 
 ```xml
  <properties>
-    <meecrowave.version>1.2.1</meecrowave.version>
-    <tomcat-servlet-api.version>9.0.5</tomcat-servlet-api.version>
+    <meecrowave.version>1.2.3</meecrowave.version>
   </properties>
 
   <dependencies>
     <dependency>
-      <groupId>org.apache.geronimo.specs</groupId>
-      <artifactId>geronimo-atinject_1.0_spec</artifactId>
-      <version>1.0</version>
-      <scope>provided</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.apache.geronimo.specs</groupId>
-      <artifactId>geronimo-jcdi_2.0_spec</artifactId>
-      <version>1.0</version>
-      <scope>provided</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.apache.geronimo.specs</groupId>
-      <artifactId>geronimo-jaxrs_2.0_spec</artifactId>
-      <version>1.0-alpha-1</version>
-      <scope>provided</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.apache.geronimo.specs</groupId>
-      <artifactId>geronimo-json_1.1_spec</artifactId>
-      <version>1.0</version>
-      <scope>provided</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.apache.logging.log4j</groupId>
-      <artifactId>log4j-api</artifactId>
-      <version>2.9.1</version>
-      <scope>provided</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.apache.tomcat</groupId>
-      <artifactId>tomcat-servlet-api</artifactId>
-      <version>${tomcat-servlet-api.version}</version>
+      <groupId>org.apache.meecrowave</groupId>
+      <artifactId>meecrowave-specs-api</artifactId>
+      <version>${project.version}</version>
     </dependency>
   </dependencies>
 ```
