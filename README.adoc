@@ -16,12 +16,23 @@ If you want to start with your first *Hello World* you have to add the following
     <dependency>
       <groupId>org.apache.meecrowave</groupId>
       <artifactId>meecrowave-specs-api</artifactId>
-      <version>${project.version}</version>
+      <version>${meecrowave.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.meecrowave</groupId>
+      <artifactId>meecrowave-core</artifactId>
+      <version>${meecrowave.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.meecrowave</groupId>
+      <artifactId>meecrowave-junit</artifactId>
+      <version>${meecrowave.version}</version>
+      <scope>test</scope>
     </dependency>
   </dependencies>
 ```
 
-This is not very convenient, means that an aggregating jar will be created soon to minimize thee amount of dependencies you have to declare.
 The project itself should be used with Java8 as the minimum JDK-version.
 
 To work with the latest SNAPSHOT, you can clone the repo and make a ```mvn clean install```.
