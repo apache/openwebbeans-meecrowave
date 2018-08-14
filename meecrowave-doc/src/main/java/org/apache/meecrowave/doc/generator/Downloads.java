@@ -174,16 +174,19 @@ public class Downloads {
         String url = DIST_RELEASE + version + "/" + artifactId + "-" + version + "-" + classifier + "." + format;
         String downloadUrl;
         if (urlExists(url)) {
+            // artifact exists on dist.a.o
             downloadUrl = MIRROR_RELEASE + version + "/" + artifactId + "-" + version + "-" + classifier + "." + format;
         }
         else {
             url = ARCHIVE_RELEASE + version + "/" + artifactId + "-" + version + "-" + classifier + "." + format;
             if (urlExists(url)) {
+                // artifact exists on archive.a.o
                 downloadUrl = url;
             }
             else {
                 // falling back to Maven URL
                 downloadUrl = artifactUrl;
+                url = artifactUrl;
             }
         }
 
