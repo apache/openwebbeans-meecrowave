@@ -30,15 +30,15 @@ import java.io.InputStream;
 import java.io.PrintStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
-import static java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME;
 import static java.util.Arrays.asList;
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toList;
@@ -70,6 +70,9 @@ public class Downloads {
 
     public static void doMain(final PrintStream stream) {
         System.setProperty("java.util.concurrent.ForkJoinPool.common.parallelism", "32");
+
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(ZoneId.of("UTC"));
+
         Stream.of(
                 Stream.of("org/apache/meecrowave/meecrowave")
                         .flatMap(Downloads::toVersions)
@@ -101,8 +104,7 @@ public class Downloads {
                         return nameComp;
                     }
 
-                    final long dateComp = LocalDateTime.parse(o2.date, RFC_1123_DATE_TIME).toInstant(ZoneOffset.UTC).toEpochMilli()
-                            - LocalDateTime.parse(o1.date, RFC_1123_DATE_TIME).toInstant(ZoneOffset.UTC).toEpochMilli();
+                    final long dateComp = o2.date.compareTo(o1.date);
                     if (dateComp != 0) {
                         return (int) dateComp;
                     }
@@ -114,7 +116,7 @@ public class Downloads {
                         stream.println("" +
                                 "|" + d.name + (d.classifier.isEmpty() ? "" : (" " + d.classifier)).replace("source-release", "Source Release") +
                                 "|" + d.version +
-                                "|" + d.date +
+                                "|" + dateFormatter.format(d.date) +
                                 "|" + d.size +
                                 "|" + d.format +
                                 "| " + d.url + "[icon:download[] " + d.format + "] " + d.sha1 + "[icon:download[] sha1] " + d.asc + "[icon:download[] asc]"));
@@ -122,7 +124,7 @@ public class Downloads {
 
     private static Download fillDownloadable(final Download download) {
         try {
-            final URL url = new URL(download.url);
+            final URL url = new URL(download.mavenCentralUrl);
             final HttpURLConnection connection = HttpURLConnection.class.cast(url.openConnection());
             connection.setConnectTimeout((int) TimeUnit.SECONDS.toMillis(30));
             final int responseCode = connection.getResponseCode();
@@ -133,8 +135,8 @@ public class Downloads {
                 return null;
             }
 
-            String lastMod = connection.getHeaderField("Last-Modified");
-            download.date = lastMod != null ? lastMod.replaceAll(" +", " ") : null;
+            long lastMod = connection.getHeaderFieldDate("Last-Modified", 0);
+            download.date = Instant.ofEpochMilli(lastMod);
 
             download.size = toSize(ofNullable(connection.getHeaderField("Content-Length"))
                     .map(Long::parseLong).orElse(0L), ofNullable(connection.getHeaderField("Accept-Ranges")).orElse("bytes"));
@@ -197,7 +199,8 @@ public class Downloads {
                 format,
                 downloadUrl,
                 url + ".sha1",
-                url + ".asc");
+                url + ".asc",
+                artifactUrl);
     }
 
     private static boolean urlExists(String urlString) {
@@ -263,14 +266,15 @@ public class Downloads {
         private final String classifier;
         private final String version;
         private final String format;
+        private final String mavenCentralUrl;
         private final String url;
         private final String sha1;
         private final String asc;
-        private String date;
+        private Instant date;
         private String size;
 
         public Download(final String name, final String classifier, final String version,
-                        final String format, final String url, final String sha1, final String asc) {
+                        final String format, final String url, final String sha1, final String asc, String mavenCentralUrl) {
             this.name = name;
             this.classifier = classifier;
             this.version = version;
@@ -278,6 +282,7 @@ public class Downloads {
             this.url = url;
             this.sha1 = sha1;
             this.asc = asc;
+            this.mavenCentralUrl = mavenCentralUrl;
         }
     }
 
