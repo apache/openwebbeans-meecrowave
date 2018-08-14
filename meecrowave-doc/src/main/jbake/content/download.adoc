@@ -1,4 +1,5 @@
 = Downloads
+:jbake-generated: true
 :jbake-date: 2017-07-24
 :jbake-type: page
 :jbake-status: published

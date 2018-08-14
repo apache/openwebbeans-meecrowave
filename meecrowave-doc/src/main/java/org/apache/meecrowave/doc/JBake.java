@@ -18,21 +18,17 @@
  */
 package org.apache.meecrowave.doc;
 
-import com.orientechnologies.orient.core.Orient;
-import org.apache.commons.configuration.CompositeConfiguration;
-import org.apache.commons.configuration.MapConfiguration;
-import org.apache.meecrowave.Meecrowave;
-import org.apache.meecrowave.doc.generator.ArquillianConfiguration;
-import org.apache.meecrowave.doc.generator.CliConfiguration;
-import org.apache.meecrowave.doc.generator.Configuration;
-import org.apache.meecrowave.doc.generator.LetsEncryptConfiguration;
-import org.apache.meecrowave.doc.generator.MavenConfiguration;
-import org.apache.meecrowave.doc.generator.OAuth2Configuration;
-import org.jbake.app.ConfigUtil;
-import org.jbake.app.Oven;
+import static java.nio.file.StandardWatchEventKinds.ENTRY_CREATE;
+import static java.nio.file.StandardWatchEventKinds.ENTRY_DELETE;
+import static java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintStream;
+import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.ClosedWatchServiceException;
 import java.nio.file.Path;
 import java.nio.file.WatchEvent;
@@ -46,9 +42,20 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Stream;
 
-import static java.nio.file.StandardWatchEventKinds.ENTRY_CREATE;
-import static java.nio.file.StandardWatchEventKinds.ENTRY_DELETE;
-import static java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY;
+import org.apache.commons.configuration.CompositeConfiguration;
+import org.apache.commons.configuration.MapConfiguration;
+import org.apache.meecrowave.Meecrowave;
+import org.apache.meecrowave.doc.generator.ArquillianConfiguration;
+import org.apache.meecrowave.doc.generator.CliConfiguration;
+import org.apache.meecrowave.doc.generator.Configuration;
+import org.apache.meecrowave.doc.generator.Downloads;
+import org.apache.meecrowave.doc.generator.LetsEncryptConfiguration;
+import org.apache.meecrowave.doc.generator.MavenConfiguration;
+import org.apache.meecrowave.doc.generator.OAuth2Configuration;
+import org.jbake.app.ConfigUtil;
+import org.jbake.app.Oven;
+
+import com.orientechnologies.orient.core.Orient;
 
 public class JBake {
     private JBake() {
@@ -64,6 +71,7 @@ public class JBake {
         final File destination = args == null || args.length < 2 ? new File("target/site-tmp") : new File(args[1]);
         final boolean startHttp = args == null || args.length < 2 || Boolean.parseBoolean(args[2]); // by default we dev
         final boolean skipPdf = args != null && args.length > 3 && !Boolean.parseBoolean(args[3]); // by default...too slow sorry
+        final boolean updateDownloads = args != null && args.length > 4 && Boolean.parseBoolean(args[4]); // grabs central
 
         // generation of dynamic content
         new Configuration().run();
@@ -72,6 +80,31 @@ public class JBake {
         new MavenConfiguration().run();
         new OAuth2Configuration().run();
         new LetsEncryptConfiguration().run();
+
+        if (updateDownloads) {
+            final ByteArrayOutputStream tableContent = new ByteArrayOutputStream();
+            try (final PrintStream stream = new PrintStream(tableContent)) {
+                Downloads.doMain(stream);
+            }
+            try (final Writer writer = new FileWriter(new File(source, "content/download.adoc"))) {
+                writer.write("= Downloads\n"
+                        + ":jbake-generated: true\n"
+                        + ":jbake-date: 2017-07-24\n"
+                        + ":jbake-type: page\n"
+                        + ":jbake-status: published\n"
+                        + ":jbake-meecrowavepdf:\n"
+                        + ":jbake-meecrowavecolor: body-blue\n"
+                        + ":icons: font\n"
+                        + "\n"
+                        + "License under Apache License v2 (ALv2).\n"
+                        + "\n"
+                        + "[.table.table-bordered,options=\"header\"]\n"
+                        + "|===\n"
+                        + "|Name|Version|Date|Size|Type|Links\n");
+                writer.write(new String(tableContent.toByteArray(), StandardCharsets.UTF_8));
+                writer.write("\n|===\n");
+            }
+        }
 
         final Runnable build = () -> {
             System.out.println("Building Meecrowave website in " + destination);

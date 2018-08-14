@@ -27,6 +27,7 @@ import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.time.LocalDateTime;
@@ -64,6 +65,10 @@ public class Downloads {
     }
 
     public static void main(final String[] args) {
+        doMain(System.out);
+    }
+
+    public static void doMain(final PrintStream stream) {
         System.setProperty("java.util.concurrent.ForkJoinPool.common.parallelism", "32");
         Stream.of(
                 Stream.of("org/apache/meecrowave/meecrowave")
@@ -73,12 +78,12 @@ public class Downloads {
                 versionStream("meecrowave-core")
                         .map(v -> v.classifiers("", "runner"))
                         .map(v -> v.extensions("jar")))
-                .flatMap(s -> s)
-                .flatMap(Downloads::toDownloadable)
-                .parallel()
-                .map(Downloads::fillDownloadable)
-                .filter(Objects::nonNull)
-                .sorted((o1, o2) -> {
+              .flatMap(s -> s)
+              .flatMap(Downloads::toDownloadable)
+              .parallel()
+              .map(Downloads::fillDownloadable)
+              .filter(Objects::nonNull)
+              .sorted((o1, o2) -> {
                     final int versionComp = o2.version.compareTo(o1.version);
                     if (versionComp != 0) {
                         if (o2.version.startsWith(o1.version) && o2.version.contains("-M")) { // milestone
@@ -104,9 +109,9 @@ public class Downloads {
 
                     return o1.url.compareTo(o2.url);
                 })
-                .collect(toList())
-                .forEach(d ->
-                        System.out.println("" +
+              .collect(toList())
+              .forEach(d ->
+                        stream.println("" +
                                 "|" + d.name + (d.classifier.isEmpty() ? "" : (" " + d.classifier)).replace("source-release", "Source Release") +
                                 "|" + d.version +
                                 "|" + d.date +

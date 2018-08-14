@@ -7,3 +7,4 @@ target
 *.iml
 *.log
 *~
+.site-content
