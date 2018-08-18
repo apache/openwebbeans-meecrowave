@@ -152,7 +152,7 @@ public class LetsEncryptReloadLifecycle implements AutoCloseable, Runnable {
                 certificate.writeCertificate(writer);
             }
 
-            protocol.reloadSsslHostConfigs();
+            protocol.reloadSslHostConfigs();
         } catch (final AcmeException | IOException ex) {
             getLogger().error(ex.getMessage(), ex);
         }
