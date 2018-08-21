@@ -119,7 +119,9 @@ public class Downloads {
                                 "|" + dateFormatter.format(d.date) +
                                 "|" + d.size +
                                 "|" + d.format +
-                                "| " + d.url + "[icon:download[] " + d.format + "] " + d.sha1 + "[icon:download[] sha1] " + d.asc + "[icon:download[] asc]"));
+                                "| " + d.url + "[icon:download[] " + d.format + "] " +
+                                (d.sha512 != null?  d.sha512 + "[icon:download[] sha512] " : d.sha512 + "[icon:download[] sha1] ") +
+                                d.asc + "[icon:download[] asc]"));
     }
 
     private static Download fillDownloadable(final Download download) {
@@ -175,6 +177,7 @@ public class Downloads {
     private static Download toDownload(final String artifactId, final String classifier, final String version, final String format, String artifactUrl) {
         String url = DIST_RELEASE + version + "/" + artifactId + "-" + version + "-" + classifier + "." + format;
         String downloadUrl;
+        String sha512 = null;
         if (urlExists(url)) {
             // artifact exists on dist.a.o
             downloadUrl = MIRROR_RELEASE + version + "/" + artifactId + "-" + version + "-" + classifier + "." + format;
@@ -192,6 +195,10 @@ public class Downloads {
             }
         }
 
+        if (urlExists(url + ".sha512")) {
+            sha512 = url + ".sha512";
+        }
+
         return new Download(
                 WordUtils.capitalize(artifactId.replace('-', ' ')),
                 classifier,
@@ -199,6 +206,7 @@ public class Downloads {
                 format,
                 downloadUrl,
                 url + ".sha1",
+                sha512,
                 url + ".asc",
                 artifactUrl);
     }
@@ -269,18 +277,21 @@ public class Downloads {
         private final String mavenCentralUrl;
         private final String url;
         private final String sha1;
+        private final String sha512;
         private final String asc;
         private Instant date;
         private String size;
 
         public Download(final String name, final String classifier, final String version,
-                        final String format, final String url, final String sha1, final String asc, String mavenCentralUrl) {
+                        final String format, final String url, final String sha1, final String sha512,
+                        final String asc, String mavenCentralUrl) {
             this.name = name;
             this.classifier = classifier;
             this.version = version;
             this.format = format;
             this.url = url;
             this.sha1 = sha1;
+            this.sha512 = sha512;
             this.asc = asc;
             this.mavenCentralUrl = mavenCentralUrl;
         }
