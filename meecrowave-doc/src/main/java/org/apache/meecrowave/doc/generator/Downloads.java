@@ -120,7 +120,7 @@ public class Downloads {
                                 "|" + d.size +
                                 "|" + d.format +
                                 "| " + d.url + "[icon:download[] " + d.format + "] " +
-                                (d.sha512 != null?  d.sha512 + "[icon:download[] sha512] " : d.sha512 + "[icon:download[] sha1] ") +
+                                (d.sha512 != null?  d.sha512 + "[icon:download[] sha512] " : d.sha1 + "[icon:download[] sha1] ") +
                                 d.asc + "[icon:download[] asc]"));
     }
 
