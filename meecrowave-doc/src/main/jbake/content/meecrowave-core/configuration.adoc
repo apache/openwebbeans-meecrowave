@@ -111,6 +111,9 @@ The matching is alsmot 1-1 with previous table excepted for these entries:
  See the https://tomcat.apache.org/tomcat-9.0-doc/config/http.html[Apache Tomcat 9 Connector Documentation]
 - `connector.attributes.x=y` will use the property `x` with value `y` to create the connector (set a property on the instance of ̀`org.apache.catalina.connector.Connector`)
  See the Connector attributes referenced in the  https://tomcat.apache.org/tomcat-9.0-doc/config/http.html[Apache Tomcat 9 Connector Documentation]
+- `valves.*` will be used to create valves. This prefix must be followed by a valve identifier then you can use the
+built-in virtual attributes. These ones are `_order` to sort the valves (natural order) and `_className` to specify the class to instantiate.
+Finally you can use any dotted attribute to configure the valve (see example after this list).
 - `realm=y` will create an instance of `y` (qualified name of the class) as `realm`
 - `realm.x=y` will set `x` property to `y` - needs previous property to be set
 - `login=` will create a custom `org.apache.meecrowave.Meecrowave$LoginConfigBuilder`
@@ -124,6 +127,29 @@ TIP: Out of the box, any `Builder` instance will read `meecrowave.properties`.
 `meecrowave.properties` uses CLI names (without the leading `--`).
 See link:{context_rootpath}/meecrowave-core/cli.html[CLI] page for the list.
 
+=== Valve configuration
+
+Here is an example to configure the `RemoteIpValve` and `LoadBalancerDrainingValve` using the `meecrowave.properties` syntax (which means
+it uses the `properties.` prefix to specify properties, drop it if you use the CLI options):
+
+[source,properties]
+----
+properties.valves.remote-ip._order = 1
+properties.valves.remote-ip._className = org.apache.catalina.valves.RemoteIpValve
+properties.valves.remote-ip.internalProxies = 192\\.168\\.0\\.10\|192\\.168\\.0\\.11
+properties.valves.remote-ip.remoteIpHeader = x-forwarded-for
+properties.valves.remote-ip.proxiesHeader = x-forwarded-by
+properties.valves.remote-ip.trustedProxies = proxy1|proxy2
+
+properties.valves.draining._order = 2
+properties.valves.draining._className = org.apache.catalina.valves.LoadBalancerDrainingValve
+properties.valves.draining.redirectStatusCode = 307
+properties.valves.draining.ignoreCookieName = draining-action
+properties.valves.draining.ignoreCookieValue = skip
+----
+
+This will define the `remote-ip` and `draining` valves in this order with the configuration defined thanks to the
+properties not having an underscore at the beginning of their name.
 
 == Logging
 
