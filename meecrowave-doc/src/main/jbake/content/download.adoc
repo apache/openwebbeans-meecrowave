@@ -43,7 +43,7 @@ License under Apache License v2 (ALv2).
 
 == KEYS for verifying Apache releases
 
-The GPG keys in the [OpenWebBeans KEYS file](https://www.apache.org/dist/openwebbeans/KEYS) to validate our releases.
-Read more about [How we sign Apache Releases](https://www.apache.org/info/verification.html)
+The GPG keys in the https://www.apache.org/dist/openwebbeans/KEYS[OpenWebBeans KEYS file] to validate our releases.
+Read more about https://www.apache.org/info/verification.html[How we sign Apache Releases].
 
 
