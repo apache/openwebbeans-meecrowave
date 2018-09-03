@@ -41,4 +41,9 @@ License under Apache License v2 (ALv2).
 |Meecrowave Core|0.2.0|2017-01-02 15:12:02|145 kB|jar| https://repo.maven.apache.org/maven2/org/apache/meecrowave/meecrowave-core/0.2.0/meecrowave-core-0.2.0.jar[icon:download[] jar] https://repo.maven.apache.org/maven2/org/apache/meecrowave/meecrowave-core/0.2.0/meecrowave-core-0.2.0.jar.sha1[icon:download[]&nbsp;sha1] https://repo.maven.apache.org/maven2/org/apache/meecrowave/meecrowave-core/0.2.0/meecrowave-core-0.2.0.jar.asc[icon:download[]&nbsp;asc]
 |===
 
+== KEYS for verifying Apache releases
+
+The GPG keys in the [OpenWebBeans KEYS file](https://www.apache.org/dist/openwebbeans/KEYS) to validate our releases.
+Read more about [How we sign Apache Releases](https://www.apache.org/info/verification.html)
+
 
