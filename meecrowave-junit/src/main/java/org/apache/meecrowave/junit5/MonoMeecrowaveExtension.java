@@ -18,33 +18,41 @@
  */
 package org.apache.meecrowave.junit5;
 
+import static java.util.Optional.ofNullable;
+
 import javax.enterprise.context.spi.CreationalContext;
 
 import org.apache.meecrowave.testing.Injector;
 import org.apache.meecrowave.testing.MonoBase;
-import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 
-public class MonoMeecrowaveExtension implements BeforeAllCallback, BeforeEachCallback, AfterEachCallback, AfterAllCallback {
+public class MonoMeecrowaveExtension extends BaseLifecycle
+        implements BeforeAllCallback, BeforeEachCallback, AfterEachCallback, AfterAllCallback {
     private static final MonoBase BASE = new MonoBase();
     private static final ExtensionContext.Namespace NAMESPACE = ExtensionContext.Namespace.create(MonoMeecrowaveExtension.class.getName());
 
     @Override
     public void beforeAll(final ExtensionContext context) {
-        context.getStore(NAMESPACE).put(MonoBase.Instance.class.getName(), BASE.startIfNeeded());
+        final ExtensionContext.Store store = context.getStore(NAMESPACE);
+        store.put(MonoBase.Instance.class, BASE.startIfNeeded());
         if (isPerClass(context)) {
             doInject(context);
+            store.put(LifecyleState.class, onInjection(context, null));
         }
     }
 
     @Override
     public void beforeEach(final ExtensionContext context) {
+        final ExtensionContext.Store store = context.getStore(NAMESPACE);
         if (!isPerClass(context)) {
             doInject(context);
+            store.put(
+                LifecyleState.class,
+                onInjection(context.getParent().orElse(context), store.get(LifecyleState.class, LifecyleState.class)));
         }
     }
 
@@ -57,25 +65,22 @@ public class MonoMeecrowaveExtension implements BeforeAllCallback, BeforeEachCal
 
     @Override
     public void afterAll(final ExtensionContext context) {
+        ofNullable(context.getStore(NAMESPACE)
+                .get(LifecyleState.class, LifecyleState.class))
+                .ifPresent(s -> s.afterLastTest(context));
         if (isPerClass(context)) {
             doRelease(context);
         }
     }
 
-    private void doRelease(ExtensionContext context) {
-        CreationalContext.class.cast(context.getStore(NAMESPACE).get(CreationalContext.class.getName())).release();
+    private void doRelease(final ExtensionContext context) {
+        context.getStore(NAMESPACE).get(CreationalContext.class, CreationalContext.class).release();
     }
 
     private void doInject(final ExtensionContext context) {
-        context.getStore(NAMESPACE).put(CreationalContext.class.getName(), Injector.inject(context.getTestInstance().orElse(null)));
+        context.getStore(NAMESPACE).put(CreationalContext.class, Injector.inject(context.getTestInstance().orElse(null)));
         Injector.injectConfig(
-                MonoBase.Instance.class.cast(context.getStore(NAMESPACE).get(MonoBase.Instance.class.getName())).getConfiguration(),
+                context.getStore(NAMESPACE).get(MonoBase.Instance.class, MonoBase.Instance.class).getConfiguration(),
                 context.getTestInstance().orElse(null));
-    }
-
-    private Boolean isPerClass(final ExtensionContext context) {
-        return context.getTestInstanceLifecycle()
-                .map(it -> it.equals(TestInstance.Lifecycle.PER_CLASS))
-                .orElse(false);
     }
 }
