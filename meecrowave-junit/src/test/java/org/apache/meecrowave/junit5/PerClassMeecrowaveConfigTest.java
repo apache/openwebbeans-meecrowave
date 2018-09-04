@@ -18,27 +18,60 @@
  */
 package org.apache.meecrowave.junit5;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+
+import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
+
 import org.apache.meecrowave.Meecrowave;
 import org.apache.meecrowave.io.IO;
 import org.apache.meecrowave.testing.ConfigurationInject;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.MalformedURLException;
-import java.net.URL;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
-
-@MeecrowaveConfig
-class MeecrowaveConfigTest {
+@TestInstance(PER_CLASS)
+@MeecrowaveConfig(scanningPackageIncludes = "org.apache.meecrowave.junit5.PerClassMeecrowaveConfigTest")
+class PerClassMeecrowaveConfigTest {
     @ConfigurationInject
     private Meecrowave.Builder config;
 
+    @Inject
+    private Bean bean;
+
+    private static Bean instance;
+
     @Test
-    void run() throws MalformedURLException {
-        assertEquals("simple", slurp(new URL("http://localhost:" + config.getHttpPort() + "/api/test")));
+    void m1() {
+        doTest();
+    }
+
+    @Test
+    void m2() {
+        doTest();
+    }
+
+    private void doTest() {
+        if (instance == null) {
+            first();
+        } else {
+            second();
+        }
+    }
+
+    private void first() {
+        assertEquals("ok", bean.get());
+        instance = bean;
+    }
+
+    private void second() {
+        assertSame(instance, bean);
     }
 
     private String slurp(final URL url) {
@@ -48,5 +81,12 @@ class MeecrowaveConfigTest {
             fail(e.getMessage());
         }
         return null;
+    }
+
+    @ApplicationScoped
+    public static class Bean {
+        String get() {
+            return "ok";
+        }
     }
 }

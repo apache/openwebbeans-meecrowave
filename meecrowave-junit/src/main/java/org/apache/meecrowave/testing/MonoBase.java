@@ -42,10 +42,9 @@ public class MonoBase {
             final Meecrowave meecrowave = new Meecrowave(configuration);
             if (CONTAINER.compareAndSet(null, new Instance(meecrowave, configuration, containerLoader))) {
                 final Configuration runnerConfig = StreamSupport.stream(ServiceLoader.load(Configuration.class)
-                                                                                     .spliterator(), false)
-                                                                .sorted(Comparator.comparingInt(Configuration::order))
-                                                                .findFirst()
-                                                                .orElseGet(() -> new Configuration() {});
+                        .spliterator(), false)
+                        .min(Comparator.comparingInt(Configuration::order))
+                        .orElseGet(() -> new Configuration() {});
 
                 runnerConfig.beforeStarts();
 

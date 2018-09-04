@@ -84,6 +84,10 @@ public @interface MeecrowaveConfig {
     boolean tomcatWrapLoader() default false;
     String sharedLibraries() default "";
     boolean useLog4j2JulLogManager() default false;
+    String scanningPackageIncludes() default "";
+    String scanningPackageExcludes() default "";
+    String scanningIncludes() default "";
+    String scanningExcludes() default "";
 
     Class<? extends Annotation>[] scopes() default {};
 }

@@ -22,30 +22,60 @@ import javax.enterprise.context.spi.CreationalContext;
 
 import org.apache.meecrowave.testing.Injector;
 import org.apache.meecrowave.testing.MonoBase;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 
-public class MonoMeecrowaveExtension implements BeforeAllCallback, BeforeEachCallback, AfterEachCallback {
+public class MonoMeecrowaveExtension implements BeforeAllCallback, BeforeEachCallback, AfterEachCallback, AfterAllCallback {
     private static final MonoBase BASE = new MonoBase();
     private static final ExtensionContext.Namespace NAMESPACE = ExtensionContext.Namespace.create(MonoMeecrowaveExtension.class.getName());
 
     @Override
     public void beforeAll(final ExtensionContext context) {
         context.getStore(NAMESPACE).put(MonoBase.Instance.class.getName(), BASE.startIfNeeded());
+        if (isPerClass(context)) {
+            doInject(context);
+        }
     }
 
     @Override
     public void beforeEach(final ExtensionContext context) {
+        if (!isPerClass(context)) {
+            doInject(context);
+        }
+    }
+
+    @Override
+    public void afterEach(final ExtensionContext context) {
+        if (!isPerClass(context)) {
+            doRelease(context);
+        }
+    }
+
+    @Override
+    public void afterAll(final ExtensionContext context) {
+        if (isPerClass(context)) {
+            doRelease(context);
+        }
+    }
+
+    private void doRelease(ExtensionContext context) {
+        CreationalContext.class.cast(context.getStore(NAMESPACE).get(CreationalContext.class.getName())).release();
+    }
+
+    private void doInject(final ExtensionContext context) {
         context.getStore(NAMESPACE).put(CreationalContext.class.getName(), Injector.inject(context.getTestInstance().orElse(null)));
         Injector.injectConfig(
                 MonoBase.Instance.class.cast(context.getStore(NAMESPACE).get(MonoBase.Instance.class.getName())).getConfiguration(),
                 context.getTestInstance().orElse(null));
     }
 
-    @Override
-    public void afterEach(final ExtensionContext context) {
-        CreationalContext.class.cast(context.getStore(NAMESPACE).get(CreationalContext.class.getName())).release();
+    private Boolean isPerClass(final ExtensionContext context) {
+        return context.getTestInstanceLifecycle()
+                .map(it -> it.equals(TestInstance.Lifecycle.PER_CLASS))
+                .orElse(false);
     }
 }

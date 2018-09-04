@@ -36,6 +36,7 @@ import org.apache.meecrowave.Meecrowave;
 import org.apache.meecrowave.testing.Injector;
 import org.apache.webbeans.config.WebBeansContext;
 import org.apache.webbeans.spi.ContextsService;
+import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
@@ -46,7 +47,7 @@ public class MeecrowaveExtension implements BeforeAllCallback, AfterAllCallback,
     private static final ExtensionContext.Namespace NAMESPACE = ExtensionContext.Namespace.create(MeecrowaveExtension.class.getName());
 
     @Override
-    public void beforeAll(final ExtensionContext context) throws Exception {
+    public void beforeAll(final ExtensionContext context) {
         final Meecrowave.Builder builder = new Meecrowave.Builder();
         final Optional<MeecrowaveConfig> meecrowaveConfig = context.getElement().map(e -> e.getAnnotation(MeecrowaveConfig.class));
         final String ctx;
@@ -90,25 +91,34 @@ public class MeecrowaveExtension implements BeforeAllCallback, AfterAllCallback,
         context.getStore(NAMESPACE).put(Meecrowave.class.getName(), meecrowave);
         context.getStore(NAMESPACE).put(Meecrowave.Builder.class.getName(), builder);
         meecrowave.bake(ctx);
+
+        if (isPerClass(context)) {
+            doInject(context);
+        }
     }
 
     @Override
-    public void afterAll(final ExtensionContext context) throws Exception {
-        Meecrowave.class.cast(context.getStore(NAMESPACE).get(Meecrowave.class.getName())).close();
+    public void afterAll(final ExtensionContext context) {
+        if (isPerClass(context)) {
+            Meecrowave.class.cast(context.getStore(NAMESPACE).get(Meecrowave.class.getName())).close();
+        }
     }
 
     @Override
-    public void beforeEach(final ExtensionContext context) throws Exception {
-        getScopes(context).ifPresent(scopes -> {
-           final ContextsService contextsService = WebBeansContext.currentInstance().getContextsService();
-           Stream.of(scopes).forEach(s -> contextsService.startContext(s, null));
-        });
-        context.getStore(NAMESPACE).put(CreationalContext.class.getName(), Injector.inject(context.getTestInstance().orElse(null)));
-        Injector.injectConfig(Meecrowave.Builder.class.cast(context.getStore(NAMESPACE).get(Meecrowave.Builder.class.getName())), context.getTestInstance().orElse(null));
+    public void beforeEach(final ExtensionContext context) {
+        if (!isPerClass(context)) {
+            doInject(context);
+        }
     }
 
     @Override
-    public void afterEach(final ExtensionContext context) throws Exception {
+    public void afterEach(final ExtensionContext context) {
+        if (!isPerClass(context)) {
+            doRelease(context);
+        }
+    }
+
+    private void doRelease(final ExtensionContext context) {
         CreationalContext.class.cast(context.getStore(NAMESPACE).get(CreationalContext.class.getName())).release();
         getScopes(context).ifPresent(scopes -> {
             final ContextsService contextsService = WebBeansContext.currentInstance().getContextsService();
@@ -116,6 +126,21 @@ public class MeecrowaveExtension implements BeforeAllCallback, AfterAllCallback,
             Collections.reverse(list);
             list.forEach(s -> contextsService.endContext(s, null));
         });
+    }
+
+    private Boolean isPerClass(final ExtensionContext context) {
+        return context.getTestInstanceLifecycle()
+                .map(it -> it.equals(TestInstance.Lifecycle.PER_CLASS))
+                .orElse(false);
+    }
+
+    private void doInject(final ExtensionContext context) {
+        getScopes(context).ifPresent(scopes -> {
+            final ContextsService contextsService = WebBeansContext.currentInstance().getContextsService();
+            Stream.of(scopes).forEach(s -> contextsService.startContext(s, null));
+        });
+        context.getStore(NAMESPACE).put(CreationalContext.class.getName(), Injector.inject(context.getTestInstance().orElse(null)));
+        Injector.injectConfig(Meecrowave.Builder.class.cast(context.getStore(NAMESPACE).get(Meecrowave.Builder.class.getName())), context.getTestInstance().orElse(null));
     }
 
     private Optional<Class<? extends Annotation>[]> getScopes(final ExtensionContext context) {
