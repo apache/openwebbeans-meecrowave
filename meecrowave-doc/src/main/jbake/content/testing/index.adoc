@@ -104,6 +104,10 @@ public class MeecrowaveConfigTest {
 }
 ----
 
+TIP: JUnit 5 integration provides an `@AfterFirstInjection` method and `@AfterLastTest`
+which can be used to setup/reset some environment using injections once for a set of test methods.
+The methods must not have any parameter.
+
 == Arquillian Container
 
 Container dependency:
