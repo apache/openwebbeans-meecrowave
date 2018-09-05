@@ -43,27 +43,14 @@
     </dependency>
 
     <dependency>
-      <groupId>org.junit.jupiter</groupId>
-      <artifactId>junit-jupiter-engine</artifactId>
-      <version>${junit5.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.junit.vintage</groupId>
-      <artifactId>junit-vintage-engine</artifactId>
-      <version>${junit5.version}</version>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
       <groupId>org.apache.meecrowave</groupId>
       <artifactId>meecrowave-core</artifactId>
       <version>${project.version}</version>
     </dependency>
   </dependencies>
 
-  <properties> <!-- before upgrading to [5.]3.0 we must upgrade surefire -->
-    <junit5.minor.version>2.0</junit5.minor.version>
+  <properties>
+    <junit5.minor.version>3.0</junit5.minor.version>
     <junit5.version>5.${junit5.minor.version}</junit5.version>
     <meecrowave.build.name>${project.groupId}.junit</meecrowave.build.name>
   </properties>
@@ -80,9 +67,19 @@
         <dependencies>
           <dependency>
             <groupId>org.junit.platform</groupId>
-            <artifactId>junit-platform-engine</artifactId>
+            <artifactId>junit-platform-launcher</artifactId>
             <version>1.${junit5.minor.version}</version>
           </dependency>
+           <dependency>
+             <groupId>org.junit.jupiter</groupId>
+             <artifactId>junit-jupiter-engine</artifactId>
+             <version>${junit5.version}</version>
+           </dependency>
+           <dependency>
+             <groupId>org.junit.vintage</groupId>
+             <artifactId>junit-vintage-engine</artifactId>
+             <version>${junit5.version}</version>
+           </dependency>
         </dependencies>
       </plugin>
     </plugins>
