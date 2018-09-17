@@ -99,6 +99,7 @@ import org.apache.catalina.session.StandardManager;
 import org.apache.catalina.startup.Catalina;
 import org.apache.catalina.startup.MeecrowaveContextConfig;
 import org.apache.catalina.startup.Tomcat;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.StrLookup;
 import org.apache.commons.text.StrSubstitutor;
 import org.apache.coyote.http2.Http2Protocol;
@@ -467,9 +468,17 @@ public class Meecrowave implements AutoCloseable {
             final File conf = createDirectory(base, "conf");
             createDirectory(base, "lib");
             createDirectory(base, "logs");
-            createDirectory(base, "temp");
             createDirectory(base, "work");
             createDirectory(base, "webapps");
+
+            if (StringUtils.isEmpty(configuration.getTempDir())) {
+                createDirectory(base, "temp");
+            } else {
+                File tempDir = new File(configuration.getTempDir());
+                if (!tempDir.exists()) {
+                    tempDir.mkdirs();
+                }
+            }
 
             synchronize(conf, configuration.conf);
         }
