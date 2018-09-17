@@ -55,7 +55,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Properties;
 import java.util.ServiceLoader;
 import java.util.Set;
@@ -99,7 +98,6 @@ import org.apache.catalina.session.StandardManager;
 import org.apache.catalina.startup.Catalina;
 import org.apache.catalina.startup.MeecrowaveContextConfig;
 import org.apache.catalina.startup.Tomcat;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.StrLookup;
 import org.apache.commons.text.StrSubstitutor;
 import org.apache.coyote.http2.Http2Protocol;
@@ -471,7 +469,7 @@ public class Meecrowave implements AutoCloseable {
             createDirectory(base, "work");
             createDirectory(base, "webapps");
 
-            if (StringUtils.isEmpty(configuration.getTempDir())) {
+            if (configuration.getTempDir() == null || configuration.getTempDir().length() == 0) {
                 createDirectory(base, "temp");
             } else {
                 File tempDir = new File(configuration.getTempDir());
