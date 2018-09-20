@@ -63,6 +63,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.logging.Logger;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -141,6 +142,7 @@ public class Meecrowave implements AutoCloseable {
     protected ConfigurableBus clientBus;
     protected File base;
     protected final File ownedTempDir;
+    protected File workDir;
     protected InternalTomcat tomcat;
     protected volatile Thread hook;
 
@@ -466,16 +468,23 @@ public class Meecrowave implements AutoCloseable {
             final File conf = createDirectory(base, "conf");
             createDirectory(base, "lib");
             createDirectory(base, "logs");
-            createDirectory(base, "work");
-            createDirectory(base, "webapps");
 
+            // create the temp dir folder.
+            File tempDir;
             if (configuration.getTempDir() == null || configuration.getTempDir().length() == 0) {
-                createDirectory(base, "temp");
+                tempDir = createDirectory(base, "temp");
             } else {
-                File tempDir = new File(configuration.getTempDir());
+                tempDir = new File(configuration.getTempDir());
                 if (!tempDir.exists()) {
                     tempDir.mkdirs();
                 }
+            }
+
+            try {
+                workDir = createDirectory(base, "work");
+            } catch (IllegalStateException ise) {
+                // in case we could not create that directory we create it in the temp dir folder
+                workDir = createDirectory(tempDir, "work");
             }
 
             synchronize(conf, configuration.conf);
@@ -498,7 +507,6 @@ public class Meecrowave implements AutoCloseable {
         }
 
         final File conf = new File(base, "conf");
-        final File webapps = new File(base, "webapps");
 
         tomcat.setBaseDir(base.getAbsolutePath());
         tomcat.setHostname(configuration.host);
@@ -573,12 +581,20 @@ public class Meecrowave implements AutoCloseable {
             tomcat.getEngine().setDefaultHost(configuration.host);
             final StandardHost host = new StandardHost();
             host.setName(configuration.host);
-            host.setAppBase(webapps.getAbsolutePath());
+
+            try {
+                final File webapps = createDirectory(base, "webapps");
+                host.setAppBase(webapps.getAbsolutePath());
+            } catch (IllegalStateException ise) {
+                Logger.getLogger(this.getClass().getName()).info("Could not create Tomcat AppBase directory (webapps) in " +
+                    new File(base, "webapps").getAbsolutePath() + " . This is only a problem if you deploy WARs!");
+            }
+
             host.setUnpackWARs(true); // forced for now cause OWB doesn't support war:file:// urls
             try {
-                host.setWorkDir(new File(base, "work").getCanonicalPath());
+                host.setWorkDir(workDir.getCanonicalPath());
             } catch (final IOException e) {
-                host.setWorkDir(new File(base, "work").getAbsolutePath());
+                host.setWorkDir(workDir.getAbsolutePath());
             }
             tomcat.setHost(host);
         }
@@ -1919,6 +1935,7 @@ public class Meecrowave implements AutoCloseable {
         public String getConf() {
             return conf;
         }
+
         public void setConf(final String conf) {
             this.conf = conf;
         }
