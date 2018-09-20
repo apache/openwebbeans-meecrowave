@@ -1919,7 +1919,6 @@ public class Meecrowave implements AutoCloseable {
         public String getConf() {
             return conf;
         }
-
         public void setConf(final String conf) {
             this.conf = conf;
         }

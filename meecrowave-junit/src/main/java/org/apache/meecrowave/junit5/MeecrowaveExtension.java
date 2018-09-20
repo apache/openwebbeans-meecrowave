@@ -18,25 +18,18 @@
  */
 package org.apache.meecrowave.junit5;
 
-import static java.util.Arrays.asList;
 import static java.util.Optional.ofNullable;
 
 import java.io.File;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import java.util.Optional;
-import java.util.stream.Stream;
 
 import javax.enterprise.context.spi.CreationalContext;
 
 import org.apache.meecrowave.Meecrowave;
 import org.apache.meecrowave.testing.Injector;
-import org.apache.webbeans.config.WebBeansContext;
-import org.apache.webbeans.spi.ContextsService;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
@@ -46,6 +39,20 @@ import org.junit.jupiter.api.extension.ExtensionContext;
 public class MeecrowaveExtension extends BaseLifecycle
         implements BeforeAllCallback, AfterAllCallback, BeforeEachCallback, AfterEachCallback {
     private static final ExtensionContext.Namespace NAMESPACE = ExtensionContext.Namespace.create(MeecrowaveExtension.class.getName());
+
+    private final ScopesExtension scopes = new ScopesExtension() {
+        @Override
+        protected Optional<Class<? extends Annotation>[]> getScopes(final ExtensionContext context) {
+            return context.getElement()
+                          .map(e -> ofNullable(e.getAnnotation(MeecrowaveConfig.class))
+                                  .orElseGet(() -> context.getParent()
+                                                          .flatMap(ExtensionContext::getElement)
+                                                          .map(it -> it.getAnnotation(MeecrowaveConfig.class))
+                                                          .orElse(null)))
+                          .map(MeecrowaveConfig::scopes)
+                          .filter(s -> s.length > 0);
+        }
+    };
 
     @Override
     public void beforeAll(final ExtensionContext context) {
@@ -129,30 +136,15 @@ public class MeecrowaveExtension extends BaseLifecycle
     private void doRelease(final ExtensionContext context) {
         ofNullable(context.getStore(NAMESPACE).get(CreationalContext.class, CreationalContext.class))
                 .ifPresent(CreationalContext::release);
-        getScopes(context).ifPresent(scopes -> {
-            final ContextsService contextsService = WebBeansContext.currentInstance().getContextsService();
-            final List<Class<? extends Annotation>> list = new ArrayList<>(asList(scopes));
-            Collections.reverse(list);
-            list.forEach(s -> contextsService.endContext(s, null));
-        });
+        scopes.beforeEach(context);
     }
 
     private void doInject(final ExtensionContext context) {
-        getScopes(context).ifPresent(scopes -> {
-            final ContextsService contextsService = WebBeansContext.currentInstance().getContextsService();
-            Stream.of(scopes).forEach(s -> contextsService.startContext(s, null));
-        });
+        scopes.beforeEach(context);
         final ExtensionContext.Store store = context.getStore(NAMESPACE);
         store.put(CreationalContext.class, Injector.inject(context.getTestInstance().orElse(null)));
         Injector.injectConfig(
                 store.get(Meecrowave.Builder.class, Meecrowave.Builder.class),
                 context.getTestInstance().orElse(null));
-    }
-
-    private Optional<Class<? extends Annotation>[]> getScopes(final ExtensionContext context) {
-        return context.getElement()
-                      .map(e -> e.getAnnotation(MeecrowaveConfig.class))
-                      .map(MeecrowaveConfig::scopes)
-                      .filter(s -> s.length > 0);
     }
 }
