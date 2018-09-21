@@ -19,6 +19,7 @@
 package org.apache.meecrowave;
 
 import static java.util.Collections.emptyList;
+import static java.util.Collections.emptyMap;
 import static java.util.Collections.emptySet;
 import static java.util.Comparator.comparing;
 import static java.util.Locale.ROOT;
@@ -63,7 +64,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.logging.Logger;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -99,8 +99,6 @@ import org.apache.catalina.session.StandardManager;
 import org.apache.catalina.startup.Catalina;
 import org.apache.catalina.startup.MeecrowaveContextConfig;
 import org.apache.catalina.startup.Tomcat;
-import org.apache.commons.text.StrLookup;
-import org.apache.commons.text.StrSubstitutor;
 import org.apache.coyote.http2.Http2Protocol;
 import org.apache.cxf.BusFactory;
 import org.apache.johnzon.core.BufferStrategy;
@@ -109,6 +107,7 @@ import org.apache.meecrowave.api.StopListening;
 import org.apache.meecrowave.cxf.ConfigurableBus;
 import org.apache.meecrowave.cxf.CxfCdiAutoSetup;
 import org.apache.meecrowave.io.IO;
+import org.apache.meecrowave.lang.Substitutor;
 import org.apache.meecrowave.logging.jul.Log4j2Logger;
 import org.apache.meecrowave.logging.log4j2.Log4j2Shutdown;
 import org.apache.meecrowave.logging.openwebbeans.Log4j2LoggerFactory;
@@ -465,10 +464,6 @@ public class Meecrowave implements AutoCloseable {
         { // setup
             base = new File(newBaseDir());
 
-            final File conf = createDirectory(base, "conf");
-            createDirectory(base, "lib");
-            createDirectory(base, "logs");
-
             // create the temp dir folder.
             File tempDir;
             if (configuration.getTempDir() == null || configuration.getTempDir().length() == 0) {
@@ -482,16 +477,16 @@ public class Meecrowave implements AutoCloseable {
 
             try {
                 workDir = createDirectory(base, "work");
-            } catch (IllegalStateException ise) {
+            } catch (final IllegalStateException ise) {
                 // in case we could not create that directory we create it in the temp dir folder
                 workDir = createDirectory(tempDir, "work");
             }
 
-            synchronize(conf, configuration.conf);
+            synchronize(new File(base, "conf"), configuration.conf);
         }
 
         final Properties props = configuration.properties;
-        StrSubstitutor substitutor = null;
+        Substitutor substitutor = null;
         for (final String s : props.stringPropertyNames()) {
             final String v = props.getProperty(s);
             if (v != null && v.contains("${")) {
@@ -500,7 +495,7 @@ public class Meecrowave implements AutoCloseable {
                     placeHolders.put("meecrowave.embedded.http", Integer.toString(configuration.httpPort));
                     placeHolders.put("meecrowave.embedded.https", Integer.toString(configuration.httpsPort));
                     placeHolders.put("meecrowave.embedded.stop", Integer.toString(configuration.stopPort));
-                    substitutor = new StrSubstitutor(placeHolders);
+                    substitutor = new Substitutor(placeHolders);
                 }
                 props.put(s, substitutor.replace(v));
             }
@@ -585,9 +580,9 @@ public class Meecrowave implements AutoCloseable {
             try {
                 final File webapps = createDirectory(base, "webapps");
                 host.setAppBase(webapps.getAbsolutePath());
-            } catch (IllegalStateException ise) {
-                Logger.getLogger(this.getClass().getName()).info("Could not create Tomcat AppBase directory (webapps) in " +
-                    new File(base, "webapps").getAbsolutePath() + " . This is only a problem if you deploy WARs!");
+            } catch (final IllegalStateException ise) {
+                // never an issue since the webapps are deployed being put in webapps - so no dynamic folder
+                // or through their path - so don't need webapps folder
             }
 
             host.setUnpackWARs(true); // forced for now cause OWB doesn't support war:file:// urls
@@ -653,6 +648,9 @@ public class Meecrowave implements AutoCloseable {
                 httpsConnector.addUpgradeProtocol(new Http2Protocol());
             }
             final List<SSLHostConfig> buildSslHostConfig = buildSslHostConfig();
+            if (!buildSslHostConfig.isEmpty()) {
+                createDirectory(base, "conf");
+            }
             buildSslHostConfig.forEach(sslHostConf -> {
                 if (isCertificateFromClasspath(sslHostConf.getCertificateKeystoreFile())) {
                     copyCertificateToConfDir(sslHostConf.getCertificateKeystoreFile());
@@ -1081,6 +1079,8 @@ public class Meecrowave implements AutoCloseable {
             for (final Map.Entry<String, URL> u : urls.entrySet()) {
                 try (final InputStream is = u.getValue().openStream()) {
                     final File to = new File(base, u.getKey());
+                    final File parentFile = to.getParentFile();
+                    createDirectory(parentFile.getParentFile(), parentFile.getName());
                     try (final OutputStream os = new FileOutputStream(to)) {
                         IO.copy(is, os);
                     }
@@ -2123,13 +2123,13 @@ public class Meecrowave implements AutoCloseable {
 
         public void loadFromProperties(final Properties config) {
             // filtering properties with system properties or themself
-            final StrSubstitutor strSubstitutor = new StrSubstitutor(new StrLookup<String>() {
+            final Substitutor strSubstitutor = new Substitutor(emptyMap()) {
                 @Override
-                public String lookup(final String key) {
+                public String getOrDefault(final String key, final String or) {
                     final String property = System.getProperty(key);
-                    return property == null ? config.getProperty(key) : null;
+                    return property == null ? config.getProperty(key, or) : or;
                 }
-            });
+            };
 
             final ValueTransformers transformers = getExtension(ValueTransformers.class);
             for (final String key : config.stringPropertyNames()) {
