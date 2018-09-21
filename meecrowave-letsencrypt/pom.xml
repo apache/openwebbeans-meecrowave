@@ -29,7 +29,7 @@
   <name>Meecrowave :: Let's Encrypt</name>
 
   <properties>
-    <acme4j.version>2.1</acme4j.version>
+    <acme4j.version>2.3</acme4j.version>
     <meecrowave.build.name>${project.groupId}.letsencrypt</meecrowave.build.name>
   </properties>
 
