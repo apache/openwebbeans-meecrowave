@@ -240,7 +240,9 @@ public class KnownJarsFilter implements JarScanFilter {
         add("org.apache.aries.blueprint.noosgi");
         add("org.apache.aries.blueprint.web");
         add("org.eclipse.");
+        add("org.jacoco.agent");
         add("org.junit.");
+        add("org.osgi.annotation.versioning");
         add("org.osgi.core-");
         add("org.osgi.enterprise");
         add("orient-commons-");
