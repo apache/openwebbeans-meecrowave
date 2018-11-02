@@ -18,11 +18,16 @@
  */
 package org.apache.meecrowave.openwebbeans;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Proxy;
 import java.security.Principal;
+import java.util.Objects;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 import javax.enterprise.inject.spi.BeanManager;
 import javax.enterprise.inject.spi.CDI;
+import javax.security.auth.Subject;
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.webbeans.config.WebBeansContext;
@@ -30,14 +35,39 @@ import org.apache.webbeans.corespi.security.SimpleSecurityService;
 
 public class MeecrowaveSecurityService extends SimpleSecurityService {
     private final boolean useWrapper;
+    private final Principal proxy;
 
     public MeecrowaveSecurityService(final WebBeansContext context) {
         useWrapper = "true".equalsIgnoreCase(context.getOpenWebBeansConfiguration()
                 .getProperty("org.apache.webbeans.component.PrincipalBean.proxy", "true"));
+        final ClassLoader loader = SimpleSecurityService.class.getClassLoader();
+        final Class<?>[] apiToProxy = Stream.concat(
+                Stream.of(Principal.class),
+                Stream.of(context.getOpenWebBeansConfiguration()
+                        .getProperty("org.apache.webbeans.component.PrincipalBean.proxyApis", "org.eclipse.microprofile.jwt.JsonWebToken").split(","))
+                        .map(String::trim)
+                        .filter(it -> !it.isEmpty())
+                        .map(it -> {
+                            try { // if MP JWT-Auth is available
+                                return loader.loadClass(it.trim());
+                            } catch (final NoClassDefFoundError | ClassNotFoundException e) {
+                                return null;
+                            }
+                        })).filter(Objects::nonNull).toArray(Class[]::new);
+        proxy = apiToProxy.length == 1 ? new MeecrowavePrincipal() : Principal.class.cast(
+                Proxy.newProxyInstance(loader, apiToProxy, (proxy, method, args) -> {
+                    try {
+                        return method.invoke(getCurrentPrincipal(), args);
+                    } catch (final InvocationTargetException ite) {
+                        throw ite.getTargetException();
+                    }
+                }));
+
     }
+
     @Override // reason of that class
     public Principal getCurrentPrincipal() {
-        return useWrapper ? new MeecrowavePrincipal() : getUserPrincipal();
+        return useWrapper ? proxy : getUserPrincipal();
     }
 
     // ensure it is contextual
@@ -45,6 +75,11 @@ public class MeecrowaveSecurityService extends SimpleSecurityService {
         @Override
         public String getName() {
             return unwrap().getName();
+        }
+
+        @Override
+        public boolean implies(final Subject subject) {
+            return unwrap().implies(subject);
         }
 
         private Principal unwrap() {
