@@ -62,7 +62,7 @@
     <h2.version>1.4.196</h2.version>
     <dbcp2.version>2.5.0</dbcp2.version>
     <commons-cli.version>1.4</commons-cli.version>
-    <xbean.version>4.11</xbean.version>
+    <xbean.version>4.12</xbean.version>
   </properties>
 
   <modules>
