@@ -246,6 +246,9 @@ public class CxfCdiAutoSetup implements ServletContainerInitializer {
             if (!address.endsWith("/") && !value.startsWith("/")) {
                 return address + '/' + value;
             }
+            if ("/".equals(value)) {
+                return address;
+            }
             return address + value;
         }
 
