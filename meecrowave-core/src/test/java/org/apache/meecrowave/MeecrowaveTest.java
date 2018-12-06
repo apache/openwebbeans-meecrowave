@@ -24,6 +24,7 @@ import org.apache.meecrowave.runner.cli.CliOption;
 import org.junit.Test;
 import org.superbiz.app.Bounced;
 import org.superbiz.app.Endpoint;
+import org.superbiz.app.InterfaceApi;
 import org.superbiz.app.RsApp;
 
 import java.io.File;
@@ -117,7 +118,7 @@ public class MeecrowaveTest {
             assertEquals("simple", slurp(new URL("http://localhost:" + meecrowave.getConfiguration().getHttpPort() + "/api/test")));
             assertEquals("simplefiltertrue", slurp(new URL("http://localhost:" + meecrowave.getConfiguration().getHttpPort() + "/filter")));
             assertEquals(
-                    "sci:" + Bounced.class.getName() + Endpoint.class.getName() + RsApp.class.getName(),
+                    "sci:" + Bounced.class.getName() + Endpoint.class.getName() + InterfaceApi.class.getName() + RsApp.class.getName(),
                     slurp(new URL("http://localhost:" + meecrowave.getConfiguration().getHttpPort() + "/sci")));
         } catch (final IOException e) {
             fail(e.getMessage());
