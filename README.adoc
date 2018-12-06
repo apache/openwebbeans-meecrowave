@@ -9,7 +9,7 @@ If you want to start with your first *Hello World* you have to add the following
 
 ```xml
  <properties>
-    <meecrowave.version>1.2.3</meecrowave.version>
+    <meecrowave.version>1.2.4</meecrowave.version>
   </properties>
 
   <dependencies>
