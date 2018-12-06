@@ -31,6 +31,7 @@ import javax.enterprise.inject.spi.Extension;
 import javax.enterprise.inject.spi.ProcessAnnotatedType;
 import javax.ws.rs.Path;
 
+import org.apache.meecrowave.cxf.Cxfs;
 import org.apache.meecrowave.cxf.JAXRSFieldInjectionInterceptor;
 import org.apache.meecrowave.cxf.MeecrowaveBus;
 import org.apache.webbeans.container.AnnotatedTypeWrapper;
@@ -39,13 +40,18 @@ import org.apache.webbeans.portable.AnnotatedElementFactory;
 public class MeecrowaveExtension implements Extension {
 
     void addBeansFromJava(@Observes final BeforeBeanDiscovery bbd, final BeanManager bm) {
-        // stream not really needed but here for the pattern in case we need other beans
-        Stream.of(MeecrowaveBus.class).forEach(type -> bbd.addAnnotatedType(bm.createAnnotatedType(type)));
+        if (Cxfs.IS_PRESENT) {
+            // stream not really needed but here for the pattern in case we need other beans
+            Stream.of(MeecrowaveBus.class)
+                  .forEach(type -> bbd.addAnnotatedType(bm.createAnnotatedType(type)));
+        }
     }
 
     void enableContextFieldInjectionWorks(@Observes final ProcessAnnotatedType<?> pat, final BeanManager bm) {
         final AnnotatedType<?> at = pat.getAnnotatedType();
-        if (at.isAnnotationPresent(Path.class) && !at.isAnnotationPresent(JAXRSFieldInjectionInterceptor.Binding.class)
+        if (Cxfs.IS_PRESENT
+                && at.isAnnotationPresent(Path.class)
+                && !at.isAnnotationPresent(JAXRSFieldInjectionInterceptor.Binding.class)
                 && at.getAnnotations().stream().anyMatch(a -> bm.isNormalScope(a.annotationType()))) {
             pat.setAnnotatedType(new JAXRSFIeldInjectionAT(this, at));
         }

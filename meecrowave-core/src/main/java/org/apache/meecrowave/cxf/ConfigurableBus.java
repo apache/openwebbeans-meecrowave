@@ -19,7 +19,6 @@
 package org.apache.meecrowave.cxf;
 
 import static java.util.Collections.singletonList;
-import static java.util.Optional.of;
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toList;
 
@@ -33,6 +32,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -99,10 +99,10 @@ public class ConfigurableBus extends ExtensionManagerBus {
                             final JsonReaderFactory readerFactory = provider.createReaderFactory(
                                     new HashMap<String, Object>() {{
                                         put(JsonParserFactoryImpl.SUPPORTS_COMMENTS, builder.isJsonpSupportsComment());
-                                        of(builder.getJsonpMaxStringLen()).filter(v -> v > 0)
+                                        Optional.of(builder.getJsonpMaxStringLen()).filter(v -> v > 0)
                                                 .ifPresent(s -> put(JsonParserFactoryImpl.MAX_STRING_LENGTH,
                                                         s));
-                                        of(builder.getJsonpMaxReadBufferLen()).filter(v -> v > 0)
+                                        Optional.of(builder.getJsonpMaxReadBufferLen()).filter(v -> v > 0)
                                                 .ifPresent(s -> put(JsonParserFactoryImpl.BUFFER_LENGTH,
                                                         s));
                                         ofNullable(builder.getJsonpBufferStrategy()).ifPresent(
@@ -111,7 +111,7 @@ public class ConfigurableBus extends ExtensionManagerBus {
                             final JsonWriterFactory writerFactory = provider.createWriterFactory(
                                     new HashMap<String, Object>() {{
                                         put(JsonGenerator.PRETTY_PRINTING, builder.isJsonpPrettify());
-                                        of(builder.getJsonpMaxWriteBufferLen()).filter(v -> v > 0)
+                                        Optional.of(builder.getJsonpMaxWriteBufferLen()).filter(v -> v > 0)
                                                 .ifPresent(v -> put(
                                                         JsonGeneratorFactoryImpl
                                                                 .GENERATOR_BUFFER_LENGTH,

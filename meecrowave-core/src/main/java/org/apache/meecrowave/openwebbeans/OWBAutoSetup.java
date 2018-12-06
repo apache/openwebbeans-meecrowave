@@ -19,6 +19,7 @@
 package org.apache.meecrowave.openwebbeans;
 
 import org.apache.meecrowave.Meecrowave;
+import org.apache.meecrowave.cxf.Cxfs;
 import org.apache.meecrowave.cxf.JAXRSFieldInjectionInterceptor;
 import org.apache.webbeans.annotation.DefaultLiteral;
 import org.apache.webbeans.config.WebBeansContext;
@@ -103,8 +104,10 @@ public class OWBAutoSetup implements ServletContainerInitializer {
                             .types(Meecrowave.class, AutoCloseable.class, Object.class)
                             .createWith(cc -> meecrowave)));
 
-            interceptorsManager.addInterceptorBindingType(JAXRSFieldInjectionInterceptor.Binding.class);
-            beanManager.addAdditionalAnnotatedType(this, beanManager.createAnnotatedType(JAXRSFieldInjectionInterceptor.class));
+            if (Cxfs.IS_PRESENT) {
+                interceptorsManager.addInterceptorBindingType(JAXRSFieldInjectionInterceptor.Binding.class);
+                beanManager.addAdditionalAnnotatedType(this, beanManager.createAnnotatedType(JAXRSFieldInjectionInterceptor.class));
+            }
         }
 
         private <T> Bean<?> newBean(final WebBeansContext instance, final Consumer<BeanConfigurator<T>> configurer) {

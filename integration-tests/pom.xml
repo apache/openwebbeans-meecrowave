@@ -42,6 +42,7 @@
     <module>webservices</module>
     <module>ssl</module>
     <module>sse</module>
+    <module>no-cxf</module>
   </modules>
 
   <build>

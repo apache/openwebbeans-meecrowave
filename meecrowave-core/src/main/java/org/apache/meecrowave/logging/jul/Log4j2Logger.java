@@ -18,7 +18,6 @@
  */
 package org.apache.meecrowave.logging.jul;
 
-import org.apache.cxf.common.logging.AbstractDelegatingLogger;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.simple.SimpleLogger;

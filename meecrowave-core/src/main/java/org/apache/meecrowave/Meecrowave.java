@@ -100,12 +100,11 @@ import org.apache.catalina.startup.Catalina;
 import org.apache.catalina.startup.MeecrowaveContextConfig;
 import org.apache.catalina.startup.Tomcat;
 import org.apache.coyote.http2.Http2Protocol;
-import org.apache.cxf.BusFactory;
-import org.apache.johnzon.core.BufferStrategy;
 import org.apache.meecrowave.api.StartListening;
 import org.apache.meecrowave.api.StopListening;
 import org.apache.meecrowave.cxf.ConfigurableBus;
 import org.apache.meecrowave.cxf.CxfCdiAutoSetup;
+import org.apache.meecrowave.cxf.Cxfs;
 import org.apache.meecrowave.io.IO;
 import org.apache.meecrowave.lang.Substitutor;
 import org.apache.meecrowave.logging.jul.Log4j2Logger;
@@ -188,7 +187,10 @@ public class Meecrowave implements AutoCloseable {
         }
 
         final ProvidedLoader loader = new ProvidedLoader(classLoader, configuration.isTomcatWrapLoader());
-        final Consumer<Context> builtInCustomizer = c -> c.setLoader(loader);
+        final Consumer<Context> builtInCustomizer = c -> {
+            c.setLoader(loader);
+            configuration.getInitializers().forEach(i -> c.addServletContainerInitializer(i, emptySet()));
+        };
         return deployWebapp(new DeploymentMeta(meta.context, meta.docBase, ofNullable(meta.consumer).map(c -> (Consumer<Context>) ctx -> {
             builtInCustomizer.accept(ctx);
             c.accept(ctx);
@@ -277,7 +279,9 @@ public class Meecrowave implements AutoCloseable {
         final AtomicReference<Runnable> releaseSCI = new AtomicReference<>();
         final ServletContainerInitializer meecrowaveInitializer = (c, ctx1) -> {
             new OWBAutoSetup().onStartup(c, ctx1);
-            new CxfCdiAutoSetup().onStartup(c, ctx1);
+            if (Cxfs.IS_PRESENT) {
+                new CxfCdiAutoSetup().onStartup(c, ctx1);
+            }
             new TomcatAutoInitializer().onStartup(c, ctx1);
 
             if (configuration.isInjectServletContainerInitializer()) {
@@ -715,7 +719,7 @@ public class Meecrowave implements AutoCloseable {
         beforeStart();
 
 
-        if (configuration.initializeClientBus && BusFactory.getDefaultBus(false) == null) {
+        if (configuration.initializeClientBus && Cxfs.IS_PRESENT && !Cxfs.hasDefaultBus()) {
             clientBus = new ConfigurableBus();
             clientBus.initProviders(configuration,
                     ofNullable(Thread.currentThread().getContextClassLoader()).orElseGet(ClassLoader::getSystemClassLoader));
@@ -975,9 +979,7 @@ public class Meecrowave implements AutoCloseable {
             } catch (final LifecycleException e) {
                 throw new IllegalStateException(e);
             } finally {
-                if (BusFactory.getDefaultBus(false) == clientBus) { // after if runnables or listeners trigger CXF
-                    BusFactory.setDefaultBus(null);
-                }
+                Cxfs.resetDefaultBusIfEquals(clientBus); // after if runnables or listeners trigger CXF
                 tomcat = null; // ensure we can call close() N times and not have side effects
                 contexts.clear();
                 if (clearCatalinaSystemProperties) {
@@ -1255,7 +1257,7 @@ public class Meecrowave implements AutoCloseable {
         private boolean jaxrsLogProviders = false;
 
         @CliOption(name = "jsonp-buffer-strategy", description = "JSON-P JAX-RS provider buffer strategy (see johnzon)")
-        private String jsonpBufferStrategy = BufferStrategy.QUEUE.name();
+        private String jsonpBufferStrategy = "QUEUE";
 
         @CliOption(name = "jsonp-max-string-length", description = "JSON-P JAX-RS provider max string limit size (see johnzon)")
         private int jsonpMaxStringLen = 64 * 1024;
@@ -1369,6 +1371,9 @@ public class Meecrowave implements AutoCloseable {
 
         private final Map<Class<?>, Object> extensions = new HashMap<>();
         private final Collection<Consumer<Tomcat>> instanceCustomizers = new ArrayList<>();
+
+        @CliOption(name = "servlet-container-initializer", description = "ServletContainerInitializer instances.")
+        private Collection<ServletContainerInitializer> initializers = new ArrayList<>();
 
         public Builder() { // load defaults
             extensions.put(ValueTransformers.class, new ValueTransformers());
@@ -2095,6 +2100,14 @@ public class Meecrowave implements AutoCloseable {
 
         public void addCustomizer(final Consumer<Builder> configurationCustomizer) {
             configurationCustomizer.accept(this);
+        }
+
+        public void addServletContextInitializer(final ServletContainerInitializer initializer) {
+            initializers.add(initializer);
+        }
+
+        public Collection<ServletContainerInitializer> getInitializers() {
+            return initializers;
         }
 
         public String getJaxrsDefaultProviders() {
