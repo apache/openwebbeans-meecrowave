@@ -97,7 +97,7 @@ import org.apache.catalina.core.StandardHost;
 import org.apache.catalina.session.ManagerBase;
 import org.apache.catalina.session.StandardManager;
 import org.apache.catalina.startup.Catalina;
-import org.apache.catalina.startup.MeecrowaveContextConfig;
+import org.apache.meecrowave.tomcat.MeecrowaveContextConfig;
 import org.apache.catalina.startup.Tomcat;
 import org.apache.coyote.http2.Http2Protocol;
 import org.apache.meecrowave.api.StartListening;
