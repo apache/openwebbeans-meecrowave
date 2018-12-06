@@ -20,8 +20,8 @@ package org.apache.meecrowave.nocxf.itest;
 
 import static org.junit.Assert.assertEquals;
 
+import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.StringWriter;
 import java.net.URL;
@@ -30,7 +30,6 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.logging.log4j.core.util.IOUtils;
 import org.apache.meecrowave.Meecrowave;
 import org.junit.Test;
 
@@ -49,8 +48,8 @@ public class RunWithoutCxfTest {
         }}.randomHttpPort()).bake()) {
             final String url = "http://localhost:" + container.getConfiguration().getHttpPort() + "/test";
             final StringWriter output = new StringWriter();
-            try (final InputStream stream = new URL(url).openStream()) {
-                IOUtils.copy(new InputStreamReader(stream), output);
+            try (final BufferedReader stream = new BufferedReader(new InputStreamReader(new URL(url).openStream()))) {
+                output.write(stream.readLine());
             }
             assertEquals("servlet :)", output.toString().trim());
         }

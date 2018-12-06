@@ -18,22 +18,22 @@
  */
 package org.apache.meecrowave.logging.log4j2;
 
-import org.apache.logging.log4j.LogManager;
+import org.apache.meecrowave.logging.tomcat.LogFacade;
 
-/**
- * Hide away Log4j2 stuff
- */
-public class Log4j2Shutdown {
-
-    public void shutdown() {
+public class Log4j2s {
+    public static final boolean IS_PRESENT;
+    static {
+        boolean hasLog4j2;
         try {
-            // We disabled the log4j shutdown hook to gain more control and keep logs during shutdown.
-            // See #disableLog4jShutdownHook()
-            // Otoh that means we need to shutdown Log4j manually.
-            // So here we go...
-            LogManager.shutdown();
-        } catch (final Exception e) {
-            System.out.println("A problem happened when shutting down Log4j: " + e + "\n" + e.getMessage());
+            LogFacade.class.getClassLoader().loadClass("org.apache.logging.log4j.Logger");
+            hasLog4j2 = true;
+        } catch (final Exception | NoClassDefFoundError e) {
+            hasLog4j2 = false;
         }
+        IS_PRESENT = hasLog4j2;
+    }
+
+    private Log4j2s() {
+        // no-op
     }
 }

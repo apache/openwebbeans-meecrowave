@@ -19,6 +19,7 @@
 package org.apache.meecrowave.logging.tomcat;
 
 import org.apache.juli.logging.Log;
+import org.apache.meecrowave.logging.log4j2.Log4j2s;
 
 public class LogFacade implements Log {
     private final Log delegate;
@@ -29,7 +30,7 @@ public class LogFacade implements Log {
 
     public LogFacade(final String name) {
         // should be read per launch and not once per JVM
-        this.delegate = "org.apache.meecrowave.logging.tomcat.Log4j2Log".equals(System.getProperty("org.apache.tomcat.Logger", "jul")) ?
+        this.delegate = Log4j2s.IS_PRESENT && "org.apache.meecrowave.logging.tomcat.Log4j2Log".equals(System.getProperty("org.apache.tomcat.Logger", "jul")) ?
                 new Log4j2Log(name) : new JULLog(name);
     }
 

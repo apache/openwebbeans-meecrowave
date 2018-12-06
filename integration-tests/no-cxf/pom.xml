@@ -58,6 +58,10 @@
           <groupId>org.apache.geronimo.specs</groupId>
           <artifactId>geronimo-jaxrs_2.1_spec</artifactId>
         </exclusion>
+        <exclusion>
+          <groupId>org.apache.logging.log4j</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
       </exclusions>
     </dependency>
 

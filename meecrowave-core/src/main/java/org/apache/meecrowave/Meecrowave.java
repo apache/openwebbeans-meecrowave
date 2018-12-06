@@ -109,6 +109,7 @@ import org.apache.meecrowave.io.IO;
 import org.apache.meecrowave.lang.Substitutor;
 import org.apache.meecrowave.logging.jul.Log4j2Logger;
 import org.apache.meecrowave.logging.log4j2.Log4j2Shutdown;
+import org.apache.meecrowave.logging.log4j2.Log4j2s;
 import org.apache.meecrowave.logging.openwebbeans.Log4j2LoggerFactory;
 import org.apache.meecrowave.logging.tomcat.Log4j2Log;
 import org.apache.meecrowave.logging.tomcat.LogFacade;
@@ -432,11 +433,11 @@ public class Meecrowave implements AutoCloseable {
             configuration.loadFrom(configuration.getMeecrowaveProperties());
         }
 
-        if (configuration.isUseLog4j2JulLogManager()) { // /!\ don't move this line or add anything before without checking log setup
+        if (configuration.isUseLog4j2JulLogManager() && Log4j2s.IS_PRESENT) { // /!\ don't move this line or add anything before without checking log setup
             System.setProperty("java.util.logging.manager", "org.apache.logging.log4j.jul.LogManager");
         }
 
-        if (configuration.loggingGlobalSetup) {
+        if (configuration.loggingGlobalSetup && Log4j2s.IS_PRESENT) {
 
             setSystemProperty(systemPropsToRestore, "log4j.shutdownHookEnabled", "false");
             setSystemProperty(systemPropsToRestore, "openwebbeans.logging.factory", Log4j2LoggerFactory.class.getName());
@@ -444,7 +445,9 @@ public class Meecrowave implements AutoCloseable {
             setSystemProperty(systemPropsToRestore, "org.apache.tomcat.Logger", Log4j2Log.class.getName());
 
             postTask = () -> {
-                new Log4j2Shutdown().shutodwn();
+                if (Log4j2s.IS_PRESENT) {
+                    new Log4j2Shutdown().shutdown();
+                }
                 systemPropsToRestore.forEach((key, value) -> {
                     if (value == null) {
                         System.clearProperty(key);
