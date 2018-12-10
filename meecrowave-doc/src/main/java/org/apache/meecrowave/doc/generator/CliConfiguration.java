@@ -26,7 +26,6 @@ import java.lang.reflect.Field;
 import java.util.Comparator;
 import java.util.stream.Stream;
 
-import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.joining;
 
 public class CliConfiguration extends BaseGenerator {
@@ -43,7 +42,7 @@ public class CliConfiguration extends BaseGenerator {
                                 new DocCliOption("context", "The context to use to deploy the webapp"),
                                 new DocCliOption("webapp", "Location of the webapp, if not set the classpath will be deployed"),
                                 new DocCliOption("docbase", "Location of the docbase for a classpath deployment")))
-                        .flatMap(identity())
+                        .flatMap(t -> t)
                         .map(opt -> "|--" + opt.name() + "|" + opt.description())
                         .collect(joining("\n")) + "\n|===\n";
     }
