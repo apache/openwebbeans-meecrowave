@@ -19,8 +19,8 @@
 package org.apache.meecrowave.tomcat;
 
 import static java.util.Collections.emptySet;
+import static java.util.Collections.singleton;
 import static java.util.Optional.ofNullable;
-import static java.util.stream.Collectors.toSet;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -29,6 +29,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.HashMap;
@@ -38,7 +39,6 @@ import java.util.Set;
 import java.util.stream.Stream;
 
 import javax.servlet.ServletContainerInitializer;
-import javax.servlet.ServletContext;
 import javax.servlet.annotation.HandlesTypes;
 import javax.servlet.annotation.WebFilter;
 import javax.servlet.annotation.WebListener;
@@ -56,11 +56,8 @@ import org.apache.meecrowave.logging.tomcat.LogFacade;
 import org.apache.meecrowave.openwebbeans.OWBTomcatWebScannerService;
 import org.apache.meecrowave.watching.ReloadOnChangeController;
 import org.apache.tomcat.JarScanner;
-import org.apache.tomcat.util.bcel.classfile.AnnotationEntry;
 import org.apache.tomcat.util.bcel.classfile.ClassParser;
-import org.apache.tomcat.util.bcel.classfile.JavaClass;
 import org.apache.tomcat.util.descriptor.web.WebXml;
-import org.apache.tomcat.util.descriptor.web.WebXmlParser;
 import org.apache.webbeans.config.WebBeansContext;
 import org.apache.webbeans.corespi.scanner.xbean.CdiArchive;
 import org.apache.webbeans.corespi.scanner.xbean.OwbAnnotationFinder;
@@ -100,7 +97,7 @@ public class MeecrowaveContextConfig extends ContextConfig {
         }
 
         if (!configuration.isTomcatScanning()) {
-            doWebConfig();
+            super.webConfig();
             return;
         }
 
@@ -134,105 +131,33 @@ public class MeecrowaveContextConfig extends ContextConfig {
             thread.setContextClassLoader(old);
         }
         try {
-            doWebConfig();
+            super.webConfig();
         } finally {
             webClasses.clear();
             finder = null;
         }
     }
 
-    // webConfig of the parent
-    private void doWebConfig() {
-        final WebXmlParser webXmlParser = new WebXmlParser(context.getXmlNamespaceAware(),
-                context.getXmlValidation(), context.getXmlBlockExternal());
-
-        final Set<WebXml> defaults = new HashSet<>();
-        defaults.add(WebXml.class.cast(invokePrivate("getDefaultWebXmlFragment", WebXmlParser.class, webXmlParser)));
-
-        final Set<WebXml> tomcatWebXml = new HashSet<>();
-        tomcatWebXml.add(WebXml.class.cast(invokePrivate("getTomcatWebXmlFragment", WebXmlParser.class, webXmlParser)));
-
-        final WebXml webXml = createWebXml();
-        final InputSource contextWebXml = getContextWebXmlSource();
-        if (!webXmlParser.parseWebXml(contextWebXml, webXml, false)) {
-            ok = false;
-        }
-
-        final ServletContext sContext = context.getServletContext();
-        final Map<String,WebXml> fragments = processJarsForWebFragments(webXml, webXmlParser);
-        final Set<WebXml> orderedFragments = WebXml.orderWebFragments(webXml, fragments, sContext);
-        if (ok) {
-            processServletContainerInitializers();
-        }
-
-        if  (!webXml.isMetadataComplete() || typeInitializerMap.size() > 0) {
-            final ClassLoader loader = context.getLoader().getClassLoader();
-            webClasses.forEach((k, v) -> {
-                final WebXml xml = fragments.get(k);
-                if (xml == null) {
-                    return;
-                }
-                v.forEach(clazz -> {
-                    try (final InputStream stream = loader.getResourceAsStream(clazz.getName().replace('.', '/') + ".class")) {
-                        final ClassParser parser = new ClassParser(stream);
-                        final JavaClass parsed = parser.parse();
-                        final AnnotationEntry[] annotationsEntries = parsed.getAnnotationEntries();
-                        if (annotationsEntries != null) {
-                            final String className = parsed.getClassName();
-                            for (final AnnotationEntry ae : annotationsEntries) {
-                                final String type = ae.getAnnotationType();
-                                if ("Ljavax/servlet/annotation/WebServlet;".equals(type)) {
-                                    processAnnotationWebServlet(className, ae, xml);
-                                }else if ("Ljavax/servlet/annotation/WebFilter;".equals(type)) {
-                                    processAnnotationWebFilter(className, ae, xml);
-                                }else if ("Ljavax/servlet/annotation/WebListener;".equals(type)) {
-                                    xml.addListener(className);
-                                }
-                            }
-                        }
-                    } catch (final IOException e) {
-                        new LogFacade(MeecrowaveContextConfig.class.getName()).error("Can't parse " + clazz);
-                    }
-                });
-            });
-        }
-
-        if (!webXml.isMetadataComplete()) {
-            if (ok) {
-                ok = webXml.merge(orderedFragments);
+    @Override
+    protected void processClasses(final WebXml webXml, final Set<WebXml> orderedFragments) {
+        final ClassLoader loader = context.getLoader().getClassLoader();
+        orderedFragments.forEach(fragment -> {
+            final WebXml annotations = new WebXml();
+            annotations.setDistributable(true);
+            final URL url = fragment.getURL();
+            final Collection<Class<?>> classes = webClasses.get(url.toExternalForm());
+            if (classes == null) {
+                return;
             }
-            webXml.merge(tomcatWebXml);
-            webXml.merge(defaults);
-            if (ok) {
-                invokePrivate("convertJsps", WebXml.class, webXml);
-            }
-            if (ok) {
-                invokePrivate("configureContext", WebXml.class, webXml);
-            }
-        } else {
-            webXml.merge(tomcatWebXml);
-            webXml.merge(defaults);
-            invokePrivate("convertJsps", WebXml.class, webXml);
-            invokePrivate("configureContext", WebXml.class, webXml);
-        }
-
-        if (context.getLogEffectiveWebXml()) {
-            LOG.info("web.xml:\n" + webXml.toXml());
-        }
-
-        if (ok) {
-            processResourceJARs(Stream.concat(orderedFragments.stream(), fragments.values().stream()).collect(toSet()));
-        }
-
-        if (ok) {
-            initializerClassMap.forEach((key, value) -> {
-                if (value.isEmpty()) {
-                    context.addServletContainerInitializer(key, null);
-                } else {
-                    context.addServletContainerInitializer(key, value);
+            classes.forEach(clazz -> {
+                try (final InputStream stream = loader.getResourceAsStream(clazz.getName().replace('.', '/') + ".class")) {
+                    processClass(annotations, new ClassParser(stream).parse());
+                } catch (final IOException e) {
+                    new LogFacade(MeecrowaveContextConfig.class.getName()).error("Can't parse " + clazz);
                 }
             });
-        }
+            fragment.merge(singleton(annotations));
+        });
     }
 
     @Override
