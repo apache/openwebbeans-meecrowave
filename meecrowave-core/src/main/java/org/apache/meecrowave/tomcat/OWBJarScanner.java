@@ -23,18 +23,17 @@ import org.apache.tomcat.JarScanFilter;
 import org.apache.tomcat.JarScanType;
 import org.apache.tomcat.JarScanner;
 import org.apache.tomcat.JarScannerCallback;
-import org.apache.tomcat.util.buf.UriUtil;
 import org.apache.tomcat.util.scan.Constants;
 import org.apache.tomcat.util.scan.JarFactory;
 import org.apache.webbeans.config.WebBeansContext;
 import org.apache.webbeans.corespi.scanner.xbean.CdiArchive;
 import org.apache.webbeans.web.scanner.WebScannerService;
+import org.apache.xbean.finder.util.Files;
 
 import javax.servlet.ServletContext;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.net.URISyntaxException;
 import java.net.URL;
 
 public class OWBJarScanner implements JarScanner {
@@ -50,23 +49,17 @@ public class OWBJarScanner implements JarScanner {
                         .forEach(u -> {
                             try {
                                 final URL url = new URL(u);
-                                if ("jar".equals(url.getProtocol()) || url.getPath().endsWith(Constants.JAR_EXT)) {
-                                    try (final Jar jar = JarFactory.newInstance(url)) {
+                                final File asFile = Files.toFile(url);
+                                if (asFile.getName().endsWith(Constants.JAR_EXT)) {
+                                    try (final Jar jar = JarFactory.newInstance(asFile.toURI().toURL())) {
                                         callback.scan(jar, u, true);
                                     }
-                                } else if ("file".equals(url.getProtocol())) {
-                                    final File f = new File(url.toURI());
-                                    if (f.isFile()) {
-                                        try (final Jar jar = JarFactory.newInstance(UriUtil.buildJarUrl(f))) {
-                                            callback.scan(jar, f.getAbsolutePath(), true);
-                                        }
-                                    } else if (f.isDirectory()) {
-                                        callback.scan(f, f.getAbsolutePath(), true);
-                                    }
+                                } else if (asFile.isDirectory()) {
+                                    callback.scan(asFile, asFile.getAbsolutePath(), true);
                                 }
                             } catch (final MalformedURLException e) {
                                 // skip
-                            } catch (final IOException | URISyntaxException ioe) {
+                            } catch (final IOException ioe) {
                                 throw new IllegalArgumentException(ioe);
                             }
                         });
