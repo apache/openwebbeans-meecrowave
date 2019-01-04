@@ -27,7 +27,9 @@ import org.apache.meecrowave.openwebbeans.OWBTomcatWebScannerService;
 import org.apache.openwebbeans.se.OWBContainer;
 import org.apache.openwebbeans.se.OWBInitializer;
 import org.apache.webbeans.config.WebBeansContext;
+import org.apache.webbeans.spi.ContextsService;
 import org.apache.webbeans.spi.ScannerService;
+import org.apache.webbeans.web.context.WebContextsService;
 import org.apache.xbean.finder.filter.Filter;
 
 import javax.enterprise.inject.se.SeContainer;
@@ -117,6 +119,9 @@ public class MeecrowaveSeContainerInitializer extends OWBInitializer {
     @Override
     protected SeContainer newContainer(final WebBeansContext context) {
         final Meecrowave meecrowave = new Meecrowave(builder);
+        if (!services.containsKey(ContextsService.class.getName())) { // forced otherwise we mess up the env with owb-se
+            context.registerService(ContextsService.class, new WebContextsService(context));
+        }
         return new OWBContainer(context, meecrowave) {
             {
                 meecrowave.bake();
