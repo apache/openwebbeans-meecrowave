@@ -99,6 +99,15 @@ public class MeecrowaveExtension {
     private String defaultSSLHostConfigName;
     private Integer webSessionTimeout;
     private String webSessionCookieConfig;
+    private boolean tomcatJspDevelopment;
+
+    public boolean isTomcatJspDevelopment() {
+        return tomcatJspDevelopment;
+    }
+
+    public void setTomcatJspDevelopment(final boolean tomcatJspDevelopment) {
+        this.tomcatJspDevelopment = tomcatJspDevelopment;
+    }
 
     public Integer getWebSessionTimeout() {
         return webSessionTimeout;

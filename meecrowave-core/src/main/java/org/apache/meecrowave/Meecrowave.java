@@ -1310,6 +1310,9 @@ public class Meecrowave implements AutoCloseable {
         @CliOption(name = "tomcat-default-setup", description = "Add default servlet")
         private boolean tomcatAutoSetup = true;
 
+        @CliOption(name = "tomcat-default-setup-jsp-development", description = "Should JSP support if available be set in development mode")
+        private boolean tomcatJspDevelopment = false;
+
         @CliOption(name = "use-shutdown-hook", description = "Use shutdown hook to automatically stop the container on Ctrl+C")
         private boolean useShutdownHook = true;
 
@@ -1395,6 +1398,14 @@ public class Meecrowave implements AutoCloseable {
                     throw new IllegalArgumentException(e);
                 }
             }));
+        }
+
+        public boolean isTomcatJspDevelopment() {
+            return tomcatJspDevelopment;
+        }
+
+        public void setTomcatJspDevelopment(final boolean tomcatJspDevelopment) {
+            this.tomcatJspDevelopment = tomcatJspDevelopment;
         }
 
         public Integer getWebSessionTimeout() {

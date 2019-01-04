@@ -78,6 +78,7 @@ public @interface MeecrowaveConfig {
     boolean loggingGlobalSetup() default true;
     boolean tomcatScanning() default true;
     boolean tomcatAutoSetup() default true;
+    boolean tomcatJspDevelopmentMode() default false;
     boolean useShutdownHook() default true;
     String tomcatFilter() default "";
     boolean useTomcatDefaults() default true;

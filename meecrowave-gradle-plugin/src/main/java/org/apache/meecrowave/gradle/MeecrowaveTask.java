@@ -238,6 +238,10 @@ public class MeecrowaveTask extends DefaultTask {
 
     @Input
     @Optional
+    private boolean tomcatJspDevelopment = false;
+
+    @Input
+    @Optional
     private boolean useShutdownHook = true;
 
     @Input
@@ -1219,5 +1223,13 @@ public class MeecrowaveTask extends DefaultTask {
 
     public void setWebSessionCookieConfig(final String webSessionCookieConfig) {
         this.webSessionCookieConfig = webSessionCookieConfig;
+    }
+
+    public boolean isTomcatJspDevelopment() {
+        return tomcatJspDevelopment;
+    }
+
+    public void setTomcatJspDevelopment(final boolean tomcatJspDevelopment) {
+        this.tomcatJspDevelopment = tomcatJspDevelopment;
     }
 }

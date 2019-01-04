@@ -18,18 +18,18 @@
  */
 package org.apache.meecrowave.tomcat;
 
-import org.apache.catalina.servlets.DefaultServlet;
-import org.apache.meecrowave.Meecrowave;
+import java.util.Set;
 
 import javax.servlet.ServletContainerInitializer;
 import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
 import javax.servlet.ServletRegistration;
-import java.util.Set;
+
+import org.apache.catalina.servlets.DefaultServlet;
+import org.apache.meecrowave.Meecrowave;
 
 public class TomcatAutoInitializer implements ServletContainerInitializer {
     @Override
-    public void onStartup(final Set<Class<?>> c, final ServletContext ctx) throws ServletException {
+    public void onStartup(final Set<Class<?>> c, final ServletContext ctx) {
         final Meecrowave.Builder builder = Meecrowave.Builder.class.cast(ctx.getAttribute("meecrowave.configuration"));
         if (!builder.isTomcatAutoSetup()) {
             return;
@@ -48,7 +48,7 @@ public class TomcatAutoInitializer implements ServletContainerInitializer {
             if (jspDef != null) {
                 jspDef.setInitParameter("fork", "false");
                 jspDef.setInitParameter("xpoweredBy", "false");
-                jspDef.setInitParameter("development", "false");
+                jspDef.setInitParameter("development", Boolean.toString(builder.isTomcatJspDevelopment()));
                 jspDef.setLoadOnStartup(3);
                 jspDef.addMapping("*.jsp");
                 jspDef.addMapping("*.jspx");

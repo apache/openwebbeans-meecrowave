@@ -108,6 +108,7 @@ public class MeecrowaveConfiguration implements ContainerConfiguration {
     private String defaultSSLHostConfigName;
     private Integer webSessionTimeout;
     private String webSessionCookieConfig;
+    private boolean tomcatJspDevelopment;
 
     // configurable cause when set to Local arquillian bypass some protocol configuration cause of container default
     private String arquillianProtocol = "Servlet 3.1";
@@ -231,6 +232,14 @@ public class MeecrowaveConfiguration implements ContainerConfiguration {
         }
 
         return builder;
+    }
+
+    public boolean isTomcatJspDevelopment() {
+        return tomcatJspDevelopment;
+    }
+
+    public void setTomcatJspDevelopment(final boolean tomcatJspDevelopment) {
+        this.tomcatJspDevelopment = tomcatJspDevelopment;
     }
 
     public String getCxfServletParams() {

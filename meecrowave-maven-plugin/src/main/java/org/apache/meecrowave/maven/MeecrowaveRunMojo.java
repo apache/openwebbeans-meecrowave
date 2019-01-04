@@ -112,6 +112,9 @@ public class MeecrowaveRunMojo extends AbstractMojo {
     @Parameter(property = "meecrowave.tomcatAutoSetup", defaultValue = "true")
     private boolean tomcatAutoSetup;
 
+    @Parameter(property = "meecrowave.tomcatJspDevelopment", defaultValue = "false")
+    private boolean tomcatJspDevelopment;
+
     @Parameter(property = "meecrowave.skipHttp")
     private boolean skipHttp;
 
