@@ -159,8 +159,8 @@ public class ConfigurableBus extends ExtensionManagerBus {
     }
 
     @Provider
-    @Produces({MediaType.APPLICATION_JSON, "*/*+json"})
-    @Consumes({MediaType.APPLICATION_JSON, "*/*+json"})
+    @Produces({MediaType.APPLICATION_JSON, "application/*+json"})
+    @Consumes({MediaType.APPLICATION_JSON, "application/*+json"})
     public static class ConfiguredJsonbJaxrsProvider<T> extends JsonbJaxrsProvider<T> {
         private final Jsonb jsonb;
 

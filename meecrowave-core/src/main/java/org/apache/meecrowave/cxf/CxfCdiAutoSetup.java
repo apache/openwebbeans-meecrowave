@@ -140,7 +140,7 @@ public class CxfCdiAutoSetup implements ServletContainerInitializer {
             }
         });
         jaxrs.setAsyncSupported(true);
-        jaxrs.addMappingForUrlPatterns(EnumSet.allOf(DispatcherType.class), true, builder.getJaxrsMapping());
+        jaxrs.addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST, DispatcherType.ASYNC), true, builder.getJaxrsMapping());
         ofNullable(builder.getCxfServletParams()).ifPresent(m -> m.forEach(jaxrs::setInitParameter));
     }
 

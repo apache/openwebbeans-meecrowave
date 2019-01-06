@@ -43,6 +43,7 @@
     <module>ssl</module>
     <module>sse</module>
     <module>no-cxf</module>
+    <module>dispatch-jsp</module>
   </modules>
 
   <build>
