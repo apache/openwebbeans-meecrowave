@@ -18,16 +18,16 @@
  */
 package org.apache.meecrowave.openwebbeans;
 
-import org.apache.meecrowave.Meecrowave;
-import org.apache.tomcat.JarScanFilter;
-import org.apache.tomcat.JarScanType;
+import static java.util.Optional.ofNullable;
+import static java.util.stream.Collectors.toSet;
 
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.stream.Stream;
 
-import static java.util.Optional.ofNullable;
-import static java.util.stream.Collectors.toSet;
+import org.apache.meecrowave.Meecrowave;
+import org.apache.tomcat.JarScanFilter;
+import org.apache.tomcat.JarScanType;
 
 public class KnownJarsFilter implements JarScanFilter {
     private final Collection<String> forceIncludes = new HashSet<String>() {{
@@ -119,7 +119,11 @@ public class KnownJarsFilter implements JarScanFilter {
         add("FastInfoset");
         add("freeemarker-");
         add("fusemq-leveldb-");
-        add("geronimo-");
+        add("geronimo-connector-");
+        add("geronimo-j2ee");
+        add("geronimo-jpa");
+        add("geronimo-javamail");
+        add("geronimo-transaction");
         add("google-");
         add("gpars-");
         add("gragent.jar");
@@ -353,6 +357,11 @@ public class KnownJarsFilter implements JarScanFilter {
 
     @Override
     public boolean check(final JarScanType jarScanType, final String jarName) {
-        return forceIncludes.stream().anyMatch(jarName::startsWith) || excludes.stream().noneMatch(jarName::startsWith);
+        return forceIncludes.stream().anyMatch(jarName::startsWith) ||
+                (excludes.stream().noneMatch(jarName::startsWith) && !isGeronimoSpecJar(jarName));
+    }
+
+    private boolean isGeronimoSpecJar(final String jarName) {
+        return jarName.startsWith("geronimo") && jarName.contains("_spec");
     }
 }
