@@ -28,16 +28,16 @@
 
   <groupId>org.apache.meecrowave</groupId>
   <artifactId>meecrowave</artifactId>
-  <version>1.2.5</version>
+  <version>1.2.6-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <name>Meecrowave</name>
   <description>A small Tomcat/OWB/CXF/Johnzon/log4j2 based server @ ASF</description>
 
   <scm>
-    <connection>scm:svn:http://svn.apache.org/repos/asf/openwebbeans/meecrowave/tags/meecrowave-1.2.5</connection>
-    <developerConnection>scm:svn:https://svn.apache.org/repos/asf/openwebbeans/meecrowave/tags/meecrowave-1.2.5</developerConnection>
-    <url>https://svn.apache.org/repos/asf/openwebbeans/meecrowave/tags/meecrowave-1.2.5</url>
+    <connection>scm:svn:http://svn.apache.org/repos/asf/openwebbeans/meecrowave/trunk</connection>
+    <developerConnection>scm:svn:https://svn.apache.org/repos/asf/openwebbeans/meecrowave/trunk</developerConnection>
+    <url>https://svn.apache.org/repos/asf/openwebbeans/meecrowave/trunk</url>
   </scm>
 
   <issueManagement>
