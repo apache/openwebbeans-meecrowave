@@ -104,6 +104,7 @@ public class OAuth2Configurer {
     private Consumer<RedirectionBasedGrantService> redirectionBasedGrantServiceConsumer;
     private Consumer<AbstractTokenService> abstractTokenServiceConsumer;
     private OAuth2Options configuration;
+    private Map<String, String> securityProperties;
 
     @PostConstruct // TODO: still some missing configuration for jwt etc to add/wire from OAuth2Options
     private void preCompute() {
@@ -245,7 +246,7 @@ public class OAuth2Configurer {
                 .orElse(null);
 
         // we prefix them oauth2.cxf. but otherwise it is the plain cxf config
-        final Map<String, String> contextualProperties = ofNullable(builder.getProperties()).map(Properties::stringPropertyNames).orElse(emptySet()).stream()
+        securityProperties = ofNullable(builder.getProperties()).map(Properties::stringPropertyNames).orElse(emptySet()).stream()
                 .filter(s -> s.startsWith("oauth2.cxf.rs.security."))
                 .collect(toMap(s -> s.substring("oauth2.cxf.".length()), s -> builder.getProperties().getProperty(s)));
 
@@ -304,11 +305,13 @@ public class OAuth2Configurer {
             s.setMatchRedirectUriWithApplicationUri(configuration.isMatchRedirectUriWithApplicationUri());
             s.setScopesRequiringNoConsent(noConsentScopes);
             s.setSessionAuthenticityTokenProvider(sessionAuthenticityTokenProvider);
-
-            // TODO: make it even more contextual, client based?
-            final Message currentMessage = PhaseInterceptorChain.getCurrentMessage();
-            contextualProperties.forEach(currentMessage::put);
         };
+    }
+
+    private void forwardSecurityProperties() {
+        // TODO: make it even more contextual, client based?
+        final Message currentMessage = PhaseInterceptorChain.getCurrentMessage();
+        securityProperties.forEach(currentMessage::put);
     }
 
     public void accept(final AbstractTokenService service) {
@@ -317,10 +320,12 @@ public class OAuth2Configurer {
 
     public void accept(final AccessTokenService service) {
         tokenServiceConsumer.accept(service);
+        forwardSecurityProperties();
     }
 
     public void accept(final RedirectionBasedGrantService service) {
         redirectionBasedGrantServiceConsumer.accept(service);
+        forwardSecurityProperties();
     }
 
     public OAuth2Options getConfiguration() {

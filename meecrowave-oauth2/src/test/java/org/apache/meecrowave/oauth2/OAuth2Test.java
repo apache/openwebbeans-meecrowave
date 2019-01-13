@@ -18,10 +18,40 @@
  */
 package org.apache.meecrowave.oauth2;
 
+import static java.util.Collections.singletonList;
+import static javax.ws.rs.client.Entity.entity;
+import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED_TYPE;
+import static javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE;
+import static javax.xml.bind.DatatypeConverter.printBase64Binary;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+import java.io.File;
+import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+import java.util.function.BiFunction;
+
+import javax.cache.Cache;
+import javax.cache.CacheManager;
+import javax.cache.Caching;
+import javax.cache.configuration.MutableConfiguration;
+import javax.cache.spi.CachingProvider;
+import javax.json.JsonObject;
+import javax.json.JsonString;
+import javax.json.bind.Jsonb;
+import javax.json.bind.JsonbBuilder;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.Form;
+import javax.ws.rs.core.Response;
+
 import org.apache.cxf.common.classloader.ClassLoaderUtils;
 import org.apache.cxf.message.Message;
-import org.apache.cxf.rs.security.jose.jwa.KeyAlgorithm;
-import org.apache.cxf.rs.security.jose.jwa.SignatureAlgorithm;
 import org.apache.cxf.rs.security.oauth2.common.ClientAccessToken;
 import org.apache.cxf.rs.security.oauth2.common.OAuthAuthorizationData;
 import org.apache.cxf.rs.security.oauth2.provider.OAuthJSONProvider;
@@ -33,30 +63,6 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 
-import javax.cache.Cache;
-import javax.cache.CacheManager;
-import javax.cache.Caching;
-import javax.cache.configuration.MutableConfiguration;
-import javax.cache.spi.CachingProvider;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.Form;
-import javax.ws.rs.core.Response;
-import java.io.File;
-import java.net.URISyntaxException;
-import java.nio.charset.StandardCharsets;
-
-import static java.util.Collections.singletonList;
-import static javax.ws.rs.client.Entity.entity;
-import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED_TYPE;
-import static javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE;
-import static javax.xml.bind.DatatypeConverter.printBase64Binary;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-
 public class OAuth2Test {
     private static final File KEYSTORE = new File("target/OAuth2Test/keystore.jceks");
 
@@ -64,6 +70,8 @@ public class OAuth2Test {
     public static final MeecrowaveRule MEECROWAVE = new MeecrowaveRule(
             new Meecrowave.Builder().randomHttpPort()
                     .user("test", "pwd").role("test", "admin")
+                    // jwt requires more config
+                    .property("oauth2-use-jwt-format-for-access-token", "true")
                     // auth code support is optional so activate it
                     .property("oauth2-authorization-code-support", "true")
                     // auth code jose setup to store the tokens
@@ -100,6 +108,7 @@ public class OAuth2Test {
             assertNotNull(token);
             assertEquals("Bearer", token.getTokenType());
             assertNotNull(token.getTokenKey());
+            assertIsJwt(token.getTokenKey(), "__default");
             assertEquals(3600, token.getExpiresIn());
             assertNotEquals(0, token.getIssuedAt());
             assertNotNull(token.getRefreshToken());
@@ -132,7 +141,7 @@ public class OAuth2Test {
                                     .param("refresh_token", primary.getRefreshToken()), APPLICATION_FORM_URLENCODED_TYPE), ClientAccessToken.class);
             assertNotNull(token);
             assertEquals("Bearer", token.getTokenType());
-            assertNotNull(token.getTokenKey());
+            assertIsJwt(token.getTokenKey(), "__default");
             assertEquals(3600, token.getExpiresIn());
             assertNotEquals(0, token.getIssuedAt());
             assertNotNull(token.getRefreshToken());
@@ -193,7 +202,7 @@ public class OAuth2Test {
                                     .param(OAuthConstants.CLIENT_SECRET, "cpwd"), APPLICATION_FORM_URLENCODED_TYPE), ClientAccessToken.class);
             assertNotNull(token);
             assertEquals("Bearer", token.getTokenType());
-            assertNotNull(token.getTokenKey());
+            assertIsJwt(token.getTokenKey(), "c1");
             assertEquals(3600, token.getExpiresIn());
             assertNotEquals(0, token.getIssuedAt());
             assertNotNull(token.getRefreshToken());
@@ -219,5 +228,21 @@ public class OAuth2Test {
         final org.apache.cxf.rs.security.oauth2.common.Client value = new org.apache.cxf.rs.security.oauth2.common.Client("c1", "cpwd", true);
         value.setRedirectUris(singletonList("http://localhost:" + httpPort + "/redirected"));
         cache.put("c1", value);
+    }
+
+    private void assertIsJwt(final String tokenKey, final String client) {
+        final String[] split = tokenKey.split("\\.");
+        assertEquals(3, split.length);
+        final BiFunction<Jsonb, String, JsonObject> read = (jsonb, value) ->
+                jsonb.fromJson(new String(Base64.getUrlDecoder().decode(value), StandardCharsets.UTF_8), JsonObject.class);
+        try (final Jsonb jsonb = JsonbBuilder.create()) {
+            final JsonObject header = read.apply(jsonb, split[0]);
+            final JsonObject payload = read.apply(jsonb, split[1]);
+            assertEquals("RS256", header.getString("alg"));
+            assertEquals("test", payload.getString("username"));
+            assertEquals(client, payload.getString("client_id"));
+        } catch (final Exception e) {
+            fail(e.getMessage());
+        }
     }
 }
