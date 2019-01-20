@@ -41,7 +41,6 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Properties;
 import java.util.stream.Stream;
 import java.util.zip.GZIPOutputStream;
@@ -106,6 +105,9 @@ public class MeecrowaveBundleMojo extends AbstractMojo {
 
     @Parameter(property = "meecrowave.skip", defaultValue = "false")
     private boolean skip;
+
+    @Parameter(property = "meecrowave.fakeTomcatScripts", defaultValue = "false")
+    private boolean fakeTomcatScripts;
 
     @Parameter(property = "meecrowave.formats", defaultValue = "zip")
     private Collection<String> formats;
@@ -261,6 +263,19 @@ public class MeecrowaveBundleMojo extends AbstractMojo {
             } catch (final IOException e) {
                 throw new MojoExecutionException(e.getMessage(), e);
             }
+        }
+        if (fakeTomcatScripts) {
+            Stream.of("catalina.sh", "shutdown.sh", "startup.sh").forEach(script -> {
+                try (final BufferedReader reader = new BufferedReader(new InputStreamReader(
+                        Thread.currentThread().getContextClassLoader().getResourceAsStream("bin/" + script)))) {
+                    final File target = new File(distroFolder, "bin/" + script);
+                    if (!target.exists()) {
+                        write(target, reader.lines().collect(joining("\n")));
+                    }
+                } catch (final IOException e) {
+                    throw new IllegalStateException(e.getMessage(), e);
+                }
+            });
         }
 
         final Path prefix = skipArchiveRootFolder ? distroFolder.toPath() : distroFolder.getParentFile().toPath();
