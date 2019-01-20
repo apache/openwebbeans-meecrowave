@@ -231,7 +231,7 @@ if [ -z "$LOGGING_CONFIG" ]; then
 fi
 
 if [ -z "$LOGGING_MANAGER" ]; then
-  LOGGING_MANAGER="-Djava.util.logging.manager=org.apache.logging.log4j.jul.LogManager"
+  LOGGING_MANAGER="-Djava.util.logging.manager=${logManager}"
 fi
 
 # Set UMASK unless it has been overridden

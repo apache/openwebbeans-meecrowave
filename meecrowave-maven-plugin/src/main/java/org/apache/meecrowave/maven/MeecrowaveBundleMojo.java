@@ -41,6 +41,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.stream.Stream;
 import java.util.zip.GZIPOutputStream;
@@ -180,19 +181,6 @@ public class MeecrowaveBundleMojo extends AbstractMojo {
 
         Stream.of("bin", "conf", "logs", "lib").forEach(i -> new File(distroFolder, i).mkdirs());
 
-        // TODO: add .bat support
-        for (final String ext : asList("sh", "bat")) {
-            try (final BufferedReader reader = new BufferedReader(new InputStreamReader(
-                    Thread.currentThread().getContextClassLoader().getResourceAsStream("bin/meecrowave." + ext)))) {
-                write(new File(distroFolder, "bin/meecrowave." + ext), StrSubstitutor.replace(reader.lines().collect(joining("\n")),
-                        new HashMap<String, String>() {{
-                            put("main", main);
-                        }}));
-            } catch (final IOException e) {
-                throw new MojoExecutionException(e.getMessage(), e);
-            }
-        }
-
         copyProvidedFiles(distroFolder);
 
         write(new File(distroFolder, "logs/you_can_safely_delete.txt"), DELETE_TEXT);
@@ -258,6 +246,23 @@ public class MeecrowaveBundleMojo extends AbstractMojo {
             }});
         }
 
+        for (final String ext : asList("sh", "bat")) {
+            try (final BufferedReader reader = new BufferedReader(new InputStreamReader(
+                    Thread.currentThread().getContextClassLoader().getResourceAsStream("bin/meecrowave." + ext)))) {
+                final File target = new File(distroFolder, "bin/meecrowave." + ext);
+                if (!target.exists()) {
+                    write(target, StrSubstitutor.replace(reader.lines().collect(joining("\n")),
+                            new HashMap<String, String>() {{
+                                put("main", main);
+                                put("logManager", hasLog4j(distroFolder) ?
+                                        "org.apache.logging.log4j.jul.LogManager" : "org.apache.juli.ClassLoaderLogManager");
+                            }}));
+                }
+            } catch (final IOException e) {
+                throw new MojoExecutionException(e.getMessage(), e);
+            }
+        }
+
         final Path prefix = skipArchiveRootFolder ? distroFolder.toPath() : distroFolder.getParentFile().toPath();
         for (final String format : formats) {
             getLog().info(format + "-ing Custom Meecrowave Distribution");
@@ -295,6 +300,15 @@ public class MeecrowaveBundleMojo extends AbstractMojo {
 
         if (!keepExplodedFolder) {
             delete(distroFolder);
+        }
+    }
+
+    private boolean hasLog4j(final File distroFolder) {
+        try {
+            return Files.list(distroFolder.toPath().resolve("lib"))
+                    .anyMatch(it -> it.getFileName().toString().startsWith("log4j-jul"));
+        } catch (final IOException e) {
+            return true;
         }
     }
 

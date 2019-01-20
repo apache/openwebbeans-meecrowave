@@ -268,7 +268,7 @@ set LOGGING_CONFIG=-Djava.util.logging.config.file="%MEECROWAVE_BASE%\conf\loggi
 :noJuliConfig
 
 if not "%LOGGING_MANAGER%" == "" goto noJuliManager
-set LOGGING_MANAGER=-Djava.util.logging.manager=org.apache.juli.ClassLoaderLogManager
+set LOGGING_MANAGER=-Djava.util.logging.manager=${logManager}
 :noJuliManager
 
 rem Configure JAVA 9 specific start-up parameters
