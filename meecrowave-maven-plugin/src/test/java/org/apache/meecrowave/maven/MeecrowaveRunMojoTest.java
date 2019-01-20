@@ -83,7 +83,7 @@ public class MeecrowaveRunMojoTest {
                 try {
                     latch.await();
                 } catch (final InterruptedException e) {
-                    Thread.interrupted();
+                    Thread.currentThread().interrupt();
                     fail(e.getMessage());
                 }
                 return val--;
@@ -108,6 +108,7 @@ public class MeecrowaveRunMojoTest {
                     assertTrue(IOUtils.toString(new URL("http://localhost:" + port + "/api/test/model")).contains("last_name"));
                     assertTrue(IOUtils.toString(new URL("http://localhost:" + port + "/api/test/model")).contains("firstname"));
                     assertTrue(IOUtils.toString(new URL("http://localhost:" + port + "/api/test/model")).contains("null"));
+                    assertTrue(IOUtils.toString(new URL("http://localhost:" + port + "/sub/index.html")).contains("<h1>yes</h1>"));
                     latch.countDown();
                     break;
                 } catch (final Exception | AssertionError e) {

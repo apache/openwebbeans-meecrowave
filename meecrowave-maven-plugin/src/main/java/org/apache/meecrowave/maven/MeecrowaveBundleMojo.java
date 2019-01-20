@@ -142,6 +142,9 @@ public class MeecrowaveBundleMojo extends AbstractMojo {
     @Parameter(property = "meecrowave.enforce-meecrowave", defaultValue = "true")
     private boolean enforceMeecrowave; // set to false if you package meecrowave runner
 
+    @Parameter(property = "meecrowave.webapp", defaultValue = "${project.basedir}/src/main/webapp")
+    private File webapp;
+
     @Component
     private MavenProjectHelper projectHelper;
 
@@ -201,6 +204,23 @@ public class MeecrowaveBundleMojo extends AbstractMojo {
                 }).collect(toList());
         if (app.exists()) {
             addLib(distroFolder, app);
+        }
+        if (webapp != null && webapp.isDirectory()) {
+            try {
+                final Path rootSrc = webapp.toPath().toAbsolutePath();
+                final Path rootTarget = distroFolder.toPath().toAbsolutePath().resolve("docBase");
+                Files.walkFileTree(rootSrc, new SimpleFileVisitor<Path>() {
+                    @Override
+                    public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) throws IOException {
+                        final Path target = rootTarget.resolve(rootSrc.relativize(file));
+                        target.toFile().getParentFile().mkdirs();
+                        Files.copy(file, target, StandardCopyOption.REPLACE_EXISTING);
+                        return super.visitFile(file, attrs);
+                    }
+                });
+            } catch (final IOException e) {
+                throw new MojoExecutionException(e.getMessage(), e);
+            }
         }
         if (enforceCommonsCli && !includedArtifacts.contains("commons-cli")) {
             addLib(distroFolder, resolve("commons-cli", "commons-cli", "1.4", ""));
@@ -307,7 +327,7 @@ public class MeecrowaveBundleMojo extends AbstractMojo {
 
 
     /**
-     * Copy over all files from src/meecrowave/*
+     * Copy over all files from src/main/meecrowave/*
      * TODO!
      * The following files get added with default content if not found there:
      * <ul>
@@ -316,27 +336,27 @@ public class MeecrowaveBundleMojo extends AbstractMojo {
      * </ul>
      * @param distroFolder
      */
-    private void copyProvidedFiles(File distroFolder) throws MojoExecutionException
+    private void copyProvidedFiles(final File distroFolder) throws MojoExecutionException
     {
         boolean customLog4jConfig = false;
         boolean customMwProperties = false;
-        Log log = getLog();
+        final Log log = getLog();
 
-        File srcConf = new File(project.getBasedir(), conf);
-        if (srcConf.exists() && srcConf.isDirectory()) {
-            File targetConf = new File(distroFolder, "conf");
+        File srcConf = new File(conf);
+        if (!srcConf.isAbsolute()) {
+            srcConf = new File(project.getBasedir(), conf);
+        }
+        if (srcConf.isDirectory()) {
+            final File targetConf = new File(distroFolder, "conf");
             targetConf.mkdirs();
 
-            for (File file : srcConf.listFiles()) {
-                String fileName = file.getName();
+            for (final File file : srcConf.listFiles()) {
+                final String fileName = file.getName();
                 if ("log4j2.xml".equals(fileName)) {
                     customLog4jConfig = true;
-                }
-                if ("meecrowave.properties".equals(fileName)) {
+                } else if ("meecrowave.properties".equals(fileName)) {
                     customMwProperties = true;
-                }
-
-                if (fileName.startsWith(".")) {
+                } else if (fileName.startsWith(".")) {
                     // hidden file -> ignore
                     continue;
                 }
@@ -346,8 +366,7 @@ public class MeecrowaveBundleMojo extends AbstractMojo {
                         log.debug("Copying file from " + file + " to " + targetConf);
                     }
                     Files.copy(file.toPath(), new File(targetConf, fileName).toPath());
-                }
-                catch (IOException e) {
+                } catch (final IOException e) {
                     throw new MojoExecutionException("Could not copy file " + file.getAbsolutePath(), e);
                 }
             }

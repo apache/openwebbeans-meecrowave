@@ -36,6 +36,7 @@ import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.ServiceLoader;
@@ -79,7 +80,17 @@ public class Cli implements Runnable, AutoCloseable {
             final String war = line.getOptionValue("webapp");
             meecrowave.start();
             if (war == null) {
-                meecrowave.deployClasspath(new Meecrowave.DeploymentMeta(ctx, ofNullable(line.getOptionValue("docbase")).map(File::new).orElse(null), null));
+                meecrowave.deployClasspath(new Meecrowave.DeploymentMeta(
+                        ctx,
+                        ofNullable(line.getOptionValue("docbase")).map(File::new).orElseGet(() ->
+                                Stream.of("base", "home")
+                                    .map(it -> System.getProperty("meecrowave." + it))
+                                    .filter(Objects::nonNull)
+                                    .map(it -> new File(it, "docBase"))
+                                    .filter(File::isDirectory)
+                                    .findFirst()
+                                    .orElse(null)),
+                        null));
             } else {
                 meecrowave.deployWebapp(fixedCtx, new File(war));
             }
