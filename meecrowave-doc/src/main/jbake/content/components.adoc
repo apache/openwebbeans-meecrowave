@@ -16,6 +16,8 @@ link:{context_rootpath}/meecrowave-core/configuration.html[Read about Meecrowave
 
 link:{context_rootpath}/meecrowave-core/cli.html[Read about Meecrowave command line]
 
+link:{context_rootpath}/meecrowave-core/deploy-webapp.html[Read about Meecrowave and webapp/wars]
+
 == Meecrowave JPA
 
 Meecrowave JPA provides a thin layer on top of JPA to make it easier to use JPA

@@ -89,6 +89,10 @@ Finally you can test it:
 curl http://localhost:8080/hello
 ----
 
+== And my war?
+
+See link:meecrowave-core/deploy-webapp.html[How to deploy a war] to see how to use meecrowave to deploy an existing war.
+
 == Sample
 
 https://github.com/apache/openwebbeans-meecrowave-examples contains ready to use examples using meecrowave.
