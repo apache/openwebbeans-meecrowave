@@ -2,6 +2,8 @@
 
 = Apache Meecrowave
 
+image:https://img.shields.io/maven-central/v/org.apache.meecrowave/meecrowave.svg[Version]
+
 Apache Meecrowave is a small Microprofile server (JAX-RS + CDI + JSON) fully based on Apache products.
 
 == How to start
@@ -9,7 +11,7 @@ If you want to start with your first *Hello World* you have to add the following
 
 ```xml
  <properties>
-    <meecrowave.version>1.2.5</meecrowave.version>
+    <meecrowave.version>LATEST</meecrowave.version>
   </properties>
 
   <dependencies>
