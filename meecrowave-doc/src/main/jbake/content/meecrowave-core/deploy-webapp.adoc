@@ -1,0 +1,51 @@
+= Meecrowave and webapps
+:jbake-date: 2019-01-23
+:jbake-type: page
+:jbake-status: published
+:jbake-meecrowavepdf:
+:jbake-meecrowavetitleicon: icon icon_puzzle_alt
+:jbake-meecrowavecolor: body-blue
+:icons: font
+
+Meecrowave is a development enabler and simplifier thanks to its classpath deployment. However it is
+still a plain Apache Tomcat and you can deploy existing webapp you developed with no particular constraint.
+
+From now on, we will assume you have a Servlet or Spring webapp `myapp.war`.
+
+== Deployment with a Meecrowave bundle
+
+This part assumed you built a bundle with link:../meecrowave-maven/index.html[Meecrowave Maven Plugin]. It gives
+you a zip which has a tomcat layout once exploded:
+
+[source]
+----
+.
+|- bin
+|- conf
+|- logs
+`- lib
+----
+
+If you didn't package a webapp at bundle time you can create a `webapps` folder in this layout and add your war inside.
+Then to launch this war you can either use a `server.xml` in `conf` and add as in any Tomcat your `<Context />` in it
+or you can launch it directly using:
+
+[source,sh]
+----
+./bin/meecrowave.sh run --webapp=webapps/myapp.war
+----
+
+== Deployment with the runner
+
+If you prefer to use the runner you can deploy a war with the following command:
+
+[source,sh]
+----
+java -jar meecrowave-core-runner.jar --webapp=webapps/myapp.war
+----
+
+== Going further
+
+You can find more information about deployment checking out the link:cli.html[CLI] documentation
+which presents all options of the several ways to launch Meecrowave.
+
