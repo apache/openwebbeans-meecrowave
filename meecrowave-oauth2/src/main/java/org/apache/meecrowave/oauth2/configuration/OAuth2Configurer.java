@@ -44,7 +44,6 @@ import org.apache.cxf.rs.security.oauth2.grants.owner.ResourceOwnerLoginHandler;
 import org.apache.cxf.rs.security.oauth2.grants.refresh.RefreshTokenGrantHandler;
 import org.apache.cxf.rs.security.oauth2.provider.AbstractOAuthDataProvider;
 import org.apache.cxf.rs.security.oauth2.provider.AccessTokenGrantHandler;
-import org.apache.cxf.rs.security.oauth2.provider.DefaultEHCacheOAuthDataProvider;
 import org.apache.cxf.rs.security.oauth2.provider.DefaultEncryptingOAuthDataProvider;
 import org.apache.cxf.rs.security.oauth2.provider.JCacheOAuthDataProvider;
 import org.apache.cxf.rs.security.oauth2.provider.JPAOAuthDataProvider;
@@ -143,9 +142,6 @@ public class OAuth2Configurer {
                 } catch (final Exception e) {
                     throw new IllegalStateException(e);
                 }
-                break;
-            case "ehcache": // not sure it makes sense since we have jcache but this one is cheap to support
-                provider = new DefaultEHCacheOAuthDataProvider(configuration.getJcacheConfigUri(), bus);
                 break;
             case "encrypted":
                 if (!configuration.isAuthorizationCodeSupport()) { // else use code impl
