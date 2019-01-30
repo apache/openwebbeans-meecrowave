@@ -52,8 +52,9 @@ import org.apache.meecrowave.doc.generator.Downloads;
 import org.apache.meecrowave.doc.generator.LetsEncryptConfiguration;
 import org.apache.meecrowave.doc.generator.MavenConfiguration;
 import org.apache.meecrowave.doc.generator.OAuth2Configuration;
-import org.jbake.app.ConfigUtil;
 import org.jbake.app.Oven;
+import org.jbake.app.configuration.ConfigUtil;
+import org.jbake.app.configuration.DefaultJBakeConfiguration;
 
 import com.orientechnologies.orient.core.Orient;
 
@@ -121,7 +122,8 @@ public class JBake {
                             add("context_rootpath=/meecrowave");
                         }});
                     }}));
-                    config.addConfiguration(ConfigUtil.load(source));
+                    config.addConfiguration(DefaultJBakeConfiguration.class.cast(
+                            new ConfigUtil().loadConfig(source)).getCompositeConfiguration());
                     addConfiguration(config);
                 }}, true);
                 oven.setupPaths();
