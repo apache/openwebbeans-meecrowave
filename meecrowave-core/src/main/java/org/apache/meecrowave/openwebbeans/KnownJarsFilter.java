@@ -42,6 +42,7 @@ public class KnownJarsFilter implements JarScanFilter {
         add("akka-actor-");
         add("akka-cluster-");
         add("akka-remote-");
+        add("animal-sniffer-annotations-");
         add("ant-");
         add("antlr-");
         add("aopalliance-");
@@ -67,11 +68,13 @@ public class KnownJarsFilter implements JarScanFilter {
         add("asm-");
         add("async-http-client-");
         add("avalon-framework-");
+        add("avro-");
         add("axis-");
         add("axis2-");
         add("batchee-jbatch");
         add("batik-");
         add("bcprov-");
+        add("beam-");
         add("bootstrap.jar");
         add("bsf-");
         add("bval-core");
@@ -82,6 +85,7 @@ public class KnownJarsFilter implements JarScanFilter {
         add("catalina.jar");
         add("cglib-");
         add("charsets.jar");
+        add("checker-qual");
         add("commons-beanutils");
         add("commons-cli-");
         add("commons-codec-");
@@ -116,8 +120,10 @@ public class KnownJarsFilter implements JarScanFilter {
         add("eclipselink-");
         add("ehcache-");
         add("el-api");
+        add("error_prone_annotations");
+        add("failureaccess");
         add("FastInfoset");
-        add("freeemarker-");
+        add("freemarker-");
         add("fusemq-leveldb-");
         add("geronimo-connector-");
         add("geronimo-j2ee");
@@ -148,6 +154,7 @@ public class KnownJarsFilter implements JarScanFilter {
         add("idea_rt.jar");
         add("istack-commons-runtime-");
         add("ivy-");
+        add("j2objc-");
         add("jackson-annotations-");
         add("jackson-core-");
         add("jackson-databind-");
@@ -180,6 +187,7 @@ public class KnownJarsFilter implements JarScanFilter {
         add("jetty-");
         add("jfr.jar");
         add("jfxrt.jar");
+        add("jib-");
         add("jline");
         add("jmdns-");
         add("jna-");
@@ -196,6 +204,7 @@ public class KnownJarsFilter implements JarScanFilter {
         add("jsp-api");
         add("jsr166");
         add("jsr299-");
+        add("jsr305");
         add("jsr311-");
         add("jsse.jar");
         add("juli-");
@@ -206,6 +215,7 @@ public class KnownJarsFilter implements JarScanFilter {
         add("kahadb-");
         add("kotlin-runtime");
         add("leveldb");
+        add("listenablefuture");
         add("log4j-");
         add("logkit-");
         add("lombok-");
@@ -253,6 +263,7 @@ public class KnownJarsFilter implements JarScanFilter {
         add("orientdb-core-");
         add("orientdb-nativeos-");
         add("oro-");
+        add("paranamer-");
         add("pax-url");
         add("PDFBox");
         add("plexus-");
@@ -338,6 +349,7 @@ public class KnownJarsFilter implements JarScanFilter {
         add("xmltooling-");
         add("xmlunit-");
         add("xstream-");
+        add("xz-");
         add("zipfs.jar");
         add("ziplock-");
     }};
