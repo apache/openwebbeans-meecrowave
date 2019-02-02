@@ -120,8 +120,8 @@ public class Downloads {
                                 "|" + d.size +
                                 "|" + d.format +
                                 "| " + d.url + "[icon:download[] " + d.format + "] " +
-                                (d.sha512 != null?  d.sha512 + "[icon:download[]&nbsp;sha512] " : d.sha1 + "[icon:download[]&nbsp;sha1] ") +
-                                d.asc + "[icon:download[]&nbsp;asc]"));
+                                (d.sha512 != null?  d.sha512 + "[icon:download[] sha512] " : d.sha1 + "[icon:download[] sha1] ") +
+                                d.asc + "[icon:download[] asc]"));
     }
 
     private static Download fillDownloadable(final Download download) {
