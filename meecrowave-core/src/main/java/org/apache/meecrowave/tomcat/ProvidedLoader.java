@@ -18,13 +18,13 @@
  */
 package org.apache.meecrowave.tomcat;
 
+import java.beans.PropertyChangeListener;
+
 import org.apache.catalina.Context;
 import org.apache.catalina.LifecycleException;
 import org.apache.catalina.LifecycleState;
 import org.apache.catalina.Loader;
 import org.apache.catalina.util.LifecycleBase;
-
-import java.beans.PropertyChangeListener;
 
 // used to not recreate another classloader,
 // it has a small workaround cause tomcat set properties (clear*) on the classloader
@@ -128,6 +128,13 @@ public class ProvidedLoader extends LifecycleBase implements Loader {
             super(classLoader);
         }
 
+        public void setClearReferencesObjectStreamClassCaches(final boolean ignored) {
+            // no-op
+        }
+
+        public void setClearReferencesThreadLocals(final boolean ignored) {
+            // no-op
+        }
 
         public void setClearReferencesHttpClientKeepAliveThread(final boolean ignored) {
             // no-op
