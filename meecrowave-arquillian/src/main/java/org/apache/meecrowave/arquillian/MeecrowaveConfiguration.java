@@ -109,6 +109,7 @@ public class MeecrowaveConfiguration implements ContainerConfiguration {
     private Integer webSessionTimeout;
     private String webSessionCookieConfig;
     private boolean tomcatJspDevelopment;
+    private boolean antiJarLocking;
 
     // configurable cause when set to Local arquillian bypass some protocol configuration cause of container default
     private String arquillianProtocol = "Servlet 3.1";
@@ -810,5 +811,13 @@ public class MeecrowaveConfiguration implements ContainerConfiguration {
 
     public void setWebSessionCookieConfig(final String webSessionCookieConfig) {
         this.webSessionCookieConfig = webSessionCookieConfig;
+    }
+
+    public boolean isAntiJarLocking() {
+        return antiJarLocking;
+    }
+
+    public void setAntiJarLocking(final boolean antiJarLocking) {
+        this.antiJarLocking = antiJarLocking;
     }
 }

@@ -246,6 +246,10 @@ public class MeecrowaveTask extends DefaultTask {
 
     @Input
     @Optional
+    private boolean antiJarLocking = true;
+
+    @Input
+    @Optional
     private List<File> modules;
 
     @Input
@@ -1231,5 +1235,13 @@ public class MeecrowaveTask extends DefaultTask {
 
     public void setTomcatJspDevelopment(final boolean tomcatJspDevelopment) {
         this.tomcatJspDevelopment = tomcatJspDevelopment;
+    }
+
+    public boolean isAntiJarLocking() {
+        return antiJarLocking;
+    }
+
+    public void setAntiJarLocking(final boolean antiJarLocking) {
+        this.antiJarLocking = antiJarLocking;
     }
 }

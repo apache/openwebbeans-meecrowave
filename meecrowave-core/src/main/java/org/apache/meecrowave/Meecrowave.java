@@ -51,6 +51,7 @@ import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -97,7 +98,6 @@ import org.apache.catalina.core.StandardHost;
 import org.apache.catalina.session.ManagerBase;
 import org.apache.catalina.session.StandardManager;
 import org.apache.catalina.startup.Catalina;
-import org.apache.meecrowave.tomcat.MeecrowaveContextConfig;
 import org.apache.catalina.startup.Tomcat;
 import org.apache.coyote.http2.Http2Protocol;
 import org.apache.meecrowave.api.StartListening;
@@ -118,6 +118,7 @@ import org.apache.meecrowave.runner.cli.CliOption;
 import org.apache.meecrowave.service.ValueTransformer;
 import org.apache.meecrowave.tomcat.CDIInstanceManager;
 import org.apache.meecrowave.tomcat.LoggingAccessLogPattern;
+import org.apache.meecrowave.tomcat.MeecrowaveContextConfig;
 import org.apache.meecrowave.tomcat.NoDescriptorRegistry;
 import org.apache.meecrowave.tomcat.OWBJarScanner;
 import org.apache.meecrowave.tomcat.ProvidedLoader;
@@ -190,7 +191,11 @@ public class Meecrowave implements AutoCloseable {
         final ProvidedLoader loader = new ProvidedLoader(classLoader, configuration.isTomcatWrapLoader());
         final Consumer<Context> builtInCustomizer = c -> {
             c.setLoader(loader);
+            if (configuration.antiJarLocking && StandardContext.class.isInstance(c)) {
+                StandardContext.class.cast(c).setAntiResourceLocking(true);
+            }
             configuration.getInitializers().forEach(i -> c.addServletContainerInitializer(i, emptySet()));
+            configuration.getGlobalContextConfigurers().forEach(it -> it.accept(c));
         };
         return deployWebapp(new DeploymentMeta(meta.context, meta.docBase, ofNullable(meta.consumer).map(c -> (Consumer<Context>) ctx -> {
             builtInCustomizer.accept(ctx);
@@ -718,6 +723,14 @@ public class Meecrowave implements AutoCloseable {
                 })
                 .forEach(c -> c.accept(tomcat));
         configuration.instanceCustomizers.forEach(c -> c.accept(tomcat));
+
+        StreamSupport.stream(ServiceLoader.load(Meecrowave.ContextCustomizer.class).spliterator(), false)
+                .peek(i -> {
+                    if (MeecrowaveAwareContextCustomizer.class.isInstance(i)) {
+                        MeecrowaveAwareContextCustomizer.class.cast(i).setMeecrowave(this);
+                    }
+                })
+                .forEach(configuration::addGlobalContextCustomizer);
 
         beforeStart();
 
@@ -1381,6 +1394,12 @@ public class Meecrowave implements AutoCloseable {
         @CliOption(name = "servlet-container-initializer", description = "ServletContainerInitializer instances.")
         private Collection<ServletContainerInitializer> initializers = new ArrayList<>();
 
+        @CliOption(name = "tomcat-antijarlocking", description = "Should anti-jar-locking be activated on StandardContext.")
+        private boolean antiJarLocking;
+
+        @CliOption(name = "tomcat-context-configurer", description = "Configurers for all webapps. The Consumer<Context> instances will be applied to all deployments.")
+        private Collection<Consumer<Context>> contextConfigurers;
+
         public Builder() { // load defaults
             extensions.put(ValueTransformers.class, new ValueTransformers());
             StreamSupport.stream(ServiceLoader.load(Meecrowave.ConfigurationCustomizer.class).spliterator(), false)
@@ -1398,6 +1417,18 @@ public class Meecrowave implements AutoCloseable {
                     throw new IllegalArgumentException(e);
                 }
             }));
+        }
+
+        public boolean isAntiJarLocking() {
+            return antiJarLocking;
+        }
+
+        public void setAntiJarLocking(final boolean antiJarLocking) {
+            this.antiJarLocking = antiJarLocking;
+        }
+
+        public Collection<Consumer<Context>> getGlobalContextConfigurers() {
+            return ofNullable(contextConfigurers).orElseGet(Collections::emptySet);
         }
 
         public boolean isTomcatJspDevelopment() {
@@ -2116,6 +2147,13 @@ public class Meecrowave implements AutoCloseable {
             configurationCustomizer.accept(this);
         }
 
+        public void addGlobalContextCustomizer(final Consumer<Context> contextConfigurer) {
+            if (contextConfigurers == null) {
+                contextConfigurers = new ArrayList<>();
+            }
+            contextConfigurers.add(contextConfigurer);
+        }
+
         public void addServletContextInitializer(final ServletContainerInitializer initializer) {
             initializers.add(initializer);
         }
@@ -2652,6 +2690,13 @@ public class Meecrowave implements AutoCloseable {
     }
 
     public interface InstanceCustomizer extends Consumer<Tomcat> {
+    }
+
+    public interface ContextCustomizer extends Consumer<Context> {
+    }
+
+    public interface MeecrowaveAwareContextCustomizer extends ContextCustomizer {
+        void setMeecrowave(Meecrowave meecrowave);
     }
 
     // since it is too early to have CDI and lookup the instance we must set it manually
