@@ -189,14 +189,7 @@ public class Meecrowave implements AutoCloseable {
         }
 
         final ProvidedLoader loader = new ProvidedLoader(classLoader, configuration.isTomcatWrapLoader());
-        final Consumer<Context> builtInCustomizer = c -> {
-            c.setLoader(loader);
-            if (configuration.antiResourceLocking && StandardContext.class.isInstance(c)) {
-                StandardContext.class.cast(c).setAntiResourceLocking(true);
-            }
-            configuration.getInitializers().forEach(i -> c.addServletContainerInitializer(i, emptySet()));
-            configuration.getGlobalContextConfigurers().forEach(it -> it.accept(c));
-        };
+        final Consumer<Context> builtInCustomizer = c -> c.setLoader(loader);
         return deployWebapp(new DeploymentMeta(meta.context, meta.docBase, ofNullable(meta.consumer).map(c -> (Consumer<Context>) ctx -> {
             builtInCustomizer.accept(ctx);
             c.accept(ctx);
@@ -404,6 +397,11 @@ public class Meecrowave implements AutoCloseable {
         }
 
         ofNullable(meta.consumer).ifPresent(c -> c.accept(ctx));
+        if (configuration.antiResourceLocking && StandardContext.class.isInstance(ctx)) {
+            StandardContext.class.cast(ctx).setAntiResourceLocking(true);
+        }
+        configuration.getInitializers().forEach(i -> ctx.addServletContainerInitializer(i, emptySet()));
+        configuration.getGlobalContextConfigurers().forEach(it -> it.accept(ctx));
 
         final Host host = tomcat.getHost();
         host.addChild(ctx);
