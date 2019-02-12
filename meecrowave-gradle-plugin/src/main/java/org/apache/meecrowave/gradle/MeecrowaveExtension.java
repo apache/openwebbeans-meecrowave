@@ -100,14 +100,14 @@ public class MeecrowaveExtension {
     private Integer webSessionTimeout;
     private String webSessionCookieConfig;
     private boolean tomcatJspDevelopment;
-    private boolean antiJarLocking;
+    private boolean antiResourceLocking;
 
-    public boolean isAntiJarLocking() {
-        return antiJarLocking;
+    public boolean isAntiResourceLocking() {
+        return antiResourceLocking;
     }
 
-    public void setAntiJarLocking(final boolean antiJarLocking) {
-        this.antiJarLocking = antiJarLocking;
+    public void setAntiResourceLocking(final boolean antiResourceLocking) {
+        this.antiResourceLocking = antiResourceLocking;
     }
 
     public boolean isTomcatJspDevelopment() {

@@ -246,7 +246,7 @@ public class MeecrowaveTask extends DefaultTask {
 
     @Input
     @Optional
-    private boolean antiJarLocking = true;
+    private boolean antiResourceLocking = true;
 
     @Input
     @Optional
@@ -1237,11 +1237,11 @@ public class MeecrowaveTask extends DefaultTask {
         this.tomcatJspDevelopment = tomcatJspDevelopment;
     }
 
-    public boolean isAntiJarLocking() {
-        return antiJarLocking;
+    public boolean isAntiResourceLocking() {
+        return antiResourceLocking;
     }
 
-    public void setAntiJarLocking(final boolean antiJarLocking) {
-        this.antiJarLocking = antiJarLocking;
+    public void setAntiResourceLocking(final boolean antiResourceLocking) {
+        this.antiResourceLocking = antiResourceLocking;
     }
 }

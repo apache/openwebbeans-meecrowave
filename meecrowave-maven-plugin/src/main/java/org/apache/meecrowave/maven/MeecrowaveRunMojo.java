@@ -91,8 +91,8 @@ public class MeecrowaveRunMojo extends AbstractMojo {
     @Parameter(property = "meecrowave.useTomcatDefaults", defaultValue = "true")
     private boolean useTomcatDefaults;
 
-    @Parameter(property = "meecrowave.antiJarLocking", defaultValue = "false")
-    private boolean antiJarLocking;
+    @Parameter(property = "meecrowave.antiResourceLocking", defaultValue = "false")
+    private boolean antiResourceLocking;
 
     @Parameter
     private Map<String, String> properties;

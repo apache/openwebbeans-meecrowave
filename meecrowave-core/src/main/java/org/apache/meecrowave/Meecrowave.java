@@ -191,7 +191,7 @@ public class Meecrowave implements AutoCloseable {
         final ProvidedLoader loader = new ProvidedLoader(classLoader, configuration.isTomcatWrapLoader());
         final Consumer<Context> builtInCustomizer = c -> {
             c.setLoader(loader);
-            if (configuration.antiJarLocking && StandardContext.class.isInstance(c)) {
+            if (configuration.antiResourceLocking && StandardContext.class.isInstance(c)) {
                 StandardContext.class.cast(c).setAntiResourceLocking(true);
             }
             configuration.getInitializers().forEach(i -> c.addServletContainerInitializer(i, emptySet()));
@@ -1394,8 +1394,8 @@ public class Meecrowave implements AutoCloseable {
         @CliOption(name = "servlet-container-initializer", description = "ServletContainerInitializer instances.")
         private Collection<ServletContainerInitializer> initializers = new ArrayList<>();
 
-        @CliOption(name = "tomcat-antijarlocking", description = "Should anti-jar-locking be activated on StandardContext.")
-        private boolean antiJarLocking;
+        @CliOption(name = "tomcat-antiresourcelocking", description = "Should Tomcat anti resource locking feature be activated on StandardContext.")
+        private boolean antiResourceLocking;
 
         @CliOption(name = "tomcat-context-configurer", description = "Configurers for all webapps. The Consumer<Context> instances will be applied to all deployments.")
         private Collection<Consumer<Context>> contextConfigurers;
@@ -1419,12 +1419,12 @@ public class Meecrowave implements AutoCloseable {
             }));
         }
 
-        public boolean isAntiJarLocking() {
-            return antiJarLocking;
+        public boolean isAntiResourceLocking() {
+            return antiResourceLocking;
         }
 
-        public void setAntiJarLocking(final boolean antiJarLocking) {
-            this.antiJarLocking = antiJarLocking;
+        public void setAntiResourceLocking(final boolean antiResourceLocking) {
+            this.antiResourceLocking = antiResourceLocking;
         }
 
         public Collection<Consumer<Context>> getGlobalContextConfigurers() {
