@@ -18,6 +18,36 @@
  */
 package org.apache.meecrowave.oauth2.configuration;
 
+import static java.util.Arrays.asList;
+import static java.util.Collections.emptySet;
+import static java.util.Locale.ENGLISH;
+import static java.util.Optional.ofNullable;
+import static java.util.function.Function.identity;
+import static java.util.stream.Collectors.toMap;
+import static org.apache.cxf.rs.security.oauth2.common.AuthenticationMethod.PASSWORD;
+
+import java.io.IOException;
+import java.io.StringReader;
+import java.nio.charset.StandardCharsets;
+import java.security.Principal;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.function.Consumer;
+import java.util.function.Function;
+
+import javax.annotation.PostConstruct;
+import javax.crypto.spec.SecretKeySpec;
+import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.Response;
+
 import org.apache.catalina.realm.GenericPrincipal;
 import org.apache.cxf.Bus;
 import org.apache.cxf.common.util.StringUtils;
@@ -30,7 +60,11 @@ import org.apache.cxf.rs.security.jose.jwe.JweHeaders;
 import org.apache.cxf.rs.security.jose.jwe.JweUtils;
 import org.apache.cxf.rs.security.jose.jws.JwsSignatureProvider;
 import org.apache.cxf.rs.security.jose.jws.JwsUtils;
+import org.apache.cxf.rs.security.jose.jwt.JwtClaims;
+import org.apache.cxf.rs.security.oauth2.common.AccessToken;
 import org.apache.cxf.rs.security.oauth2.common.OAuthRedirectionState;
+import org.apache.cxf.rs.security.oauth2.common.ServerAccessToken;
+import org.apache.cxf.rs.security.oauth2.common.TokenIntrospection;
 import org.apache.cxf.rs.security.oauth2.common.UserSubject;
 import org.apache.cxf.rs.security.oauth2.grants.AbstractGrantHandler;
 import org.apache.cxf.rs.security.oauth2.grants.clientcred.ClientCredentialsGrantHandler;
@@ -59,32 +93,6 @@ import org.apache.meecrowave.Meecrowave;
 import org.apache.meecrowave.oauth2.data.RefreshTokenEnabledProvider;
 import org.apache.meecrowave.oauth2.provider.JCacheCodeDataProvider;
 
-import javax.annotation.PostConstruct;
-import javax.crypto.spec.SecretKeySpec;
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.core.MultivaluedMap;
-import java.io.IOException;
-import java.io.StringReader;
-import java.nio.charset.StandardCharsets;
-import java.security.Principal;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.function.Consumer;
-
-import static java.util.Arrays.asList;
-import static java.util.Collections.emptySet;
-import static java.util.Locale.ENGLISH;
-import static java.util.Optional.ofNullable;
-import static java.util.stream.Collectors.toMap;
-import static org.apache.cxf.rs.security.oauth2.common.AuthenticationMethod.PASSWORD;
-
 @ApplicationScoped
 public class OAuth2Configurer {
     @Inject
@@ -99,28 +107,46 @@ public class OAuth2Configurer {
     @Inject
     private JCacheConfigurer jCacheConfigurer;
 
+    private OAuth2Options configuration;
+
     private Consumer<AccessTokenService> tokenServiceConsumer;
     private Consumer<RedirectionBasedGrantService> redirectionBasedGrantServiceConsumer;
     private Consumer<AbstractTokenService> abstractTokenServiceConsumer;
-    private OAuth2Options configuration;
     private Map<String, String> securityProperties;
 
     @PostConstruct // TODO: still some missing configuration for jwt etc to add/wire from OAuth2Options
     private void preCompute() {
         configuration = builder.getExtension(OAuth2Options.class);
 
+        final Function<JwtClaims, JwtClaims> customizeClaims = configuration.isUseJwtFormatForAccessTokens() ? claims -> {
+            if (claims.getIssuer() == null) {
+                claims.setIssuer(configuration.getJwtIssuer());
+            }
+            return claims;
+        } : identity();
+
         AbstractOAuthDataProvider provider;
         switch (configuration.getProvider().toLowerCase(ENGLISH)) {
             case "jpa": {
                 if (!configuration.isAuthorizationCodeSupport()) { // else use code impl
-                    final JPAOAuthDataProvider jpaProvider = new JPAOAuthDataProvider();
+                    final JPAOAuthDataProvider jpaProvider = new JPAOAuthDataProvider() {
+                        @Override
+                        protected JwtClaims createJwtAccessToken(final ServerAccessToken at) {
+                            return customizeClaims.apply(super.createJwtAccessToken(at));
+                        }
+                    };
                     jpaProvider.setEntityManagerFactory(JPAAdapter.createEntityManagerFactory(configuration));
                     provider = jpaProvider;
                     break;
                 }
             }
             case "jpa-code": {
-                final JPACodeDataProvider jpaProvider = new JPACodeDataProvider();
+                final JPACodeDataProvider jpaProvider = new JPACodeDataProvider() {
+                    @Override
+                    protected JwtClaims createJwtAccessToken(final ServerAccessToken at) {
+                        return customizeClaims.apply(super.createJwtAccessToken(at));
+                    }
+                };
                 jpaProvider.setEntityManagerFactory(JPAAdapter.createEntityManagerFactory(configuration));
                 provider = jpaProvider;
                 break;
@@ -129,7 +155,12 @@ public class OAuth2Configurer {
                 if (!configuration.isAuthorizationCodeSupport()) { // else use code impl
                     jCacheConfigurer.doSetup(configuration);
                     try {
-                        provider = new JCacheOAuthDataProvider(configuration.getJcacheConfigUri(), bus, configuration.isJcacheStoreJwtKeyOnly());
+                        provider = new JCacheOAuthDataProvider(configuration.getJcacheConfigUri(), bus, configuration.isJcacheStoreJwtKeyOnly()) {
+                            @Override
+                            protected JwtClaims createJwtAccessToken(final ServerAccessToken at) {
+                                return customizeClaims.apply(super.createJwtAccessToken(at));
+                            }
+                        };
                     } catch (final Exception e) {
                         throw new IllegalStateException(e);
                     }
@@ -138,7 +169,12 @@ public class OAuth2Configurer {
             case "jcache-code":
                 jCacheConfigurer.doSetup(configuration);
                 try {
-                    provider = new JCacheCodeDataProvider(configuration, bus);
+                    provider = new JCacheCodeDataProvider(configuration, bus) {
+                        @Override
+                        protected JwtClaims createJwtAccessToken(final ServerAccessToken at) {
+                            return customizeClaims.apply(super.createJwtAccessToken(at));
+                        }
+                    };
                 } catch (final Exception e) {
                     throw new IllegalStateException(e);
                 }
@@ -146,12 +182,22 @@ public class OAuth2Configurer {
             case "encrypted":
                 if (!configuration.isAuthorizationCodeSupport()) { // else use code impl
                     provider = new DefaultEncryptingOAuthDataProvider(
-                            new SecretKeySpec(configuration.getEncryptedKey().getBytes(StandardCharsets.UTF_8), configuration.getEncryptedAlgo()));
+                            new SecretKeySpec(configuration.getEncryptedKey().getBytes(StandardCharsets.UTF_8), configuration.getEncryptedAlgo())) {
+                        @Override
+                        protected JwtClaims createJwtAccessToken(final ServerAccessToken at) {
+                            return customizeClaims.apply(super.createJwtAccessToken(at));
+                        }
+                    };
                     break;
                 }
             case "encrypted-code":
                 provider = new DefaultEncryptingCodeDataProvider(
-                        new SecretKeySpec(configuration.getEncryptedKey().getBytes(StandardCharsets.UTF_8), configuration.getEncryptedAlgo()));
+                        new SecretKeySpec(configuration.getEncryptedKey().getBytes(StandardCharsets.UTF_8), configuration.getEncryptedAlgo())) {
+                    @Override
+                    protected JwtClaims createJwtAccessToken(final ServerAccessToken at) {
+                        return customizeClaims.apply(super.createJwtAccessToken(at));
+                    }
+                };
                 break;
             default:
                 throw new IllegalArgumentException("Unsupported oauth2 provider: " + configuration.getProvider());

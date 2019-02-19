@@ -32,6 +32,7 @@ import java.io.OutputStream;
 import java.security.KeyStore;
 import java.security.Principal;
 import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.security.cert.X509Certificate;
 
 public final class Keystores {
@@ -39,28 +40,29 @@ public final class Keystores {
         // no-op
     }
 
-    public static void create(final File keystore) throws Exception {
+    public static PublicKey create(final File keystore) throws Exception {
         CryptoUtils.installBouncyCastleProvider();
 
         final KeyStore ks = KeyStore.getInstance("JKS");
         ks.load(null, "password".toCharArray());
 
-        final CertAndKeyGen keyGen = new CertAndKeyGen("RSA", "SHA1WithRSA", null);
+        final CertAndKeyGen keyGen = new CertAndKeyGen("RSA", "SHA256WithRSA", null);
         keyGen.generate(2048);
-        PrivateKey rootPrivateKey = keyGen.getPrivateKey();
+        final PrivateKey rootPrivateKey = keyGen.getPrivateKey();
 
         X509Certificate rootCertificate = keyGen.getSelfCertificate(new X500Name("cn=root"), (long) 365 * 24 * 60 * 60);
 
-        final CertAndKeyGen keyGen1 = new CertAndKeyGen("RSA", "SHA1WithRSA", null);
+        final CertAndKeyGen keyGen1 = new CertAndKeyGen("RSA", "SHA256WithRSA", null);
         keyGen1.generate(2048);
         final PrivateKey middlePrivateKey = keyGen1.getPrivateKey();
 
         X509Certificate middleCertificate = keyGen1.getSelfCertificate(new X500Name("CN=MIDDLE"), (long) 365 * 24 * 60 * 60);
 
         //Generate leaf certificate
-        final CertAndKeyGen keyGen2 = new CertAndKeyGen("RSA", "SHA1WithRSA", null);
+        final CertAndKeyGen keyGen2 = new CertAndKeyGen("RSA", "SHA256WithRSA", null);
         keyGen2.generate(2048);
         final PrivateKey topPrivateKey = keyGen2.getPrivateKey();
+
 
         X509Certificate topCertificate = keyGen2.getSelfCertificate(new X500Name("cn=root"), (long) 365 * 24 * 60 * 60);
 
@@ -77,6 +79,8 @@ public final class Keystores {
         try (final OutputStream os = new FileOutputStream(keystore)) {
             ks.store(os, "password".toCharArray());
         }
+
+        return keyGen2.getPublicKey();
     }
 
     private static X509Certificate createSignedCertificate(final X509Certificate cetrificate, final X509Certificate issuerCertificate,

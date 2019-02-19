@@ -30,10 +30,14 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.File;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
+import java.security.PublicKey;
 import java.util.Base64;
 import java.util.function.BiFunction;
+import java.util.stream.Stream;
 
 import javax.cache.Cache;
 import javax.cache.CacheManager;
@@ -56,15 +60,22 @@ import org.apache.cxf.rs.security.oauth2.common.ClientAccessToken;
 import org.apache.cxf.rs.security.oauth2.common.OAuthAuthorizationData;
 import org.apache.cxf.rs.security.oauth2.provider.OAuthJSONProvider;
 import org.apache.cxf.rs.security.oauth2.utils.OAuthConstants;
+import org.apache.geronimo.microprofile.impl.jwtauth.config.GeronimoJwtAuthConfig;
+import org.apache.geronimo.microprofile.impl.jwtauth.jwt.DateValidator;
+import org.apache.geronimo.microprofile.impl.jwtauth.jwt.JwtParser;
+import org.apache.geronimo.microprofile.impl.jwtauth.jwt.KidMapper;
+import org.apache.geronimo.microprofile.impl.jwtauth.jwt.SignatureValidator;
 import org.apache.meecrowave.Meecrowave;
 import org.apache.meecrowave.junit.MeecrowaveRule;
 import org.apache.meecrowave.oauth2.provider.JCacheCodeDataProvider;
+import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 
 public class OAuth2Test {
     private static final File KEYSTORE = new File("target/OAuth2Test/keystore.jceks");
+    private static PublicKey PUBLIC_KEY;
 
     @ClassRule
     public static final MeecrowaveRule MEECROWAVE = new MeecrowaveRule(
@@ -72,6 +83,7 @@ public class OAuth2Test {
                     .user("test", "pwd").role("test", "admin")
                     // jwt requires more config
                     .property("oauth2-use-jwt-format-for-access-token", "true")
+                    .property("oauth2-jwt-issuer", "myissuer")
                     // auth code support is optional so activate it
                     .property("oauth2-authorization-code-support", "true")
                     // auth code jose setup to store the tokens
@@ -90,7 +102,7 @@ public class OAuth2Test {
 
     @BeforeClass
     public static void createKeyStore() throws Exception {
-        Keystores.create(KEYSTORE);
+        PUBLIC_KEY = Keystores.create(KEYSTORE);
     }
 
     @Test
@@ -112,6 +124,7 @@ public class OAuth2Test {
             assertEquals(3600, token.getExpiresIn());
             assertNotEquals(0, token.getIssuedAt());
             assertNotNull(token.getRefreshToken());
+            validateJwt(token);
         } finally {
             client.close();
         }
@@ -243,6 +256,61 @@ public class OAuth2Test {
             assertEquals(client, payload.getString("client_id"));
         } catch (final Exception e) {
             fail(e.getMessage());
+        }
+    }
+
+    private void validateJwt(final ClientAccessToken token) {
+        final JwtParser parser = new JwtParser();
+        final KidMapper kidMapper = new KidMapper();
+        final DateValidator dateValidator = new DateValidator();
+        final SignatureValidator signatureValidator = new SignatureValidator();
+        final GeronimoJwtAuthConfig config = (value, def) -> {
+            switch (value) {
+                case "issuer.default":
+                    return "myissuer";
+                case "jwt.header.kid.default":
+                    return "defaultkid";
+                case "public-key.default":
+                    return Base64.getEncoder().encodeToString(PUBLIC_KEY.getEncoded());
+                default:
+                    return def;
+            }
+        };
+        setField(kidMapper, "config", config);
+        setField(dateValidator, "config", config);
+        setField(parser, "config", config);
+        setField(signatureValidator, "config", config);
+        setField(parser, "kidMapper", kidMapper);
+        setField(parser, "dateValidator", dateValidator);
+        setField(parser, "signatureValidator", signatureValidator);
+        Stream.of(dateValidator, signatureValidator, kidMapper, parser).forEach(this::init);
+        final JsonWebToken jsonWebToken = parser.parse(token.getTokenKey());
+        assertNotNull(jsonWebToken);
+        assertEquals("myissuer", jsonWebToken.getIssuer());
+        assertEquals("test", JsonString.class.cast(jsonWebToken.getClaim("username")).getString());
+    }
+
+    private void init(final Object o) {
+        try {
+            final Method init = o.getClass().getDeclaredMethod("init");
+            if (!init.isAccessible()) {
+                init.setAccessible(true);
+            }
+            init.invoke(o);
+        } catch (final Exception e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    private void setField(final Object instance, final String field, final Object value) {
+        try {
+            final Field declaredField = instance.getClass().getDeclaredField(field);
+            if (!declaredField.isAccessible()) {
+                declaredField.setAccessible(true);
+            }
+            declaredField.set(instance, value);
+        } catch (final Exception e) {
+            throw new IllegalArgumentException(e);
         }
     }
 }

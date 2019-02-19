@@ -106,6 +106,12 @@
       <version>1.46</version>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>org.apache.geronimo</groupId>
+      <artifactId>geronimo-jwt-auth</artifactId>
+      <version>1.0.1</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>

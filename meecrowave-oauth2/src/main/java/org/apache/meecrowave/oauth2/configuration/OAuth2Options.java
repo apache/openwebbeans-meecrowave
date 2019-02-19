@@ -76,6 +76,9 @@ public class OAuth2Options implements Cli.Options {
     @CliOption(name = "oauth2-jwt-access-token-claim-map", description = "The jwt claims configuration")
     private String jwtAccessTokenClaimMap;
 
+    @CliOption(name = "oauth2-jwt-issuer", description = "The jwt issuer (ignored if not set)")
+    private String jwtIssuer;
+
     @CliOption(name = "oauth2-provider", description = "Which provider type to use: jcache[-code], jpa[-code], encrypted[-code]")
     private String provider = "jcache";
 
@@ -535,5 +538,13 @@ public class OAuth2Options implements Cli.Options {
 
     public void setJcacheJmx(final boolean jcacheJmx) {
         this.jcacheJmx = jcacheJmx;
+    }
+
+    public String getJwtIssuer() {
+        return jwtIssuer;
+    }
+
+    public void setJwtIssuer(final String jwtIssuer) {
+        this.jwtIssuer = jwtIssuer;
     }
 }
