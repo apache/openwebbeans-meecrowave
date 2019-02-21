@@ -1,0 +1,303 @@
+= Howto
+:jbake-date: 2019-12-21
+:jbake-type: page
+:jbake-status: draft
+:jbake-meecrowavepdf:
+:jbake-meecrowavecolor: body-green
+:icons: font
+
+== How to create a simple maven project using Meecrowave ?
+
+You should add the following dependencies do the dependencies section of your pom.xml (adjust version to current stable version)
+
+[source,maven]
+----
+        <dependency>
+            <groupId>org.apache.meecrowave</groupId>
+            <artifactId>meecrowave-specs-api</artifactId>
+            <version>1.2.5</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.meecrowave</groupId>
+            <artifactId>meecrowave-core</artifactId>
+            <version>1.2.5</version>
+        </dependency>
+
+        <!-- if you intend to have unit tests (you really should) -->
+        <dependency>
+            <groupId>org.apache.meecrowave</groupId>
+            <artifactId>meecrowave-junit</artifactId>
+            <version>1.2.5</version>
+            <scope>test</scope>
+        </dependency>
+----
+
+and the following plugin configuration to the build/plugins section of your pom.xml
+
+[source,maven]
+----
+            <plugin>
+                <!--
+                    For starting meecrowave via Maven. Just run
+                    $> mvn clean install meecrowave:run
+                -->
+                <groupId>org.apache.meecrowave</groupId>
+                <artifactId>meecrowave-maven-plugin</artifactId>
+                <version>1.2.5</version>
+            </plugin>
+----
+
+Then, you can start your app by running 
+
+[source,shell]
+----
+mvn clean install meecrowave:run
+----
+
+
+== How to add a REST Endpoint ?
+
+You should add a class such as :
+
+[source,java]
+----
+package org.mypackage;
+
+import javax.enterprise.context.ApplicationScoped;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+
+@Path("mypath")
+@ApplicationScoped
+public class MyEndpoint {
+
+    /**
+     * Ping / pong rest GET method, to check backend and replies to queries
+     * 
+     * @return 
+     */
+    @Path("/ping")
+    @GET()
+    public String getPing() {
+        return "pong";
+    }
+}
+----
+
+== How to add a filter (simple case) ?
+
+Use standard Servlet 3.0 link:https://docs.oracle.com/javaee/6/api/javax/servlet/annotation/WebFilter.html[@WebFilter] annotation. A simple example :
+
+[source,java]
+----
+
+package org.mypackage;
+
+import java.io.IOException;
+import javax.servlet.Filter;
+import javax.servlet.FilterChain;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
+import javax.servlet.annotation.WebFilter;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+/**
+ * A simple CORS filter
+ *
+ */
+@WebFilter(asyncSupported = true, urlPatterns = {"/*"})
+public class CORSFilter implements Filter {
+
+    /**
+     * A basic CORS filter, allowing everything
+     */
+    @Override
+    public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain chain)
+            throws IOException, ServletException {
+ 
+        HttpServletRequest request = (HttpServletRequest) servletRequest;
+
+        HttpServletResponse response = (HttpServletResponse) servletResponse;
+        response.addHeader("Access-Control-Allow-Origin", "*");
+        response.addHeader("Access-Control-Allow-Methods","GET, OPTIONS, HEAD, PUT, POST, DELETE");
+        response.addHeader("Access-Control-Allow-Headers","*");
+ 
+        if (request.getMethod().equals("OPTIONS")) {
+            // special case of return code for "OPTIONS" query
+            response.setStatus(HttpServletResponse.SC_ACCEPTED);
+            return;
+        }
+ 
+        // pass the request along the filter chain
+        chain.doFilter(request, servletResponse);
+    }
+}
+----
+
+== How to add a servlet ?
+
+If your servlet requires no configuration that you would typically put in the web.xml file, you can use the link:https://docs.oracle.com/javaee/6/api/javax/servlet/annotation/WebServlet.html[@WebServlet] annotation from the Servlet 3.0 specification.
+
+If you need to configure the servlet, you should use a link:https://docs.oracle.com/javaee/6/api/javax/servlet/ServletContainerInitializer.html[ServletContainerInitializer].
+
+If you would have a declaration such as :
+[source,xml]
+----
+    <servlet>
+        <description>My Servlet</description>
+        <servlet-name>MyServlet</servlet-name>
+        <servlet-class>org.my.servlet.ImplementationClass</servlet-class>
+        <init-param>
+            <param-name>param-name</param-name>
+            <param-value>My param value</param-value>
+        </init-param>
+        <load-on-startup>0</load-on-startup>
+        <async-supported>true</async-supported>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>MyServlet</servlet-name>
+        <url-pattern>/my_mapping/*</url-pattern>
+    </servlet-mapping>
+----
+
+in your web.xml, you would have a SerlvetContainerInitializer such as :
+
+[source,java]
+----
+package org.mypackage;
+
+import java.util.Set;
+
+import javax.servlet.ServletContainerInitializer;
+import javax.servlet.ServletContext;
+import javax.servlet.ServletRegistration;
+
+import org.my.servlet.ImplementationClass;
+
+public class MyServletContainerInitializer implements ServletContainerInitializer {
+    @Override
+    public void onStartup(final Set<Class<?>> c, final ServletContext context) {
+        final ServletRegistration.Dynamic def = context.addServlet("My Servlet", ImplementationClass.class);
+        def.setInitParameter("param-name", "My param value");
+
+        def.setLoadOnStartup(0);
+        def.addMapping("/my_mapping/*");
+        def.setAsyncSupported(true);
+    }
+}
+----
+
+Then, you should register this implementation of ServletContainerInitializer:
+
+* in a SPI, in src/main/resources/META-INF/services/javax.servlet.ServletContainerInitializer:
+[source,spi]
+----
+org.mypackage.MyServletContainerInitializer
+----
+* or, better, add it to Meecrowave configuration using a Meecrowave.ConfigurationCustomizer such as :
+[source,java]
+----
+package org.mypackage;
+
+import org.apache.meecrowave.Meecrowave;
+
+public class ServletContainerInitializerCustomizer implements Meecrowave.ConfigurationCustomizer {
+    @Override
+    public void accept(final Meecrowave.Builder builder) {
+        builder.addServletContextInitializer(new MyServletContainerInitializer());
+    }
+}
+----
+
+Using this last option, the configuration will also be performed in unit tests.
+
+Your implementation of Meecrowave.ConfigurationCustomizer should be added to the configuration by appending its canonical name to the src/main/resources/META-INF/org.apache.meecrowave.Meecrowave$ConfigurationCustomizer file.
+
+== How to add a valve ?
+
+Simple cases should be handled using link:http://openwebbeans.apache.org/meecrowave/meecrowave-core/configuration.html#_valve_configuration[a meecrowave.properties file].
+
+More complex cases can be handled using an implementation of Meecrowave.ConfigurationCustomizer.
+
+In the following example, we instantiate a Tomcat RewriteValve and load the rewrite.config file we usually put in src/main/webapp/WEB-INF in a webapp packaged as a war, and that we would put in src/main/resources in a meecrowave app :
+
+[source,java]
+----
+package org.mypackage;
+
+import java.io.IOException;
+import java.io.InputStream;
+import org.apache.catalina.LifecycleException;
+import org.apache.catalina.valves.rewrite.RewriteValve;
+import org.apache.cxf.helpers.IOUtils;
+import org.apache.meecrowave.Meecrowave;
+
+/**
+ * A bit of glue to set proxy / RewriteValve configuration at startup
+ * 
+ */
+@Log4j2
+public class RewriteValveCustomizer implements Meecrowave.ConfigurationCustomizer {
+    final String PROXY_CONFIG = "rewrite.config";
+    @Override
+    public void accept(final Meecrowave.Builder builder) {
+        log.info("Loading proxy / rewrite configuration from {}", PROXY_CONFIG);
+        log.info("This file should be in src/main/resources in project sources");
+        InputStream stream = Thread.currentThread().getContextClassLoader().getResourceAsStream(PROXY_CONFIG);
+        if (null == stream) {
+            log.info("Rewrite configuration file {} not found", PROXY_CONFIG);
+            return;
+        }
+        String configuration;
+        try {
+            configuration = IOUtils.toString(stream);
+        } catch (IOException ex) {
+            log.error("Error reading rewrite / proxy configuration file {}", PROXY_CONFIG);
+            return;
+        }
+        final RewriteValve proxy = new RewriteValve() {
+            @Override
+            protected synchronized void startInternal() throws LifecycleException {
+                super.startInternal();
+                try {
+                    setConfiguration(configuration);
+                } catch (final Exception e) {
+                    throw new LifecycleException(e);
+                }
+            }
+        };
+        // at this time, we are still single threaded. So, this should be safe.
+        builder.instanceCustomizer(tomcat -> tomcat.getHost().getPipeline().addValve(proxy));
+        log.info("Proxy / rewrite configuration valve configured and added to tomcat.");
+    }
+}
+----
+
+Your implementation of Meecrowave.ConfigurationCustomizer should be added to the configuration by appending its canonical name to the src/main/resources/META-INF/org.apache.meecrowave.Meecrowave$ConfigurationCustomizer file.
+
+
+A more complex example link:https://rmannibucau.metawerx.net/post/tomcat-rewrite-url[is available on Romain Manni-Bucau's blog].
+
+== How to add a web frontend ?
+
+You should add <webapp> element to the meecrowave plugin configuration. Example :
+[source,pom.xml]
+----
+            <plugin>
+                <!--
+                    For starting meecrowave via Maven. Just run
+                    $> mvn clean install meecrowave:run
+                -->
+                <groupId>org.apache.meecrowave</groupId>
+                <artifactId>meecrowave-maven-plugin</artifactId>
+                <version>1.2.5</version>
+                <configuration>
+                    <!-- include packaged app as webapp -->
+                    <webapp>src/main/webapp/dist</webapp>
+                </configuration>
+            </plugin>
+----
+
+will add the content of the "dist" folder to your package and its files will be available on the applicaiton root.
