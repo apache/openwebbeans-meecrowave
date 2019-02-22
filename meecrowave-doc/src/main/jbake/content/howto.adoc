@@ -211,7 +211,7 @@ public class ServletContainerInitializerCustomizer implements Meecrowave.Configu
 }
 ----
 
-Using this last option, the configuration will also be performed in unit tests.
+Using this last option, the configuration will also be performed before executing unit tests.
 
 Your implementation of Meecrowave.ConfigurationCustomizer should be added to the configuration by appending its canonical name to the src/main/resources/META-INF/org.apache.meecrowave.Meecrowave$ConfigurationCustomizer file.
 
@@ -221,7 +221,7 @@ Simple cases should be handled using link:http://openwebbeans.apache.org/meecrow
 
 More complex cases can be handled using an implementation of Meecrowave.ConfigurationCustomizer.
 
-In the following example, we instantiate a Tomcat RewriteValve and load the rewrite.config file we usually put in src/main/webapp/WEB-INF in a webapp packaged as a war, and that we would put in src/main/resources in a meecrowave app :
+In the following example, we instantiate a link:https://tomcat.apache.org/tomcat-9.0-doc/rewrite.html[Tomcat RewriteValve] and load the rewrite.config file we usually put in src/main/webapp/WEB-INF in a webapp packaged as a war, and that we would put in src/main/resources in a meecrowave app :
 
 [source,java]
 ----
@@ -229,6 +229,7 @@ package org.mypackage;
 
 import java.io.IOException;
 import java.io.InputStream;
+import lombok.extern.log4j.Log4j2;
 import org.apache.catalina.LifecycleException;
 import org.apache.catalina.valves.rewrite.RewriteValve;
 import org.apache.cxf.helpers.IOUtils;
@@ -282,7 +283,7 @@ A more complex example link:https://rmannibucau.metawerx.net/post/tomcat-rewrite
 
 == How to add a web frontend ?
 
-You should add <webapp> element to the meecrowave plugin configuration. Example :
+You should add a <webapp> element to the meecrowave plugin configuration. Example :
 [source,pom.xml]
 ----
             <plugin>
@@ -300,4 +301,6 @@ You should add <webapp> element to the meecrowave plugin configuration. Example 
             </plugin>
 ----
 
-will add the content of the "dist" folder to your package and its files will be available on the applicaiton root.
+will add the content of the "dist" folder to your package and its files will be available on the application root.
+
+Note that your frontend will be served when executing the app (on a mvn meecrowave:run or when running a packaged app). It will not be available during unit tests.
