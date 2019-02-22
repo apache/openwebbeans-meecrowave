@@ -99,7 +99,7 @@ public class CliTest {
                 try {
                     runner.join(TimeUnit.MINUTES.toMillis(1));
                 } catch (final InterruptedException e) {
-                    Thread.interrupted();
+                    Thread.currentThread().interrupt();
                 }
             }
         }
