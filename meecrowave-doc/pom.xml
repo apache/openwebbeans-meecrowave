@@ -38,7 +38,7 @@
     <jbake.pdf>true</jbake.pdf>
     <jbake.updatedownloads>false</jbake.updatedownloads> <!-- grabs too much things on the net to be true by default -->
     <meecrowave.build.name>${project.groupId}.documentation</meecrowave.build.name>
-    <groovy.version>2.5.4</groovy.version>
+    <groovy.version>2.5.6</groovy.version>
   </properties>
 
   <dependencies>

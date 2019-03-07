@@ -32,7 +32,7 @@
     <dependency>
       <groupId>org.codehaus.groovy</groupId>
       <artifactId>groovy</artifactId>
-      <version>2.5.4</version>
+      <version>2.5.6</version>
     </dependency>
     <dependency>
       <groupId>org.apache.meecrowave</groupId>
@@ -65,7 +65,7 @@
           <dependency>
             <groupId>org.codehaus.groovy</groupId>
             <artifactId>groovy-eclipse-batch</artifactId>
-            <version>2.4.3-01</version>
+            <version>2.5.6-01</version>
           </dependency>
         </dependencies>
       </plugin>
