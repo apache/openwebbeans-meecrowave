@@ -19,6 +19,7 @@
 package org.apache.meecrowave.doc.generator;
 
 import static java.util.Comparator.comparing;
+import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.joining;
 
 import java.lang.reflect.Field;
@@ -43,7 +44,7 @@ public class GradleConfiguration extends BaseGenerator {
     private String toLine(final Field opt) {
         opt.setAccessible(true);
         try {
-            return '|' + opt.getName() + '|' + opt.get(defaults) + '|' + findDescription(opt.getName());
+            return '|' + opt.getName() + '|' + ofNullable(opt.get(defaults)).orElse("-") + '|' + findDescription(opt.getName());
         } catch (final IllegalAccessException e) {
             throw new IllegalStateException(e);
         }
