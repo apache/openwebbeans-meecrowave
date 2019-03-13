@@ -49,6 +49,7 @@ import org.apache.meecrowave.doc.generator.ArquillianConfiguration;
 import org.apache.meecrowave.doc.generator.CliConfiguration;
 import org.apache.meecrowave.doc.generator.Configuration;
 import org.apache.meecrowave.doc.generator.Downloads;
+import org.apache.meecrowave.doc.generator.GradleConfiguration;
 import org.apache.meecrowave.doc.generator.LetsEncryptConfiguration;
 import org.apache.meecrowave.doc.generator.MavenConfiguration;
 import org.apache.meecrowave.doc.generator.OAuth2Configuration;
@@ -81,6 +82,7 @@ public class JBake {
         new MavenConfiguration().run();
         new OAuth2Configuration().run();
         new LetsEncryptConfiguration().run();
+        new GradleConfiguration().run();
 
         if (updateDownloads) {
             final ByteArrayOutputStream tableContent = new ByteArrayOutputStream();

@@ -22,7 +22,7 @@ group 'com.app'
 version '1.0-SNAPSHOT'
 
 apply plugin: 'java'
-apply plugin: 'org.apache.meecrowave.meecrowave'
+apply plugin: 'org.apache.meecrowave'
 
 meecrowave {
     httpPort = 9090
@@ -31,4 +31,9 @@ meecrowave {
 
 ----
 
-More coming soon, for now use gradle IDE integration or configuration documentation please.
+IMPORTANT: until version `1.2.7` the plugin id was `org.apache.microwave.microwave` so you had to use `apply plugin: 'org.apache.microwave.microwave'`.
+Alternatively you can use plugin class: `apply plugin: org.apache.meecrowave.gradle.MeecrowavePlugin`.
+
+== Configuration
+
+include::../../../../../target/generated-doc/GradleConfiguration.adoc[]
