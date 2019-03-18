@@ -37,7 +37,7 @@ public class SharedLibTest {
                 .bake()) {
             assertEquals(
                     "org.apache.deltaspike.core.api.config.ConfigProperty",
-                    slurp(new URL("http://localhost:" + container.getConfiguration().getHttpPort() + "/api/test/load/org.apache.deltaspike.core.api.config.ConfigProperty")));
+                    slurp(new URL("http://localhost:" + container.getConfiguration().getHttpPort() + "/api/test/load/true")));
         }
     }
 

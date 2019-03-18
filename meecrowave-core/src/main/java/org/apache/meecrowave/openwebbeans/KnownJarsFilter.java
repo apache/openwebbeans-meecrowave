@@ -86,6 +86,8 @@ public class KnownJarsFilter implements JarScanFilter {
         add("cglib-");
         add("charsets.jar");
         add("checker-qual");
+        add("common-java5");
+        add("common-junit");
         add("commons-beanutils");
         add("commons-cli-");
         add("commons-codec-");
@@ -174,6 +176,7 @@ public class KnownJarsFilter implements JarScanFilter {
         add("javax.");
         add("jaxb-");
         add("jaxp-");
+        add("jaxws-api");
         add("jbake-");
         add("jboss-");
         add("jbossall-");
@@ -295,6 +298,7 @@ public class KnownJarsFilter implements JarScanFilter {
         add("sshd-");
         add("stax2-api-");
         add("stax-api-");
+        add("stax-ex-");
         add("sunec.jar");
         add("surefire-");
         add("swizzle-");

@@ -22,7 +22,6 @@ import static java.util.Collections.singletonList;
 import static javax.ws.rs.client.Entity.entity;
 import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED_TYPE;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE;
-import static javax.xml.bind.DatatypeConverter.printBase64Binary;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
@@ -183,7 +182,7 @@ public class OAuth2Test {
                     .queryParam(OAuthConstants.CLIENT_SECRET, "cpwd")
                     .queryParam(OAuthConstants.REDIRECT_URI, "http://localhost:" + httpPort + "/redirected")
                     .request(APPLICATION_JSON_TYPE)
-                    .header("authorization", "Basic " + printBase64Binary("test:pwd".getBytes(StandardCharsets.UTF_8)))
+                    .header("authorization", "Basic " + Base64.getEncoder().encodeToString("test:pwd".getBytes(StandardCharsets.UTF_8)))
                     .get();
             final OAuthAuthorizationData data = authorization.readEntity(OAuthAuthorizationData.class);
             assertNotNull(data.getAuthenticityToken());
@@ -198,7 +197,7 @@ public class OAuth2Test {
                     .queryParam(OAuthConstants.AUTHORIZATION_DECISION_KEY, "allow")
                     .request(APPLICATION_JSON_TYPE)
                     .cookie(authorization.getCookies().get("JSESSIONID"))
-                    .header("authorization", "Basic " + printBase64Binary("test:pwd".getBytes(StandardCharsets.UTF_8)))
+                    .header("authorization", "Basic " + Base64.getEncoder().encodeToString("test:pwd".getBytes(StandardCharsets.UTF_8)))
                     .get();
             assertEquals(Response.Status.SEE_OTHER.getStatusCode(), decision.getStatus());
             assertTrue(decision.getLocation().toASCIIString(), decision.getLocation().toASCIIString().startsWith("http://localhost:" + httpPort + "/redirected?code="));

@@ -101,9 +101,9 @@ public class MeecrowaveTest {
         try (final Meecrowave meecrowave = new Meecrowave(new Meecrowave.Builder().randomHttpPort().includePackages("org.superbiz.app")).start()) {
             meecrowave.deployWebapp("", root);
             assertEquals("hello", slurp(new URL("http://localhost:" + meecrowave.getConfiguration().getHttpPort() + "/index.html")));
-            assertEquals("simple", slurp(new URL("http://localhost:" + meecrowave.getConfiguration().getHttpPort() + "/api/test")));
-            assertEquals("simplepathinfo", slurp(new URL("http://localhost:" + meecrowave.getConfiguration().getHttpPort()
-                    + "/api/test?checkcustom=pathinfo#is=fine")));
+            assertEquals("simplefalse", slurp(new URL("http://localhost:" + meecrowave.getConfiguration().getHttpPort() + "/api/test")));
+            assertEquals("simpletrue", slurp(new URL("http://localhost:" + meecrowave.getConfiguration().getHttpPort()
+                    + "/api/test?checkcustom=true")));
             assertEquals("simple", slurp(new URL("http://localhost:" + meecrowave.getConfiguration().getHttpPort() + "/api/other")));
             assertEquals("simplefiltertrue", slurp(new URL("http://localhost:" + meecrowave.getConfiguration().getHttpPort() + "/filter")));
             assertEquals("filtertrue", slurp(new URL("http://localhost:" + meecrowave.getConfiguration().getHttpPort() + "/other")));
@@ -115,7 +115,7 @@ public class MeecrowaveTest {
     @Test
     public void classpath() {
         try (final Meecrowave meecrowave = new Meecrowave(new Meecrowave.Builder().randomHttpPort().includePackages("org.superbiz.app")).bake()) {
-            assertEquals("simple", slurp(new URL("http://localhost:" + meecrowave.getConfiguration().getHttpPort() + "/api/test")));
+            assertEquals("simplefalse", slurp(new URL("http://localhost:" + meecrowave.getConfiguration().getHttpPort() + "/api/test")));
             assertEquals("simplefiltertrue", slurp(new URL("http://localhost:" + meecrowave.getConfiguration().getHttpPort() + "/filter")));
             assertEquals(
                     "sci:" + Bounced.class.getName() + Endpoint.class.getName() + InterfaceApi.class.getName() + RsApp.class.getName(),

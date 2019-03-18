@@ -50,6 +50,10 @@ public class OWBJarScanner implements JarScanner {
                             try {
                                 final URL url = new URL(u);
                                 final File asFile = Files.toFile(url);
+                                if (!filter.check(jarScanType, asFile.getName())) {
+                                    return;
+                                }
+
                                 if (asFile.getName().endsWith(Constants.JAR_EXT)) {
                                     try (final Jar jar = JarFactory.newInstance(asFile.toURI().toURL())) {
                                         callback.scan(jar, u, true);

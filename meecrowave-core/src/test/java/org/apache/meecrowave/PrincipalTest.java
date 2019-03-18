@@ -28,8 +28,8 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
 import java.security.Principal;
+import java.util.Base64;
 
-import static javax.xml.bind.DatatypeConverter.printBase64Binary;
 import static org.junit.Assert.assertEquals;
 
 public class PrincipalTest {
@@ -64,7 +64,7 @@ public class PrincipalTest {
 
     private String slurp(final URL url) throws IOException {
         final URLConnection is = HttpURLConnection.class.cast(url.openConnection());
-        is.setRequestProperty("Authorization", "Basic " + printBase64Binary("foo:pwd".getBytes(StandardCharsets.UTF_8)));
+        is.setRequestProperty("Authorization", "Basic " + Base64.getEncoder().encodeToString("foo:pwd".getBytes(StandardCharsets.UTF_8)));
         return IO.toString(is.getInputStream());
     }
 

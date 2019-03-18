@@ -18,6 +18,10 @@
  */
 package org.superbiz.app;
 
+import static org.junit.Assert.assertNotNull;
+
+import java.security.Principal;
+
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.spi.BeanManager;
 import javax.inject.Inject;
@@ -28,10 +32,6 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
-import java.security.Principal;
-
-import static java.util.Optional.ofNullable;
-import static org.junit.Assert.assertNotNull;
 
 @Path("test")
 @ApplicationScoped
@@ -50,8 +50,8 @@ public class Endpoint {
 
     @GET
     @Produces(MediaType.TEXT_PLAIN)
-    public String simple(@QueryParam("checkcustom") final String query) {
-        return Boolean.parseBoolean(injectable.injected()) ? "simple" + ofNullable(query).orElse("") : "fail";
+    public String simple(@QueryParam("checkcustom") final boolean query) {
+        return Boolean.parseBoolean(injectable.injected()) ? "simple" + query : "fail";
     }
 
     @GET
@@ -72,15 +72,15 @@ public class Endpoint {
     @GET
     @Path("load/{name}")
     @Produces(MediaType.TEXT_PLAIN)
-    public String load(@PathParam("name") final String fqn) {
+    public String load(@PathParam("name") final boolean ds) {
         try {
             final ClassLoader loader = Thread.currentThread().getContextClassLoader(); // if sharedlib is set should be MeecrowaveClassloader
-            if (fqn.contains("deltaspike")) {
+            if (ds) {
                 final Class<?> ce = loader.loadClass("org.apache.deltaspike.core.impl.config.ConfigurationExtension");
                 final Object extensionBeanInstance = bm.getReference(bm.resolve(bm.getBeans(ce)), ce, bm.createCreationalContext(null));
                 assertNotNull(extensionBeanInstance);
             }
-            return loader.loadClass(fqn).getName();
+            return loader.loadClass("org.apache.deltaspike.core.api.config.ConfigProperty").getName();
         } catch (final ClassNotFoundException cnfe) {
             return "oops";
         }
