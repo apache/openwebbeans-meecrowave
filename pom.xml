@@ -217,12 +217,6 @@
     </profile>
   </profiles>
 
-  <repositories>
-    <repository>
-      <id>tomcat-staging</id>
-      <url>https://repository.apache.org/content/repositories/orgapachetomcat-1205/</url>
-    </repository>
-  </repositories>
 <!-- only needed when under development
   <repositories>
     <repository>
