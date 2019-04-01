@@ -12,39 +12,39 @@ You should add the following dependencies do the dependencies section of your po
 
 [source,maven]
 ----
-        <dependency>
-            <groupId>org.apache.meecrowave</groupId>
-            <artifactId>meecrowave-specs-api</artifactId>
-            <version>1.2.5</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.meecrowave</groupId>
-            <artifactId>meecrowave-core</artifactId>
-            <version>1.2.5</version>
-        </dependency>
+<dependency>
+    <groupId>org.apache.meecrowave</groupId>
+    <artifactId>meecrowave-specs-api</artifactId>
+    <version>1.2.5</version>
+</dependency>
+<dependency>
+    <groupId>org.apache.meecrowave</groupId>
+    <artifactId>meecrowave-core</artifactId>
+    <version>1.2.5</version>
+</dependency>
 
-        <!-- if you intend to have unit tests (you really should) -->
-        <dependency>
-            <groupId>org.apache.meecrowave</groupId>
-            <artifactId>meecrowave-junit</artifactId>
-            <version>1.2.5</version>
-            <scope>test</scope>
-        </dependency>
+<!-- if you intend to have unit tests (you really should) -->
+<dependency>
+    <groupId>org.apache.meecrowave</groupId>
+    <artifactId>meecrowave-junit</artifactId>
+    <version>1.2.5</version>
+    <scope>test</scope>
+</dependency>
 ----
 
 and the following plugin configuration to the build/plugins section of your pom.xml
 
 [source,maven]
 ----
-            <plugin>
-                <!--
-                    For starting meecrowave via Maven. Just run
-                    $> mvn clean install meecrowave:run
-                -->
-                <groupId>org.apache.meecrowave</groupId>
-                <artifactId>meecrowave-maven-plugin</artifactId>
-                <version>1.2.5</version>
-            </plugin>
+<plugin>
+    <!--
+        For starting meecrowave via Maven. Just run
+        $> mvn clean install meecrowave:run
+    -->
+    <groupId>org.apache.meecrowave</groupId>
+    <artifactId>meecrowave-maven-plugin</artifactId>
+    <version>1.2.5</version>
+</plugin>
 ----
 
 Then, you can start your app by running 
@@ -145,21 +145,21 @@ If you need to configure the servlet, you should use a link:https://docs.oracle.
 If you would have a declaration such as :
 [source,xml]
 ----
-    <servlet>
-        <description>My Servlet</description>
-        <servlet-name>MyServlet</servlet-name>
-        <servlet-class>org.my.servlet.ImplementationClass</servlet-class>
-        <init-param>
-            <param-name>param-name</param-name>
-            <param-value>My param value</param-value>
-        </init-param>
-        <load-on-startup>0</load-on-startup>
-        <async-supported>true</async-supported>
-    </servlet>
-    <servlet-mapping>
-        <servlet-name>MyServlet</servlet-name>
-        <url-pattern>/my_mapping/*</url-pattern>
-    </servlet-mapping>
+<servlet>
+    <description>My Servlet</description>
+    <servlet-name>MyServlet</servlet-name>
+    <servlet-class>org.my.servlet.ImplementationClass</servlet-class>
+    <init-param>
+        <param-name>param-name</param-name>
+        <param-value>My param value</param-value>
+    </init-param>
+    <load-on-startup>0</load-on-startup>
+    <async-supported>true</async-supported>
+</servlet>
+<servlet-mapping>
+    <servlet-name>MyServlet</servlet-name>
+    <url-pattern>/my_mapping/*</url-pattern>
+</servlet-mapping>
 ----
 
 in your web.xml, you would have a SerlvetContainerInitializer such as :
@@ -232,7 +232,6 @@ import java.io.InputStream;
 import lombok.extern.log4j.Log4j2;
 import org.apache.catalina.LifecycleException;
 import org.apache.catalina.valves.rewrite.RewriteValve;
-import org.apache.cxf.helpers.IOUtils;
 import org.apache.meecrowave.Meecrowave;
 
 /**
@@ -246,14 +245,12 @@ public class RewriteValveCustomizer implements Meecrowave.ConfigurationCustomize
     public void accept(final Meecrowave.Builder builder) {
         log.info("Loading proxy / rewrite configuration from {}", PROXY_CONFIG);
         log.info("This file should be in src/main/resources in project sources");
-        InputStream stream = Thread.currentThread().getContextClassLoader().getResourceAsStream(PROXY_CONFIG);
-        if (null == stream) {
-            log.info("Rewrite configuration file {} not found", PROXY_CONFIG);
-            return;
-        }
-        String configuration;
-        try {
-            configuration = IOUtils.toString(stream);
+        try (InputStream stream = Thread.currentThread().getContextClassLoader().getResourceAsStream(PROXY_CONFIG)) {
+            if (null == stream) {
+                log.info("Rewrite configuration file {} not found", PROXY_CONFIG);
+                return;
+            }
+            configuration = new BufferedReader(new InputStreamReader(stream)).lines().collect(Collectors.joining("\n"));
         } catch (IOException ex) {
             log.error("Error reading rewrite / proxy configuration file {}", PROXY_CONFIG);
             return;
@@ -286,19 +283,19 @@ A more complex example link:https://rmannibucau.metawerx.net/post/tomcat-rewrite
 You should add a <webapp> element to the meecrowave plugin configuration. Example :
 [source,pom.xml]
 ----
-            <plugin>
-                <!--
-                    For starting meecrowave via Maven. Just run
-                    $> mvn clean install meecrowave:run
-                -->
-                <groupId>org.apache.meecrowave</groupId>
-                <artifactId>meecrowave-maven-plugin</artifactId>
-                <version>1.2.5</version>
-                <configuration>
-                    <!-- include packaged app as webapp -->
-                    <webapp>src/main/webapp/dist</webapp>
-                </configuration>
-            </plugin>
+<plugin>
+    <!--
+        For starting meecrowave via Maven. Just run
+        $> mvn clean install meecrowave:run
+    -->
+    <groupId>org.apache.meecrowave</groupId>
+    <artifactId>meecrowave-maven-plugin</artifactId>
+    <version>1.2.5</version>
+    <configuration>
+        <!-- include packaged app as webapp -->
+        <webapp>src/main/webapp/dist</webapp>
+    </configuration>
+</plugin>
 ----
 
 will add the content of the "dist" folder to your package and its files will be available on the application root.
