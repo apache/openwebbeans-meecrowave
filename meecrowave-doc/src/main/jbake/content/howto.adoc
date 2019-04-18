@@ -143,6 +143,7 @@ If your servlet requires no configuration that you would typically put in the we
 If you need to configure the servlet, you should use a link:https://docs.oracle.com/javaee/6/api/javax/servlet/ServletContainerInitializer.html[ServletContainerInitializer].
 
 If you would have a declaration such as :
+
 [source,xml]
 ----
 <servlet>
@@ -284,6 +285,7 @@ A more complex example link:https://rmannibucau.metawerx.net/post/tomcat-rewrite
 == How to add a web frontend ?
 
 You should add a <webapp> element to the meecrowave plugin configuration. Example :
+
 [source,xml]
 ----
 <plugin>
