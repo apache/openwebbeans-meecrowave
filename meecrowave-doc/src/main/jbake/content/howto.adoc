@@ -10,7 +10,7 @@
 
 You should add the following dependencies do the dependencies section of your pom.xml (adjust version to current stable version)
 
-[source,maven]
+[source,xml]
 ----
 <dependency>
     <groupId>org.apache.meecrowave</groupId>
@@ -34,12 +34,12 @@ You should add the following dependencies do the dependencies section of your po
 
 and the following plugin configuration to the build/plugins section of your pom.xml
 
-[source,maven]
+[source,xml]
 ----
 <plugin>
     <!--
-        For starting meecrowave via Maven. Just run
-        $> mvn clean install meecrowave:run
+    For starting meecrowave via Maven. Just run
+    $> mvn clean install meecrowave:run
     -->
     <groupId>org.apache.meecrowave</groupId>
     <artifactId>meecrowave-maven-plugin</artifactId>
@@ -192,11 +192,14 @@ public class MyServletContainerInitializer implements ServletContainerInitialize
 Then, you should register this implementation of ServletContainerInitializer:
 
 * in a SPI, in src/main/resources/META-INF/services/javax.servlet.ServletContainerInitializer:
-[source,spi]
+
+[source]
 ----
 org.mypackage.MyServletContainerInitializer
 ----
+
 * or add it to Meecrowave configuration using a Meecrowave.ConfigurationCustomizer such as :
+
 [source,java]
 ----
 package org.mypackage;
@@ -281,7 +284,7 @@ A more complex example link:https://rmannibucau.metawerx.net/post/tomcat-rewrite
 == How to add a web frontend ?
 
 You should add a <webapp> element to the meecrowave plugin configuration. Example :
-[source,pom.xml]
+[source,xml]
 ----
 <plugin>
     <!--

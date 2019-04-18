@@ -122,3 +122,6 @@ See link:meecrowave-core/deploy-webapp.html[How to deploy a war] to see how to u
 == Sample
 
 https://github.com/apache/openwebbeans-meecrowave-examples contains ready to use examples using meecrowave.
+
+You can also find more information on our link:howto.html[How To] page.
+
