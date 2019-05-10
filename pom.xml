@@ -52,7 +52,7 @@
     <junit.version>4.12</junit.version>
     <tomcat.version>9.0.19</tomcat.version>
     <openwebbeans.version>2.0.10</openwebbeans.version>
-    <cxf.version>3.3.1</cxf.version>
+    <cxf.version>3.3.2</cxf.version>
     <johnzon.version>1.1.10</johnzon.version>
     <log4j2.version>2.11.1</log4j2.version>
     <deltaspike.version>1.8.2</deltaspike.version>
@@ -217,8 +217,8 @@
     </profile>
   </profiles>
 
-<!-- only needed when under development
   <repositories>
+<!-- only needed when under development
     <repository>
       <id>asf-snapshot</id>
       <url>https://repository.apache.org/content/repositories/snapshots/</url>
@@ -229,6 +229,16 @@
         <enabled>true</enabled>
       </snapshots>
     </repository>
-  </repositories>
 -->
+    <repository>
+      <id>cxf-staging</id>
+      <url>https://repository.apache.org/content/repositories/orgapachecxf-1141/</url>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>
+  </repositories>
 </project>

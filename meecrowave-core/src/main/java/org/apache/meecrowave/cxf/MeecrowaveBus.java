@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 
 import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.inject.Typed;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.servlet.ServletContext;
@@ -35,8 +36,9 @@ import org.apache.cxf.message.Message;
 import org.apache.meecrowave.Meecrowave;
 
 @Named("cxf")
+@Typed({MeecrowaveBus.class, Bus.class})
 @ApplicationScoped
-public class MeecrowaveBus implements Bus {
+public class MeecrowaveBus implements Bus, ClassUnwrapper {
     private final ConfigurableBus delegate = new ConfigurableBus();
 
     protected MeecrowaveBus() {
@@ -45,7 +47,7 @@ public class MeecrowaveBus implements Bus {
 
     @Inject
     public MeecrowaveBus(final ServletContext context) {
-        setProperty(ClassUnwrapper.class.getName(), (ClassUnwrapper) this::getRealClass);
+        setProperty(ClassUnwrapper.class.getName(), this);
 
         final ClassLoader appLoader = context.getClassLoader();
         setExtension(appLoader, ClassLoader.class); // ServletController locks on the classloader otherwise
@@ -60,11 +62,16 @@ public class MeecrowaveBus implements Bus {
     /**
      * Unwrap all proxies and get the real underlying class
      * for detecting annotations, etc.
-     * @param o
-     * @return
+     * @param o the instance to analyze.
+     * @return the class to introspect.
      */
-    protected Class<?> getRealClass(Object o) {
-        final Class<?> aClass = o.getClass();
+    @Override
+    public Class<?> getRealClass(Object o) {
+        return getRealClassFromClass(o.getClass());
+    }
+
+    @Override
+    public Class<?> getRealClassFromClass(final Class<?> aClass) {
         if (aClass.getName().contains("$$")) {
             Class realClass = aClass.getSuperclass();
             if (realClass == Object.class || realClass.isInterface()) {
