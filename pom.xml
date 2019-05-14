@@ -230,15 +230,5 @@
       </snapshots>
     </repository>
 -->
-    <repository>
-      <id>cxf-staging</id>
-      <url>https://repository.apache.org/content/repositories/orgapachecxf-1141/</url>
-      <releases>
-        <enabled>true</enabled>
-      </releases>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
-    </repository>
   </repositories>
 </project>
