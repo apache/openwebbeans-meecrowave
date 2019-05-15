@@ -119,7 +119,6 @@ import org.apache.meecrowave.service.ValueTransformer;
 import org.apache.meecrowave.tomcat.CDIInstanceManager;
 import org.apache.meecrowave.tomcat.LoggingAccessLogPattern;
 import org.apache.meecrowave.tomcat.MeecrowaveContextConfig;
-import org.apache.meecrowave.tomcat.NoDescriptorRegistry;
 import org.apache.meecrowave.tomcat.OWBJarScanner;
 import org.apache.meecrowave.tomcat.ProvidedLoader;
 import org.apache.meecrowave.tomcat.TomcatAutoInitializer;
@@ -868,12 +867,8 @@ public class Meecrowave implements AutoCloseable {
     }
 
     private void setupJmx(final boolean skip) {
-        try {
-            final Field registry = Registry.class.getDeclaredField("registry");
-            registry.setAccessible(true);
-            registry.set(null, skip ? new NoDescriptorRegistry() : new Registry());
-        } catch (final Exception e) {
-            throw new IllegalStateException(e);
+        if (skip) {
+            Registry.disableRegistry();
         }
     }
 
