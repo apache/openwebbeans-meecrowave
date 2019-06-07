@@ -51,13 +51,6 @@ public class ProxyServletSetup implements Meecrowave.MeecrowaveAwareContextCusto
             }
             servlet.setInitParameter("mapping", config.mapping);
             servlet.setInitParameter("configuration", config.configuration);
-            servlet.setInitParameter("read.timeout", config.readTimeout);
-            servlet.setInitParameter("connect.timeout", config.connectTimeout);
-            servlet.setInitParameter("executor.core", config.threadPoolCoreSize);
-            servlet.setInitParameter("executor.max", config.threadPoolMaxSize);
-            servlet.setInitParameter("executor.keepAlive", config.threadPoolKeepAlive);
-            servlet.setInitParameter("shutdown.timeout", config.shutdownTimeout);
-            servlet.setInitParameter("async.timeout", config.asyncTimeout);
         }, null);
     }
 
@@ -90,24 +83,6 @@ public class ProxyServletSetup implements Meecrowave.MeecrowaveAwareContextCusto
 
         @CliOption(name = "proxy-configuration", description = "The route file.")
         private String configuration = "conf/proxy.json";
-
-        @CliOption(name = "proxy-shutdown-timeout", description = "How long the shutdown will wait for in progress tasks (executor).")
-        private String shutdownTimeout = "30000";
-
-        @CliOption(name = "proxy-executor-core", description = "HTTP client thread pool core size.")
-        private String threadPoolCoreSize = "64";
-
-        @CliOption(name = "proxy-executor-max", description = "HTTP client thread pool max size.")
-        private String threadPoolMaxSize = "512";
-
-        @CliOption(name = "proxy-executor-max", description = "HTTP client thread pool keep alive duration (in ms).")
-        private String threadPoolKeepAlive = "60000";
-
-        @CliOption(name = "proxy-read-timeout", description = "HTTP client read timeout.")
-        private String readTimeout = "30000";
-
-        @CliOption(name = "proxy-connect-timeout", description = "HTTP client connect timeout.")
-        private String connectTimeout = "30000";
 
         @CliOption(name = "proxy-async-timeout", description = "Asynchronous execution timeout.")
         private String asyncTimeout = "30000";

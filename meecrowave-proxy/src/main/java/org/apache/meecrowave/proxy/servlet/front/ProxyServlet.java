@@ -34,10 +34,6 @@ import java.util.Enumeration;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletionStage;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.stream.Stream;
 
 import javax.servlet.AsyncContext;
@@ -50,8 +46,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.HttpMethod;
 import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.CompletionStageRxInvoker;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation;
@@ -67,10 +61,6 @@ import org.apache.meecrowave.proxy.servlet.service.ConfigurationLoader;
 // IMPORTANT: don't make this class depending on meecrowave, cxf or our internals, use setup class
 public class ProxyServlet extends HttpServlet {
     protected Routes routes;
-    protected Client client;
-    protected ExecutorService executor;
-    protected long awaitTimeout;
-    protected long asyncTimeout;
     protected int prefixLength;
 
     @Override
@@ -87,9 +77,9 @@ public class ProxyServlet extends HttpServlet {
     protected CompletionStage<HttpServletResponse> doExecute(final Routes.Route route, final HttpServletRequest req, final HttpServletResponse resp,
                                                              final String prefix) throws IOException {
         final AsyncContext asyncContext = req.startAsync();
-        asyncContext.setTimeout(asyncTimeout);
+        asyncContext.setTimeout(route.clientConfiguration.timeouts.execution);
 
-        WebTarget target = client.target(route.responseConfiguration.target);
+        WebTarget target = route.client.target(route.responseConfiguration.target);
         target = target.path(prefix); // todo: query params, multipart, etc
 
         final Map<String, String> queryParams = ofNullable(req.getQueryString())
@@ -187,7 +177,7 @@ public class ProxyServlet extends HttpServlet {
 
     protected void forwardCookies(final Routes.Route route, final Response response, final HttpServletResponse resp) {
         response.getCookies().entrySet().stream()
-                .filter(cookie -> filterCookie(route.requestConfiguration.skippedCookies, cookie.getKey(), cookie.getValue().getValue()))
+                .filter(cookie -> filterCookie(route.responseConfiguration.skippedCookies, cookie.getKey(), cookie.getValue().getValue()))
                 .forEach(cookie -> addCookie(resp, cookie));
     }
 
@@ -206,7 +196,7 @@ public class ProxyServlet extends HttpServlet {
 
     protected void forwardHeaders(final Routes.Route route, final Response response, final HttpServletResponse resp) {
         response.getHeaders().entrySet().stream()
-                .filter(header -> filterHeader(route.requestConfiguration.skippedHeaders, header.getKey()))
+                .filter(header -> filterHeader(route.responseConfiguration.skippedHeaders, header.getKey()))
                 .flatMap(entry -> entry.getValue().stream().map(value -> new AbstractMap.SimpleEntry<>(entry.getKey(), String.valueOf(value))))
                 .forEach(header -> resp.addHeader(header.getKey(), header.getValue()));
     }
@@ -239,7 +229,12 @@ public class ProxyServlet extends HttpServlet {
     }
 
     protected Optional<Routes> loadConfiguration() {
-        return get("configuration").flatMap(path -> new ConfigurationLoader(path).load());
+        return get("configuration").flatMap(path -> new ConfigurationLoader(path) {
+            @Override
+            protected void log(final String message) {
+                getServletContext().log(message);
+            }
+        }.load());
     }
 
     @Override
@@ -250,11 +245,6 @@ public class ProxyServlet extends HttpServlet {
                 .map(it -> it.endsWith("/*") ? it.substring(0, it.length() - "/*".length()) : it)
                 .orElse("").length() + config.getServletContext().getContextPath().length();
 
-        awaitTimeout = getLong("shutdown.timeout").orElse(1L);
-        asyncTimeout = getLong("async.timeout").orElse(30000L);
-
-        setupClient();
-
         final Optional<Routes> configuration = loadConfiguration();
         if (!configuration.isPresent()) {
             return;
@@ -264,57 +254,24 @@ public class ProxyServlet extends HttpServlet {
 
     @Override
     public void destroy() {
-        if (executor != null) {
-            executor.shutdown();
-            try {
-                if (!executor.awaitTermination(awaitTimeout, MILLISECONDS)) {
-                    getServletContext().log("Can't shutdown the client executor in " + awaitTimeout + "ms");
-                }
-            } catch (final InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-        }
-        client.close();
-        super.destroy();
-    }
-
-    protected void setupClient() {
-        executor = new ThreadPoolExecutor(
-                getInt("executor.core").orElse(64),
-                getInt("executor.max").orElse(512),
-                getLong("executor.keepAlive").orElse(60000L),
-                MILLISECONDS,
-                new LinkedBlockingQueue<>(),
-                new ThreadFactory() {
-                    private final SecurityManager sm = System.getSecurityManager();
-                    private final ThreadGroup group = (sm != null) ? sm.getThreadGroup() : Thread.currentThread().getThreadGroup();
-
-                    @Override
-                    public Thread newThread(final Runnable r) {
-                        final Thread newThread = new Thread(group, r, ProxyServlet.class.getName() + "_" + hashCode());
-                        newThread.setDaemon(false);
-                        newThread.setPriority(Thread.NORM_PRIORITY);
-                        newThread.setContextClassLoader(getClass().getClassLoader());
-                        return newThread;
+        if (routes != null && routes.routes != null) {
+            routes.routes.forEach(it -> {
+                if (it.executor != null) {
+                    it.executor.shutdown();
+                    try {
+                        if (!it.executor.awaitTermination(it.clientConfiguration.executor.shutdownTimeout, MILLISECONDS)) {
+                            getServletContext().log("Can't shutdown the client executor in " + it.clientConfiguration.executor.shutdownTimeout + "ms");
+                        }
+                    } catch (final InterruptedException e) {
+                        Thread.currentThread().interrupt();
                     }
-                },
-                (r, executor) -> getServletContext().log("Proxy rejected task: " + r));
-
-        final ClientBuilder clientBuilder = ClientBuilder.newBuilder();
-        clientBuilder.executorService(executor);
-        clientBuilder.readTimeout(getLong("read.timeout").orElse(30000L), MILLISECONDS);
-        clientBuilder.connectTimeout(getLong("connect.timeout").orElse(30000L), MILLISECONDS);
-        // todo: configure ssl
-        // clientBuilder.scheduledExecutorService(); // not used by cxf for instance so no need to overkill the conf
-        client = clientBuilder.build();
-    }
-
-    private Optional<Long> getLong(final String key) {
-        return get(key).map(Long::parseLong);
-    }
-
-    private Optional<Integer> getInt(final String key) {
-        return get(key).map(Integer::parseInt);
+                }
+                if (it.client != null) {
+                    it.client.close();
+                }
+            });
+        }
+        super.destroy();
     }
 
     private Optional<String> get(final String key) {

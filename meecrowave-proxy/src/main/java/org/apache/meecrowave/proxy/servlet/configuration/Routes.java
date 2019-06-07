@@ -19,6 +19,10 @@
 package org.apache.meecrowave.proxy.servlet.configuration;
 
 import java.util.Collection;
+import java.util.concurrent.ExecutorService;
+
+import javax.json.bind.annotation.JsonbTransient;
+import javax.ws.rs.client.Client;
 
 public class Routes {
     public Route defaultRoute;
@@ -33,10 +37,83 @@ public class Routes {
         public String id;
         public RequestConfiguration requestConfiguration;
         public ResponseConfiguration responseConfiguration;
+        public ClientConfiguration clientConfiguration;
+
+        @JsonbTransient
+        public Client client;
+
+        @JsonbTransient
+        public ExecutorService executor;
 
         @Override
         public String toString() {
             return "Route{id='" + id + "', requestConfiguration=" + requestConfiguration + ", responseConfiguration=" + responseConfiguration + '}';
+        }
+    }
+
+    public static class ExecutorConfiguration {
+        public int core = 8;
+        public int max = 512;
+        public long keepAlive = 60000;
+        public long shutdownTimeout = 1;
+
+        @Override
+        public String toString() {
+            return "ExecutorConfiguration{" +
+                    "core=" + core +
+                    ", max=" + max +
+                    ", keepAlive=" + keepAlive +
+                    ", shutdownTimeout=" + shutdownTimeout +
+                    '}';
+        }
+    }
+
+    public static class TimeoutConfiguration {
+        public long read = 30000;
+        public long connect = 30000;
+        public long execution = 60000;
+
+        @Override
+        public String toString() {
+            return "TimeoutConfiguration{" +
+                    "read=" + read +
+                    ", connect=" + connect +
+                    '}';
+        }
+    }
+
+    public static class ClientConfiguration {
+        public TimeoutConfiguration timeouts;
+        public ExecutorConfiguration executor;
+        public SslConfiguration sslConfiguration;
+
+        @Override
+        public String toString() {
+            return "ClientConfiguration{" +
+                    "timeouts=" + timeouts +
+                    ", executor=" + executor +
+                    '}';
+        }
+    }
+
+    public static class SslConfiguration {
+        public boolean acceptAnyCertificate;
+        public String keystoreLocation;
+        public String keystoreType;
+        public String keystorePassword;
+        public String truststoreType;
+        public Collection<String> verifiedHostnames;
+
+        @Override
+        public String toString() {
+            return "SslConfiguration{" +
+                    "acceptAnyCertificate=" + acceptAnyCertificate +
+                    ", keystoreLocation='" + keystoreLocation + '\'' +
+                    ", keystoreType='" + keystoreType + '\'' +
+                    ", keystorePassword='" + keystorePassword + '\'' +
+                    ", truststoreType='" + truststoreType + '\'' +
+                    ", verifiedHostnames=" + verifiedHostnames +
+                    '}';
         }
     }
 
