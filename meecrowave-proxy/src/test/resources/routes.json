@@ -1,0 +1,28 @@
+{
+  "defaultRoute": {
+    "responseConfiguration": {
+      // configure our global fake server for all the endpoints
+      "target": "http://localhost:${fake.server.port}"
+    }
+  },
+  "routes": [
+    {
+      // used to test a plain simple static endpoint - simplest case
+      "id": "get-simple",
+      "requestConfiguration": {
+        "method": "GET",
+        "prefix": "/simple"
+      }
+    },
+    {
+      /**
+        * used to test a very trivial post without any query param or anything else
+        */
+      "id": "post-simple",
+      "requestConfiguration": {
+        "method": "POST",
+        "prefix": "/data1"
+      }
+    }
+  ]
+}

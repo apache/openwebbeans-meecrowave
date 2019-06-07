@@ -1,0 +1,33 @@
+= Meecrowave Proxy
+:jbake-date: 2019-06-07
+:jbake-type: page
+:jbake-status: published
+:jbake-meecrowavepdf:
+:jbake-meecrowavetitleicon: icon icon_puzzle_alt
+:jbake-meecrowavecolor: blue-green
+:icons: font
+
+Coordinates:
+
+[source,xml]
+----
+<dependency>
+  <groupId>org.apache.meecrowave</groupId>
+  <artifactId>meecrowave-proxy</artifactId>
+  <version>${meecrowave.version}</version>
+</dependency>
+----
+
+Simple proxy module using Meecrowave as backbone.
+It can be extended using CDI programming model and JAX-RS client.
+
+== Configuration
+
+include::../../../../../target/generated-doc/ProxyConfiguration.adoc[]
+
+TIP: you can use that servlet in a plain Servlet container (adding JAX-RS+JSON-B client).
+An integration example can be found in `org.apache.meecrowave.proxy.servlet.meecrowave.ProxyServletSetup#accept`.
+
+== Extend
+
+TBD

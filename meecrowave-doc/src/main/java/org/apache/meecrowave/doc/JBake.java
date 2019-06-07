@@ -53,6 +53,7 @@ import org.apache.meecrowave.doc.generator.GradleConfiguration;
 import org.apache.meecrowave.doc.generator.LetsEncryptConfiguration;
 import org.apache.meecrowave.doc.generator.MavenConfiguration;
 import org.apache.meecrowave.doc.generator.OAuth2Configuration;
+import org.apache.meecrowave.doc.generator.ProxyConfiguration;
 import org.jbake.app.Oven;
 import org.jbake.app.configuration.ConfigUtil;
 import org.jbake.app.configuration.DefaultJBakeConfiguration;
@@ -83,6 +84,7 @@ public class JBake {
         new OAuth2Configuration().run();
         new LetsEncryptConfiguration().run();
         new GradleConfiguration().run();
+        new ProxyConfiguration().run();
 
         if (updateDownloads) {
             final ByteArrayOutputStream tableContent = new ByteArrayOutputStream();
