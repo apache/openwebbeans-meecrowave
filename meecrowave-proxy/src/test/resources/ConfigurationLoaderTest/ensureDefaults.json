@@ -1,0 +1,11 @@
+{
+  "routes": [
+    {
+      "id": "get-simple",
+      "requestConfiguration": {
+        "method": "GET",
+        "prefix": "/simple"
+      }
+    }
+  ]
+}

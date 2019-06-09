@@ -18,25 +18,30 @@
  */
 package org.apache.meecrowave.proxy.servlet.mock;
 
+import java.io.IOException;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 
+import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
+
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 
 public class FakeRemoteServer implements TestRule {
     private HttpServer server;
-    private final Collection<Consumer<HttpServer>> configurers = new ArrayList<>();
+    private final Collection<BiConsumer<HttpServer, HttpHelper>> configurers = new ArrayList<BiConsumer<HttpServer, HttpHelper>>();
 
     public HttpServer getServer() {
         return server;
     }
 
-    public FakeRemoteServer with(final Consumer<HttpServer> configurer) {
+    public FakeRemoteServer with(final BiConsumer<HttpServer, HttpHelper> configurer) {
         configurers.add(configurer);
         return this;
     }
@@ -48,7 +53,12 @@ public class FakeRemoteServer implements TestRule {
             public void evaluate() throws Throwable {
                 try {
                     server = HttpServer.create(new InetSocketAddress(0), 0);
-                    configurers.forEach(it -> it.accept(server));
+                    configurers.forEach(it -> it.accept(server, (exchange, status, payload) -> {
+                        exchange.sendResponseHeaders(HttpURLConnection.HTTP_OK, payload.length);
+                        try (final OutputStream os = exchange.getResponseBody()) {
+                            os.write(payload);
+                        }
+                    }));
                     server.start();
                     System.setProperty("fake.server.port", Integer.toString(server.getAddress().getPort()));
                     statement.evaluate();
@@ -59,5 +69,9 @@ public class FakeRemoteServer implements TestRule {
                 }
             }
         };
+    }
+
+    public interface HttpHelper {
+        void response(HttpExchange exchange, int status, byte[] payload) throws IOException ;
     }
 }

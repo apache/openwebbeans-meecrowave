@@ -18,13 +18,16 @@
  */
 package org.apache.meecrowave.proxy.servlet;
 
+import static java.util.Arrays.asList;
 import static java.util.Optional.ofNullable;
 import static javax.ws.rs.client.Entity.entity;
+import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static javax.ws.rs.core.MediaType.MULTIPART_FORM_DATA;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN_TYPE;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
-import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.nio.charset.StandardCharsets;
 import java.util.function.Consumer;
@@ -34,6 +37,9 @@ import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
 
+import org.apache.cxf.jaxrs.ext.multipart.Attachment;
+import org.apache.cxf.jaxrs.ext.multipart.ContentDisposition;
+import org.apache.cxf.jaxrs.ext.multipart.MultipartBody;
 import org.apache.meecrowave.Meecrowave;
 import org.apache.meecrowave.io.IO;
 import org.apache.meecrowave.junit.MeecrowaveRule;
@@ -45,7 +51,7 @@ import org.junit.rules.TestRule;
 public class ProxyServletTest {
     @ClassRule(order = 1)
     public static final TestRule FAKE_REMOTE_SERVER = new FakeRemoteServer()
-            .with(server -> server.createContext("/simple", exchange -> {
+            .with((server, helper) -> server.createContext("/simple", exchange -> {
                 final byte[] out = ("{\"message\":\"" + ofNullable(exchange.getRequestBody()).map(it -> {
                     try {
                         return IO.toString(it);
@@ -55,24 +61,44 @@ public class ProxyServletTest {
                 }).orElse("ok") + "\"}").getBytes(StandardCharsets.UTF_8);
                 exchange.getResponseHeaders().add("Fake-Server", "true");
                 exchange.getResponseHeaders().add("Foo", ofNullable(exchange.getRequestURI().getQuery()).orElse("-"));
-                exchange.sendResponseHeaders(HttpURLConnection.HTTP_OK, out.length);
-                try (final OutputStream os = exchange.getResponseBody()) {
-                    os.write(out);
-                }
+                helper.response(exchange, HttpURLConnection.HTTP_OK, out);
             }))
-            .with(server -> server.createContext("/data1", exchange -> {
+            .with((server, helper) -> server.createContext("/data1", exchange -> {
                 final byte[] out = ("{\"message\":\"" + IO.toString(exchange.getRequestBody()) + "\"}")
                         .getBytes(StandardCharsets.UTF_8);
                 exchange.getResponseHeaders().add("Fake-Server", "posted");
-                exchange.sendResponseHeaders(HttpURLConnection.HTTP_OK, out.length);
-                try (final OutputStream os = exchange.getResponseBody()) {
-                    os.write(out);
-                }
+                helper.response(exchange, HttpURLConnection.HTTP_OK, out);
+            }))
+            .with((server, helper) -> server.createContext("/upload1", exchange -> {
+                final byte[] out = ("{\"message\":\"" + IO.toString(exchange.getRequestBody()) + "\"}")
+                        .getBytes(StandardCharsets.UTF_8);
+                helper.response(exchange, HttpURLConnection.HTTP_OK, out);
             }));
 
     @ClassRule(order = 2)
     public static final MeecrowaveRule MW = new MeecrowaveRule(new Meecrowave.Builder()
             .property("proxy-configuration", "target/test-classes/routes.json"), "");
+
+    @Test
+    public void upload() {
+        withClient(target -> {
+            final Response response = target.path("/upload1").request()
+                    .post(entity(new MultipartBody(asList(
+                            new Attachment("metadata", APPLICATION_JSON, "{\"content\":\"text\"}"),
+                            new Attachment(
+                                    "file",
+                                    Thread.currentThread().getContextClassLoader().getResourceAsStream("ProxyServletTest/upload/file.txt"),
+                                    new ContentDisposition("uploadded.txt"))
+                    )), MULTIPART_FORM_DATA));
+            assertEquals(HttpURLConnection.HTTP_OK, response.getStatus());
+            final String actual = response.readEntity(String.class);
+            assertTrue(actual, actual.contains("uuid:"));
+            assertTrue(actual, actual.contains("Content-Type: application/json"));
+            assertTrue(actual, actual.contains("{\"content\":\"text\"}"));
+            assertTrue(actual, actual.contains("Content-Type: application/octet-stream"));
+            assertTrue(actual, actual.contains("test\nfile\nwith\nmultiple\nlines"));
+        });
+    }
 
     @Test
     public void get() {

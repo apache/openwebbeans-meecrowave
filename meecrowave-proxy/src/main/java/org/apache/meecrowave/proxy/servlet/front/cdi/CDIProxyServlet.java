@@ -19,17 +19,22 @@
 package org.apache.meecrowave.proxy.servlet.front.cdi;
 
 import java.io.IOException;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.core.Response;
 
 import org.apache.meecrowave.proxy.servlet.configuration.Routes;
 import org.apache.meecrowave.proxy.servlet.front.ProxyServlet;
 import org.apache.meecrowave.proxy.servlet.front.cdi.event.AfterResponse;
 import org.apache.meecrowave.proxy.servlet.front.cdi.event.BeforeRequest;
+import org.apache.meecrowave.proxy.servlet.front.cdi.event.OnRequest;
+import org.apache.meecrowave.proxy.servlet.front.cdi.event.OnResponse;
+import org.apache.meecrowave.proxy.servlet.front.cdi.extension.SpyExtension;
 
 // IMPORTANT: don't make this class depending on meecrowave, cxf or our internals, use setup class
 public class CDIProxyServlet extends ProxyServlet {
@@ -39,17 +44,70 @@ public class CDIProxyServlet extends ProxyServlet {
     @Inject
     private Event<AfterResponse> afterResponseEvent;
 
+    @Inject
+    private Event<OnRequest> onRequestEvent;
+
+    @Inject
+    private Event<OnResponse> onResponseEvent;
+
+    @Inject
+    private SpyExtension spy;
+
     @Override
-    protected CompletionStage<HttpServletResponse> doExecute(final Routes.Route route, final HttpServletRequest req, final HttpServletResponse resp,
+    protected CompletionStage<HttpServletResponse> doExecute(final Routes.Route route,
+                                                             final HttpServletRequest req, final HttpServletResponse resp,
                                                              final String prefix) throws IOException {
-        final BeforeRequest event = new BeforeRequest(req, resp);
-        event.setRoute(route);
-        event.setPrefix(prefix);
-        beforeRequestEvent.fire(event);
-        return super.doExecute(event.getRoute(), req, resp, event.getPrefix())
-            .handle((r, t) -> {
-                afterResponseEvent.fire(new AfterResponse(req, resp));
-                return r;
-            });
+        final CompletionStage<HttpServletResponse> stage;
+        if (spy.isHasBeforeEvent()) {
+            final BeforeRequest event = new BeforeRequest(req, resp);
+            event.setRoute(route);
+            event.setPrefix(prefix);
+            beforeRequestEvent.fire(event);
+            stage = super.doExecute(event.getRoute(), req, resp, event.getPrefix());
+        } else {
+            stage = super.doExecute(route, req, resp, prefix);
+        }
+        if (!spy.isHasAfterEvent()) {
+            return stage;
+        }
+        return stage.handle((r, t) -> {
+            afterResponseEvent.fire(new AfterResponse(req, resp));
+            return r;
+        });
+    }
+
+    @Override
+    protected CompletionStage<Response> doRequest(final Routes.Route route,
+                                                  final HttpServletRequest req,
+                                                  final HttpServletResponse response,
+                                                  final String prefix) throws IOException {
+        if (spy.isHasOnRequestEvent()) {
+            final OnRequest onRequest = new OnRequest(req, response, route, r -> super.doRequest(r, req, response, prefix));
+            return onRequestEvent.fireAsync(onRequest, onRequest.getRoute().notificationOptions)
+                    .thenCompose(it -> {
+                        try {
+                            return it.proceed();
+                        } catch (final IOException e) {
+                            final CompletableFuture<Response> future = new CompletableFuture<>();
+                            future.completeExceptionally(e);
+                            return future;
+                        }
+                    });
+        }
+        return super.doRequest(route, req, response, prefix);
+    }
+
+    @Override
+    protected void forwardResponse(final Routes.Route route, final Response response,
+                                   final HttpServletRequest request, final HttpServletResponse resp) throws IOException {
+        if (spy.isHasOnResponseEvent()) {
+            final OnResponse onResponse = new OnResponse(request, resp, response, () -> super.forwardResponse(route, response, request, resp));
+            onResponseEvent.fire(onResponse);
+            if (!onResponse.isProceeded()) {
+                onResponse.proceed();
+            }
+        } else {
+            super.forwardResponse(route, response, request, resp);
+        }
     }
 }

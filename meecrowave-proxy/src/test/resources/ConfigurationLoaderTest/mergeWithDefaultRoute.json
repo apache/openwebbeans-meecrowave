@@ -1,0 +1,30 @@
+{
+  "defaultRoute": {
+    "responseConfiguration": {
+      "target": "http://localhost:${fake.server.port}"
+    },
+    "clientConfiguration": {
+      "timeouts": {
+        "read": 1234,
+        "connect": 1235
+      },
+      "executor": {
+        "core": 1
+      }
+    }
+  },
+  "routes": [
+    {
+      "id": "get-simple",
+      "requestConfiguration": {
+        "method": "GET",
+        "prefix": "/simple"
+      },
+      "clientConfiguration": {
+        "timeouts": {
+          "read": 6789
+        }
+      }
+    }
+  ]
+}

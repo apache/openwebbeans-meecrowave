@@ -74,13 +74,37 @@ public class ProxyServlet extends HttpServlet {
         }
     }
 
-    protected CompletionStage<HttpServletResponse> doExecute(final Routes.Route route, final HttpServletRequest req, final HttpServletResponse resp,
+    protected CompletionStage<HttpServletResponse> doExecute(final Routes.Route route,
+                                                             final HttpServletRequest req, final HttpServletResponse resp,
                                                              final String prefix) throws IOException {
         final AsyncContext asyncContext = req.startAsync();
         asyncContext.setTimeout(route.clientConfiguration.timeouts.execution);
 
+        return doRequest(route, req, resp, prefix).handle((response, error) -> {
+            try {
+                if (error != null) {
+                    onError(route, req, resp, error);
+                } else {
+                    try {
+                        forwardResponse(route, response, req, resp);
+                    } catch (final IOException e) {
+                        onError(route, req, resp, e);
+                    }
+                }
+            } catch (final IOException ioe) {
+                getServletContext().log("Error Proxying " + req.getMethod() + " " + req.getRequestURI() + ": " + ioe.getMessage(), ioe);
+            } finally {
+                asyncContext.complete();
+            }
+            return resp;
+        });
+    }
+
+    protected CompletionStage<Response> doRequest(final Routes.Route route,
+                                                  final HttpServletRequest req, final HttpServletResponse response,
+                                                  final String prefix) throws IOException {
         WebTarget target = route.client.target(route.responseConfiguration.target);
-        target = target.path(prefix); // todo: query params, multipart, etc
+        target = target.path(prefix);
 
         final Map<String, String> queryParams = ofNullable(req.getQueryString())
                 .filter(it -> !it.isEmpty())
@@ -98,23 +122,34 @@ public class ProxyServlet extends HttpServlet {
             target = target.queryParam(q.getKey(), q.getValue());
         }
 
-        final String type = req.getContentType();
-        final Invocation.Builder request = type != null ? target.request(type) : target.request();
+        final String type = route.requestConfiguration.addedHeaders != null ?
+                route.requestConfiguration.addedHeaders.getOrDefault("Content-Type", req.getContentType()) :
+                req.getContentType();
+        Invocation.Builder request = type != null ? target.request(type) : target.request();
 
         final Enumeration<String> headerNames = req.getHeaderNames();
         while (headerNames.hasMoreElements()) {
             final String name = headerNames.nextElement();
             if (!filterHeader(route.requestConfiguration.skippedHeaders, name)) {
-                request.header(name, list(req.getHeaders(name)));
+                request = request.header(name, list(req.getHeaders(name)));
+            }
+        }
+
+        if (route.requestConfiguration.addedHeaders != null) {
+            for (final Map.Entry<String, String> header: route.requestConfiguration.addedHeaders.entrySet()) {
+                request = request.header(header.getKey(), header.getValue());
             }
         }
 
         final Cookie[] cookies = req.getCookies();
         if (cookies != null) {
-            Stream.of(cookies)
-                    .filter(it -> filterCookie(route.requestConfiguration.skippedCookies, it.getName(), it.getValue()))
-                    .forEach(cookie -> request.cookie(
-                        new javax.ws.rs.core.Cookie(cookie.getName(), cookie.getValue(), cookie.getPath(), cookie.getDomain(), cookie.getVersion())));
+            for (final Cookie cookie : cookies) {
+                if (filterCookie(route.requestConfiguration.skippedCookies, cookie.getName(), cookie.getValue())) {
+                    continue;
+                }
+                request = request.cookie(
+                        new javax.ws.rs.core.Cookie(cookie.getName(), cookie.getValue(), cookie.getPath(), cookie.getDomain(), cookie.getVersion()));
+            }
         }
 
         final CompletionStageRxInvoker rx = request.rx();
@@ -124,35 +159,20 @@ public class ProxyServlet extends HttpServlet {
         } else {
             result = rx.method(req.getMethod());
         }
-        return result.handle((response, error) -> {
-            try {
-                if (error != null) {
-                    onError(route, resp, error);
-                } else {
-                    try {
-                        forwardResponse(route, response, resp);
-                    } catch (final IOException e) {
-                        onError(route, resp, e);
-                    }
-                }
-            } catch (final IOException ioe) {
-                getServletContext().log("Error Proxying " + req.getMethod() + " " + req.getRequestURI() + ": " + ioe.getMessage(), ioe);
-            } finally {
-                asyncContext.complete();
-            }
-            return resp;
-        });
+        return result;
     }
 
     protected boolean isWrite(final HttpServletRequest req) {
         return !HttpMethod.HEAD.equalsIgnoreCase(req.getMethod()) && !HttpMethod.GET.equalsIgnoreCase(req.getMethod());
     }
 
-    protected void onError(final Routes.Route route, final HttpServletResponse resp, final Throwable error) throws IOException {
+    protected void onError(final Routes.Route route,
+                           final HttpServletRequest request, final HttpServletResponse resp,
+                           final Throwable error) throws IOException {
         if (WebApplicationException.class.isInstance(error)) {
             final WebApplicationException wae = WebApplicationException.class.cast(error);
             if (wae.getResponse() != null) {
-                forwardResponse(route, wae.getResponse(), resp);
+                forwardResponse(route, wae.getResponse(), request, resp);
                 return;
             }
         }
@@ -164,7 +184,8 @@ public class ProxyServlet extends HttpServlet {
         error.printStackTrace(new PrintWriter(resp.getOutputStream()));
     }
 
-    protected void forwardResponse(final Routes.Route route, final Response response, final HttpServletResponse resp) throws IOException {
+    protected void forwardResponse(final Routes.Route route, final Response response,
+                                   final HttpServletRequest request, final HttpServletResponse resp) throws IOException {
         final int status = response.getStatus();
         resp.setStatus(status);
         forwardHeaders(route, response, resp);
@@ -210,7 +231,7 @@ public class ProxyServlet extends HttpServlet {
     }
 
     private void writeOutput(final HttpServletResponse resp, final InputStream stream) throws IOException {
-        final int bufferSize = Math.max(1, Math.min(8192, stream.available()));
+        final int bufferSize = Math.max(128, Math.min(8192, stream.available()));
         final byte[] buffer = new byte[bufferSize]; // todo: reusable (copier?)
         final ServletOutputStream outputStream = resp.getOutputStream();
         int read;

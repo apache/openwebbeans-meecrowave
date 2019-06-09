@@ -23,6 +23,13 @@
         "method": "POST",
         "prefix": "/data1"
       }
+    },
+    {
+      "id": "multipart",
+      "requestConfiguration": {
+        "method": "POST",
+        "prefix": "/upload1"
+      }
     }
   ]
 }

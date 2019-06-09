@@ -19,12 +19,16 @@
 package org.apache.meecrowave.proxy.servlet.configuration;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 
+import javax.enterprise.event.NotificationOptions;
+import javax.json.JsonObject;
 import javax.json.bind.annotation.JsonbTransient;
 import javax.ws.rs.client.Client;
 
 public class Routes {
+    public JsonObject extensions; // placeholder for custom metadata usable in observers
     public Route defaultRoute;
     public Collection<Route> routes;
 
@@ -38,12 +42,16 @@ public class Routes {
         public RequestConfiguration requestConfiguration;
         public ResponseConfiguration responseConfiguration;
         public ClientConfiguration clientConfiguration;
+        public JsonObject extensions; // placeholder for custom metadata usable in observers
 
         @JsonbTransient
         public Client client;
 
         @JsonbTransient
         public ExecutorService executor;
+
+        @JsonbTransient
+        public NotificationOptions notificationOptions;
 
         @Override
         public String toString() {
@@ -52,10 +60,10 @@ public class Routes {
     }
 
     public static class ExecutorConfiguration {
-        public int core = 8;
-        public int max = 512;
-        public long keepAlive = 60000;
-        public long shutdownTimeout = 1;
+        public Integer core;
+        public Integer max;
+        public Long keepAlive;
+        public Long shutdownTimeout;
 
         @Override
         public String toString() {
@@ -69,9 +77,9 @@ public class Routes {
     }
 
     public static class TimeoutConfiguration {
-        public long read = 30000;
-        public long connect = 30000;
-        public long execution = 60000;
+        public Long read;
+        public Long connect;
+        public Long execution;
 
         @Override
         public String toString() {
@@ -131,6 +139,7 @@ public class Routes {
     public static class RequestConfiguration {
         public String method;
         public String prefix;
+        public Map<String, String> addedHeaders;
         public Collection<String> skippedHeaders;
         public Collection<String> skippedCookies;
 

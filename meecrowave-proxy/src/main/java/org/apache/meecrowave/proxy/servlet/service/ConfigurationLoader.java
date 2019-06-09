@@ -18,10 +18,12 @@
  */
 package org.apache.meecrowave.proxy.servlet.service;
 
+import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonList;
 import static java.util.Optional.ofNullable;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.function.Function.identity;
+import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 
 import java.io.ByteArrayOutputStream;
@@ -41,11 +43,19 @@ import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Optional;
-import java.util.concurrent.ExecutorService;
+import java.util.UUID;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.stream.Collector;
+import java.util.stream.Stream;
 
+import javax.enterprise.event.NotificationOptions;
+import javax.json.Json;
+import javax.json.JsonBuilderFactory;
+import javax.json.JsonObject;
+import javax.json.JsonObjectBuilder;
+import javax.json.JsonValue;
 import javax.json.bind.Jsonb;
 import javax.json.bind.JsonbBuilder;
 import javax.json.bind.JsonbConfig;
@@ -54,6 +64,7 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
+import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 
 import org.apache.meecrowave.proxy.servlet.configuration.Routes;
@@ -70,6 +81,10 @@ public abstract class ConfigurationLoader {
     protected abstract void log(String message);
 
     public Optional<Routes> load() {
+        return doLoad(readContent());
+    }
+
+    protected String readContent() {
         final SimpleSubstitutor simpleSubstitutor = new SimpleSubstitutor(
                 System.getProperties().stringPropertyNames().stream().collect(toMap(identity(), System::getProperty)));
         final String resource = simpleSubstitutor.replace(path);
@@ -87,36 +102,78 @@ public abstract class ConfigurationLoader {
         if (stream == null) {
             throw new IllegalArgumentException("No routes configuration for the proxy servlet");
         }
-
-        final String content;
         try {
-            content = simpleSubstitutor.replace(load(stream));
+            return simpleSubstitutor.replace(load(stream));
         } catch (final IOException e) {
             throw new IllegalArgumentException(e);
         }
+    }
 
+    protected Optional<Routes> doLoad(final String content) {
         try (final Jsonb jsonb = JsonbBuilder.newBuilder()
                      .withProvider(loadJsonpProvider())
                      .withConfig(new JsonbConfig().setProperty("org.apache.johnzon.supports-comments", true))
                      .build()) {
             routes = jsonb.fromJson(content, Routes.class);
+            final boolean hasRoutes = routes.routes != null && !routes.routes.isEmpty();
+            if (routes.defaultRoute == null && !hasRoutes) {
+                return Optional.empty();
+            }
+            if (hasRoutes) {
+                // before merging, ensure all routes have an id to not duplicate default id
+                routes.routes.stream().filter(it -> it.id == null).forEach(it -> it.id = newId());
+            }
+            if (routes.defaultRoute != null) {
+                if (routes.defaultRoute.id == null) {
+                    routes.defaultRoute.id = "default";
+                }
+                if (routes.routes == null) { // no route were defined, consider it is the default route, /!\ empty means no route, don't default
+                    routes.routes = singletonList(routes.defaultRoute);
+                }
+                if (hasRoutes) {
+                    final JsonBuilderFactory jsonFactory = Json.createBuilderFactory(emptyMap());
+                    final JsonObject template = jsonb.fromJson(jsonb.toJson(routes.defaultRoute), JsonObject.class);
+                    routes.routes = routes.routes.stream().map(r -> merge(jsonb, jsonFactory, template, r)).collect(toList());
+                }
+            }
         } catch (final Exception e) {
             throw new IllegalArgumentException(e);
         }
-        final boolean hasRoutes = routes.routes != null && !routes.routes.isEmpty();
-        if (routes.defaultRoute == null && !hasRoutes) {
-            return Optional.empty();
-        }
-        if (routes.defaultRoute != null) {
-            if (routes.routes == null) { // no route were defined, consider it is the default route, /!\ empty means no route, don't default
-                routes.routes = singletonList(routes.defaultRoute);
-            }
-            if (hasRoutes) {
-                routes.routes.forEach(r -> merge(routes.defaultRoute, r));
-            }
-        }
-        routes.routes.forEach(this::loadClient);
+        routes.routes.forEach(this::init);
         return Optional.of(routes);
+    }
+
+    protected Routes.Route merge(final Jsonb jsonb, final JsonBuilderFactory jsonFactory,
+                                 final JsonObject template, final Routes.Route current) {
+        final JsonObject merged = doMerge(jsonFactory, template, jsonb.fromJson(jsonb.toJson(current), JsonObject.class));
+        return jsonb.fromJson(merged.toString(), Routes.Route.class);
+    }
+
+    private JsonObject doMerge(final JsonBuilderFactory jsonFactory, final JsonObject template, final JsonObject currentRoute) {
+        if (currentRoute == null) {
+            return template;
+        }
+        if (template == null) {
+            return currentRoute;
+        }
+        return Stream.concat(template.keySet().stream(), currentRoute.keySet().stream())
+            .distinct()
+            .collect(Collector.of(jsonFactory::createObjectBuilder, (builder, key) -> {
+                final JsonValue templateValue = template.get(key);
+                final JsonValue value = ofNullable(currentRoute.get(key)).orElse(templateValue);
+                switch (value.getValueType()) {
+                    case NULL:
+                        break;
+                    case OBJECT:
+                        builder.add(key, templateValue != null ?
+                                doMerge(jsonFactory, templateValue.asJsonObject(), value.asJsonObject()) :
+                                value);
+                        break;
+                    default: // primitives + array, get or replace logic since it is "values"
+                        builder.add(key, value);
+                        break;
+                }
+            }, JsonObjectBuilder::addAll, JsonObjectBuilder::build));
     }
 
     private String load(final InputStream stream) throws IOException {
@@ -129,43 +186,16 @@ public abstract class ConfigurationLoader {
         return new String(baos.toByteArray(), StandardCharsets.UTF_8);
     }
 
-    private void loadClient(final Routes.Route route) {
-        if (route.clientConfiguration == null) {
-            route.clientConfiguration = new Routes.ClientConfiguration();
-        }
-        if (route.clientConfiguration.executor == null) {
-            route.clientConfiguration.executor = new Routes.ExecutorConfiguration();
-        }
-        if (route.clientConfiguration.timeouts == null) {
-            route.clientConfiguration.timeouts = new Routes.TimeoutConfiguration();
-        }
-        if (route.clientConfiguration.sslConfiguration == null) {
-            route.clientConfiguration.sslConfiguration = new Routes.SslConfiguration();
-        }
+    private void init(final Routes.Route route) {
+        enforceClientConfiguration(route);
+        route.executor = createExecutor(route);
+        route.notificationOptions = NotificationOptions.ofExecutor(route.executor);
+        route.client = createClient(route);
+    }
 
-        final ExecutorService executor = new ThreadPoolExecutor(
-                route.clientConfiguration.executor.core,
-                route.clientConfiguration.executor.max,
-                route.clientConfiguration.executor.keepAlive,
-                MILLISECONDS,
-                new LinkedBlockingQueue<>(),
-                new ThreadFactory() {
-                    private final SecurityManager sm = System.getSecurityManager();
-                    private final ThreadGroup group = (sm != null) ? sm.getThreadGroup() : Thread.currentThread().getThreadGroup();
-
-                    @Override
-                    public Thread newThread(final Runnable r) {
-                        final Thread newThread = new Thread(group, r, "meecrowave-proxy#" + ofNullable(route.id).orElse("[noid]"));
-                        newThread.setDaemon(false);
-                        newThread.setPriority(Thread.NORM_PRIORITY);
-                        newThread.setContextClassLoader(getClass().getClassLoader());
-                        return newThread;
-                    }
-                },
-                (run, ex) -> log("Proxy rejected task: " + run + ", in " + ex));
-
+    private Client createClient(final Routes.Route route) {
         final ClientBuilder clientBuilder = ClientBuilder.newBuilder();
-        clientBuilder.executorService(executor);
+        clientBuilder.executorService(route.executor);
         clientBuilder.readTimeout(route.clientConfiguration.timeouts.read, MILLISECONDS);
         clientBuilder.connectTimeout(route.clientConfiguration.timeouts.connect, MILLISECONDS);
         // clientBuilder.scheduledExecutorService(); // not used by cxf for instance so no need to overkill the conf
@@ -184,72 +214,80 @@ public abstract class ConfigurationLoader {
                     route.clientConfiguration.sslConfiguration.truststoreType));
         }
 
-        route.client = clientBuilder.build();
+        return clientBuilder.build();
     }
 
-    private void merge(final Routes.Route defaultRoute, final Routes.Route route) {
-        // request matching
-        if (route.requestConfiguration == null) {
-            route.requestConfiguration = defaultRoute.requestConfiguration;
-        } else if (defaultRoute.requestConfiguration != null) {
-            if (route.requestConfiguration.method == null) {
-                route.requestConfiguration.method = defaultRoute.requestConfiguration.method;
-            }
-            if (route.requestConfiguration.prefix == null) {
-                route.requestConfiguration.prefix = defaultRoute.requestConfiguration.prefix;
-            }
-            if (route.requestConfiguration.skippedCookies == null) {
-                route.requestConfiguration.skippedCookies = defaultRoute.requestConfiguration.skippedCookies;
-            }
-            if (route.requestConfiguration.skippedHeaders == null) {
-                route.requestConfiguration.skippedHeaders = defaultRoute.requestConfiguration.skippedHeaders;
-            }
-        }
+    protected String newId() {
+        return UUID.randomUUID().toString();
+    }
 
-        // response processing
-        if (route.responseConfiguration == null) {
-            route.responseConfiguration = defaultRoute.responseConfiguration;
-        } else if (defaultRoute.responseConfiguration != null) {
-            if (route.responseConfiguration.target == null) {
-                route.responseConfiguration.target = defaultRoute.responseConfiguration.target;
-            }
-            if (route.responseConfiguration.skippedCookies == null) {
-                route.responseConfiguration.skippedCookies = defaultRoute.responseConfiguration.skippedCookies;
-            }
-            if (route.responseConfiguration.skippedHeaders == null) {
-                route.responseConfiguration.skippedHeaders = defaultRoute.responseConfiguration.skippedHeaders;
-            }
-        }
+    private ThreadPoolExecutor createExecutor(final Routes.Route route) {
+        return new ThreadPoolExecutor(
+            route.clientConfiguration.executor.core,
+            Math.max(route.clientConfiguration.executor.max, route.clientConfiguration.executor.core),
+            route.clientConfiguration.executor.keepAlive,
+            MILLISECONDS,
+            new LinkedBlockingQueue<>(),
+            new ThreadFactory() {
+                private final SecurityManager sm = System.getSecurityManager();
+                private final ThreadGroup group = (sm != null) ? sm.getThreadGroup() : Thread.currentThread().getThreadGroup();
 
-        // client setup
+                @Override
+                public Thread newThread(final Runnable r) {
+                    final Thread newThread = new Thread(group, r, "meecrowave-proxy#" + route.id);
+                    newThread.setDaemon(false);
+                    newThread.setPriority(Thread.NORM_PRIORITY);
+                    newThread.setContextClassLoader(getClass().getClassLoader());
+                    return newThread;
+                }
+            },
+            (run, ex) -> log("Proxy rejected task: " + run + ", in " + ex));
+    }
+
+    private void enforceClientConfiguration(final Routes.Route route) {
         if (route.clientConfiguration == null) {
-            route.clientConfiguration = defaultRoute.clientConfiguration;
-        } else if (defaultRoute.clientConfiguration != null) {
-            if (route.clientConfiguration.sslConfiguration == null) {
-                route.clientConfiguration.sslConfiguration = defaultRoute.clientConfiguration.sslConfiguration;
-            } else if (defaultRoute.clientConfiguration.sslConfiguration != null) {
-                if (route.clientConfiguration.sslConfiguration.verifiedHostnames == null) {
-                    route.clientConfiguration.sslConfiguration.verifiedHostnames = defaultRoute.clientConfiguration.sslConfiguration.verifiedHostnames;
-                }
-                if (route.clientConfiguration.sslConfiguration.keystoreLocation == null) {
-                    route.clientConfiguration.sslConfiguration.keystoreLocation = defaultRoute.clientConfiguration.sslConfiguration.keystoreLocation;
-                }
-                if (route.clientConfiguration.sslConfiguration.keystorePassword == null) {
-                    route.clientConfiguration.sslConfiguration.keystorePassword = defaultRoute.clientConfiguration.sslConfiguration.keystorePassword;
-                }
-                if (route.clientConfiguration.sslConfiguration.keystoreType == null) {
-                    route.clientConfiguration.sslConfiguration.keystoreType = defaultRoute.clientConfiguration.sslConfiguration.keystoreType;
-                }
-                if (route.clientConfiguration.sslConfiguration.truststoreType == null) {
-                    route.clientConfiguration.sslConfiguration.truststoreType = defaultRoute.clientConfiguration.sslConfiguration.truststoreType;
-                }
-            }
-            if (route.clientConfiguration.executor == null) {
-                route.clientConfiguration.executor = defaultRoute.clientConfiguration.executor;
-            }
-            if (route.clientConfiguration.timeouts == null) {
-                route.clientConfiguration.timeouts = defaultRoute.clientConfiguration.timeouts;
-            }
+            route.clientConfiguration = new Routes.ClientConfiguration();
+        }
+
+        if (route.clientConfiguration.executor == null) {
+            route.clientConfiguration.executor = new Routes.ExecutorConfiguration();
+        }
+        ensureExecutorDefaults(route.clientConfiguration.executor);
+
+        if (route.clientConfiguration.timeouts == null) {
+            route.clientConfiguration.timeouts = new Routes.TimeoutConfiguration();
+        }
+        ensureTimeoutsDefaults(route.clientConfiguration.timeouts);
+
+        if (route.clientConfiguration.sslConfiguration == null) {
+            route.clientConfiguration.sslConfiguration = new Routes.SslConfiguration();
+        }
+    }
+
+    private void ensureTimeoutsDefaults(final Routes.TimeoutConfiguration timeouts) {
+        if (timeouts.read == null) {
+            timeouts.read = 30000L;
+        }
+        if (timeouts.connect == null) {
+            timeouts.connect = 30000L;
+        }
+        if (timeouts.execution == null) {
+            timeouts.execution = 60000L;
+        }
+    }
+
+    private void ensureExecutorDefaults(final Routes.ExecutorConfiguration executor) {
+        if (executor.core == null) {
+            executor.core = Math.max(Runtime.getRuntime().availableProcessors() * 2, 2);
+        }
+        if (executor.max == null) {
+            executor.max = 512;
+        }
+        if (executor.keepAlive == null) {
+            executor.keepAlive = 60000L;
+        }
+        if (executor.shutdownTimeout == null) {
+            executor.shutdownTimeout = 1L;
         }
     }
 
