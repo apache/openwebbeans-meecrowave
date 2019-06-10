@@ -47,7 +47,7 @@ public class ConfigurationLoaderTest {
     public void ensureDefaults() {
         doLoad().map(routes -> {
             final Routes.Route route = routes.routes.iterator().next();
-            assertEquals(route.clientConfiguration.executor.core.intValue(), 8);
+            assertEquals(route.clientConfiguration.executor.core.intValue(), 2 * Runtime.getRuntime().availableProcessors());
             assertEquals(route.clientConfiguration.timeouts.read.longValue(), 30000);
             assertEquals(route.clientConfiguration.timeouts.connect.longValue(), 30000);
             return routes;

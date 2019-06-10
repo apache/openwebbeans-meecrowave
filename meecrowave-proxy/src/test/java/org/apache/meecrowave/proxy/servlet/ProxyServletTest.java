@@ -76,7 +76,7 @@ public class ProxyServletTest {
             }));
 
     @ClassRule(order = 2)
-    public static final MeecrowaveRule MW = new MeecrowaveRule(new Meecrowave.Builder()
+    public static final MeecrowaveRule MW = new MeecrowaveRule(new Meecrowave.Builder().randomHttpPort()
             .property("proxy-configuration", "target/test-classes/routes.json"), "");
 
     @Test
