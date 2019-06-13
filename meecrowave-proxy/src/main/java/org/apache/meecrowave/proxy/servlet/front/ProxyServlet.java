@@ -22,6 +22,7 @@ import static java.util.Collections.list;
 import static java.util.Optional.empty;
 import static java.util.Optional.ofNullable;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toMap;
 
 import java.io.IOException;
@@ -34,6 +35,7 @@ import java.util.Enumeration;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletionStage;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 import javax.servlet.AsyncContext;
@@ -86,7 +88,7 @@ public class ProxyServlet extends HttpServlet {
                     onError(route, req, resp, error);
                 } else {
                     try {
-                        forwardResponse(route, response, req, resp);
+                        forwardResponse(route, response, req, resp, identity());
                     } catch (final IOException e) {
                         onError(route, req, resp, e);
                     }
@@ -172,7 +174,7 @@ public class ProxyServlet extends HttpServlet {
         if (WebApplicationException.class.isInstance(error)) {
             final WebApplicationException wae = WebApplicationException.class.cast(error);
             if (wae.getResponse() != null) {
-                forwardResponse(route, wae.getResponse(), request, resp);
+                forwardResponse(route, wae.getResponse(), request, resp, identity());
                 return;
             }
         }
@@ -185,7 +187,8 @@ public class ProxyServlet extends HttpServlet {
     }
 
     protected void forwardResponse(final Routes.Route route, final Response response,
-                                   final HttpServletRequest request, final HttpServletResponse resp) throws IOException {
+                                   final HttpServletRequest request, final HttpServletResponse resp,
+                                   final Function<InputStream, InputStream> responseRewriter) throws IOException {
         final int status = response.getStatus();
         resp.setStatus(status);
         forwardHeaders(route, response, resp);
@@ -193,7 +196,7 @@ public class ProxyServlet extends HttpServlet {
             resp.setIntHeader(HttpHeaders.CONTENT_LENGTH, 0);
         }
         forwardCookies(route, response, resp);
-        writeOutput(resp, response.readEntity(InputStream.class));
+        writeOutput(resp, responseRewriter.apply(response.readEntity(InputStream.class)));
     }
 
     protected void forwardCookies(final Routes.Route route, final Response response, final HttpServletResponse resp) {

@@ -19,31 +19,40 @@
 package org.apache.meecrowave.proxy.servlet.front.cdi.event;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.util.function.Function;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.Response;
 
-import org.apache.meecrowave.proxy.servlet.front.cdi.func.IORunnable;
+import org.apache.meecrowave.proxy.servlet.front.cdi.func.IOConsumer;
 
 public class OnResponse extends BaseEvent {
     private final Response clientResponse;
-    private final IORunnable delegate;
+    private final IOConsumer<Function<InputStream, InputStream>> delegate;
+    private Function<InputStream, InputStream> payloadRewriter;
     private boolean proceeded;
 
     public OnResponse(final HttpServletRequest request, final HttpServletResponse response,
-                      final Response clientResponse, final IORunnable delegate) {
+                      final Response clientResponse, final Function<InputStream, InputStream> payloadRewriter,
+                      final IOConsumer<Function<InputStream, InputStream>> delegate) {
         super(request, response);
         this.clientResponse = clientResponse;
         this.delegate = delegate;
+        this.payloadRewriter = payloadRewriter;
     }
 
     public Response getClientResponse() {
         return clientResponse;
     }
 
+    public void setPayloadRewriter(final Function<InputStream, InputStream> payloadRewriter) {
+        this.payloadRewriter = payloadRewriter;
+    }
+
     public void proceed() throws IOException {
-        delegate.run();
+        delegate.accept(payloadRewriter);
         proceeded = true;
     }
 

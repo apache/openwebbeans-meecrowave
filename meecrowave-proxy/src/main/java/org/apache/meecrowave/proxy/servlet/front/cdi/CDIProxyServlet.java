@@ -18,9 +18,13 @@
  */
 package org.apache.meecrowave.proxy.servlet.front.cdi;
 
+import static java.util.function.Function.identity;
+
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.function.Function;
 
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
@@ -99,15 +103,17 @@ public class CDIProxyServlet extends ProxyServlet {
 
     @Override
     protected void forwardResponse(final Routes.Route route, final Response response,
-                                   final HttpServletRequest request, final HttpServletResponse resp) throws IOException {
+                                   final HttpServletRequest request, final HttpServletResponse resp,
+                                   final Function<InputStream, InputStream> responseRewriter) throws IOException {
         if (spy.isHasOnResponseEvent()) {
-            final OnResponse onResponse = new OnResponse(request, resp, response, () -> super.forwardResponse(route, response, request, resp));
+            final OnResponse onResponse = new OnResponse(request, resp, response, responseRewriter,
+                    rewriter -> super.forwardResponse(route, response, request, resp, rewriter));
             onResponseEvent.fire(onResponse);
             if (!onResponse.isProceeded()) {
                 onResponse.proceed();
             }
         } else {
-            super.forwardResponse(route, response, request, resp);
+            super.forwardResponse(route, response, request, resp, identity());
         }
     }
 }

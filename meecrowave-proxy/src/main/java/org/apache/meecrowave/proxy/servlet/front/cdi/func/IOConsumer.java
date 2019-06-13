@@ -21,6 +21,6 @@ package org.apache.meecrowave.proxy.servlet.front.cdi.func;
 import java.io.IOException;
 
 @FunctionalInterface
-public interface IORunnable {
-    void run() throws IOException;
+public interface IOConsumer<T> {
+    void accept(T parameter) throws IOException;
 }
