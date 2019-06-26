@@ -1626,6 +1626,11 @@ public class Meecrowave implements AutoCloseable {
             this.jsonbOrderStrategy = jsonbOrderStrategy;
         }
 
+        public Builder withJsonpBufferStrategy(final String jsonpBufferStrategy) {
+            this.jsonpBufferStrategy = jsonpBufferStrategy;
+            return this;
+        }
+
         public void setJsonpBufferStrategy(final String jsonpBufferStrategy) {
             this.jsonpBufferStrategy = jsonpBufferStrategy;
         }
