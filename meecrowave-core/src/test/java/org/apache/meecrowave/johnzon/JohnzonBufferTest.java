@@ -40,7 +40,7 @@ public class JohnzonBufferTest {
                         .request(MediaType.APPLICATION_JSON)
                         .get(String.class);
                 assertEquals("{\"isbn\":\"dummyisbn\"}", jsonResponse);
-                //X TODO work in progress! assertEquals(1, DebugJohnzonBufferStrategy.getCounter());
+                assertEquals(3, DebugJohnzonBufferStrategy.getCounter()); // reader fact -> parser fact (2 buffers) + writer -> generator (1 buffer)
             } finally {
                 client.close();
             }

@@ -39,23 +39,32 @@ import org.apache.meecrowave.Meecrowave;
 @Typed({MeecrowaveBus.class, Bus.class})
 @ApplicationScoped
 public class MeecrowaveBus implements Bus, ClassUnwrapper {
-    private final ConfigurableBus delegate = new ConfigurableBus();
+    private final ConfigurableBus delegate;
 
     protected MeecrowaveBus() {
-        // no-op: for proxies
+        delegate= null;
     }
 
     @Inject
     public MeecrowaveBus(final ServletContext context) {
-        setProperty(ClassUnwrapper.class.getName(), this);
-
         final ClassLoader appLoader = context.getClassLoader();
-        setExtension(appLoader, ClassLoader.class); // ServletController locks on the classloader otherwise
 
+        final Meecrowave meecrowave = Meecrowave.class.cast(context.getAttribute("meecrowave.instance"));
         final Meecrowave.Builder builder = Meecrowave.Builder.class.cast(context.getAttribute("meecrowave.configuration"));
-        if (builder != null && builder.isJaxrsProviderSetup()) {
-            delegate.initProviders(builder, appLoader);
+        if (meecrowave.getClientBus() == null) {
+            delegate = new ConfigurableBus();
+            if (builder != null && builder.isJaxrsProviderSetup()) {
+                delegate.initProviders(builder, appLoader);
+            }
+        } else {
+            delegate = meecrowave.getClientBus();
+            if (builder != null && !builder.isInitializeClientBus() && builder.isJaxrsProviderSetup()) {
+                delegate.initProviders(builder, appLoader);
+            }
         }
+
+        setProperty(ClassUnwrapper.class.getName(), this);
+        setExtension(appLoader, ClassLoader.class); // ServletController locks on the classloader otherwise
     }
 
 

@@ -276,6 +276,9 @@ public class Meecrowave implements AutoCloseable {
 
         final AtomicReference<Runnable> releaseSCI = new AtomicReference<>();
         final ServletContainerInitializer meecrowaveInitializer = (c, ctx1) -> {
+            ctx1.setAttribute("meecrowave.configuration", configuration);
+            ctx1.setAttribute("meecrowave.instance", Meecrowave.this);
+
             new OWBAutoSetup().onStartup(c, ctx1);
             if (Cxfs.IS_PRESENT) {
                 new CxfCdiAutoSetup().onStartup(c, ctx1);
@@ -355,8 +358,6 @@ public class Meecrowave implements AutoCloseable {
                     ctx.getResources().setCachingAllowed(configuration.webResourceCached);
                     break;
                 case Lifecycle.BEFORE_INIT_EVENT:
-                    ctx.getServletContext().setAttribute("meecrowave.configuration", configuration);
-                    ctx.getServletContext().setAttribute("meecrowave.instance", Meecrowave.this);
                     if (configuration.loginConfig != null) {
                         ctx.setLoginConfig(configuration.loginConfig.build());
                     }
@@ -806,6 +807,10 @@ public class Meecrowave implements AutoCloseable {
                 }
             }
         }
+    }
+
+    public ConfigurableBus getClientBus() {
+        return clientBus;
     }
 
     /**
