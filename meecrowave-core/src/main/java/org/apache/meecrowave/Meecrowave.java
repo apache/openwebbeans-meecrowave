@@ -68,6 +68,7 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import javax.annotation.Priority;
 import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
 import javax.enterprise.context.spi.CreationalContext;
@@ -719,6 +720,7 @@ public class Meecrowave implements AutoCloseable {
                         MeecrowaveAwareInstanceCustomizer.class.cast(i).setMeecrowave(this);
                     }
                 })
+                .sorted(Meecrowave::sortByPriority)
                 .forEach(c -> c.accept(tomcat));
         configuration.instanceCustomizers.forEach(c -> c.accept(tomcat));
 
@@ -728,6 +730,7 @@ public class Meecrowave implements AutoCloseable {
                         MeecrowaveAwareContextCustomizer.class.cast(i).setMeecrowave(this);
                     }
                 })
+                .sorted(Meecrowave::sortByPriority)
                 .forEach(configuration::addGlobalContextCustomizer);
 
         beforeStart();
@@ -1154,6 +1157,16 @@ public class Meecrowave implements AutoCloseable {
         return recipe;
     }
 
+    private static int priorityOf(final Object i) {
+        return ofNullable(i.getClass().getAnnotation(Priority.class))
+                .map(Priority::value)
+                .orElse(0);
+    }
+
+    private static <T> int sortByPriority(final T a, final T b) {
+        return priorityOf(a) - priorityOf(b);
+    }
+
     // this class holds all the built-in config,
     // extension can use extensions feature (see cli.html) which is basically the same kind of bean
     // accessible through builder.getExtension(type) builder being accessible through the meecrowave.configuration
@@ -1401,6 +1414,7 @@ public class Meecrowave implements AutoCloseable {
         public Builder() { // load defaults
             extensions.put(ValueTransformers.class, new ValueTransformers());
             StreamSupport.stream(ServiceLoader.load(Meecrowave.ConfigurationCustomizer.class).spliterator(), false)
+                    .sorted(Meecrowave::sortByPriority)
                     .forEach(c -> c.accept(this));
             loadFrom(meecrowaveProperties);
         }
@@ -2692,9 +2706,15 @@ public class Meecrowave implements AutoCloseable {
     public interface ConfigurationCustomizer extends Consumer<Meecrowave.Builder> {
     }
 
+    /**
+     * SPI to customize Tomcat instance. They are sorted by Priority, default being 0.
+     */
     public interface InstanceCustomizer extends Consumer<Tomcat> {
     }
 
+    /**
+     * SPI to customize context instances. They are sorted by Priority, default being 0.
+     */
     public interface ContextCustomizer extends Consumer<Context> {
     }
 
