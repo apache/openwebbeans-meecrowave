@@ -29,7 +29,6 @@ import static java.util.stream.Collectors.toSet;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -129,6 +128,7 @@ import org.apache.tomcat.util.descriptor.web.SecurityCollection;
 import org.apache.tomcat.util.descriptor.web.SecurityConstraint;
 import org.apache.tomcat.util.modeler.Registry;
 import org.apache.tomcat.util.net.SSLHostConfig;
+import org.apache.webbeans.config.PropertyLoader;
 import org.apache.webbeans.config.WebBeansContext;
 import org.apache.xbean.finder.ResourceFinder;
 import org.apache.xbean.recipe.ObjectRecipe;
@@ -2050,17 +2050,24 @@ public class Meecrowave implements AutoCloseable {
         }
 
         public Builder loadFrom(final String resource) {
-            try (final InputStream is = findStream(resource)) {
-                if (is != null) {
-                    final Properties config = new Properties() {{
-                        load(is);
-                    }};
-                    loadFromProperties(config);
+            // load all of those files on the classpath, sorted by ordinal
+            Properties config = PropertyLoader.getProperties(resource);
+            if (config == null) {
+                final File file = new File(resource);
+                if (file.exists()) {
+                    config = new Properties();
+                    try (InputStream is = new FileInputStream(file)) {
+                        config.load(is);
+                    }
+                    catch (IOException e) {
+                        throw new IllegalStateException(e);
+                    }
                 }
-                return this;
-            } catch (final IOException e) {
-                throw new IllegalStateException(e);
             }
+            if (config != null) {
+                loadFromProperties(config);
+            }
+            return this;
         }
 
         public void setServerXml(final String file) {
@@ -2079,16 +2086,6 @@ public class Meecrowave implements AutoCloseable {
             return this;
         }
 
-        private InputStream findStream(final String resource) throws FileNotFoundException {
-            InputStream stream = Thread.currentThread().getContextClassLoader().getResourceAsStream(resource);
-            if (stream == null) {
-                final File file = new File(resource);
-                if (file.exists()) {
-                    return new FileInputStream(file);
-                }
-            }
-            return stream;
-        }
 
         public Builder user(final String name, final String pwd) {
             if (users == null) {
