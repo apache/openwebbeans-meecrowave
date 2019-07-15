@@ -2051,8 +2051,9 @@ public class Meecrowave implements AutoCloseable {
 
         public Builder loadFrom(final String resource) {
             // load all of those files on the classpath, sorted by ordinal
-            Properties config = PropertyLoader.getProperties(resource);
-            if (config == null) {
+            Properties config = PropertyLoader.getProperties(resource,
+                    sortedProperties -> mergeProperties(resource, sortedProperties));
+            if (config == null || config.isEmpty()) {
                 final File file = new File(resource);
                 if (file.exists()) {
                     config = new Properties();
@@ -2368,6 +2369,27 @@ public class Meecrowave implements AutoCloseable {
 
         public void setMeecrowaveProperties(final String meecrowaveProperties) {
             this.meecrowaveProperties = meecrowaveProperties;
+        }
+
+        private Properties mergeProperties(final String resource, final List<Properties> sortedProperties) {
+            Properties mergedProperties = new Properties();
+            Properties master = null;
+            for (final Properties p : sortedProperties)
+            {
+                if (Boolean.parseBoolean(p.getProperty("configuration.complete", "false"))) {
+                    if (master != null) {
+                        throw new IllegalArgumentException("Ambiguous '" + resource + "', " +
+                                "multiple " + resource + " with configuration.complete=true");
+                    }
+                    master = p;
+                }
+                mergedProperties.putAll(p);
+            }
+
+            if (master != null) {
+                return master;
+            }
+            return mergedProperties;
         }
     }
 

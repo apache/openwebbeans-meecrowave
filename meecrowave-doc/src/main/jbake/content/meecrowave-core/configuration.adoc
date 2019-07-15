@@ -124,7 +124,11 @@ Finally you can use any dotted attribute to configure the valve (see example aft
 - `configurationCustomizer.x=y` will set `x` to `y` for the customizer
 
 TIP: Out of the box, any `Builder` instance will read `meecrowave.properties`.
-`meecrowave.properties` uses CLI names (without the leading `--`).
+`meecrowave.properties` uses CLI names (without the leading `--`). It loads all available files from the classpath,
+they are merged using `configuration.ordinal` key (exactly like Apache OpenWebBeans does for its configuration).
+It also supports `configuration.complete=[true|false]` which enables a single file to host it with the `true` value
+and will consider this file as the merged result of all potential files found in the classpath. It is useful to
+avoid an implicit merging and can typically be used in `conf/meecrowave.properties` in bundle mode.
 See link:{context_rootpath}/meecrowave-core/cli.html[CLI] page for the list.
 
 === Valve configuration

@@ -28,6 +28,7 @@ import org.superbiz.app.InterfaceApi;
 import org.superbiz.app.RsApp;
 import org.superbiz.app.TestJsonEndpoint;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
@@ -35,16 +36,54 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Writer;
+import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLConnection;
+import java.net.URLStreamHandler;
+import java.nio.charset.StandardCharsets;
+import java.util.Enumeration;
 import java.util.Properties;
 import java.util.stream.Stream;
 
+import static java.util.Arrays.asList;
+import static java.util.Collections.enumeration;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public class MeecrowaveTest {
+    @Test
+    public void conflictingConfig() throws MalformedURLException {
+        withConfigClassLoader(() -> {
+            try {
+                new Meecrowave.Builder().loadFrom("test.config.properties");
+                fail("should have failed since it conflicts");
+            } catch (final IllegalArgumentException iae) {
+                // ok
+            }
+        }, configUrl("configuration.complete=true\nf=1"), configUrl("configuration.complete=true\nf=2"));
+    }
+
+    @Test
+    public void masterConfig() throws MalformedURLException {
+        withConfigClassLoader(() -> {
+            final Meecrowave.Builder builder = new Meecrowave.Builder();
+            builder.loadFrom("test.config.properties");
+            assertEquals(1, builder.getHttpPort());
+        }, configUrl("http=2"), configUrl("configuration.complete=true\nhttp=1"), configUrl("http=3"));
+    }
+
+    @Test
+    public void mergedConfig() throws MalformedURLException {
+        withConfigClassLoader(() -> {
+            final Meecrowave.Builder builder = new Meecrowave.Builder();
+            builder.loadFrom("test.config.properties");
+            assertEquals(2, builder.getHttpPort());
+            assertEquals(4, builder.getHttpsPort());
+        }, configUrl("http=2\nconfiguration.ordinal=2\nhttps=4"), configUrl("http=3\nconfiguration.ordinal=1"));
+    }
+
     @Test
     public void configBinding() {
         final MyConfig config = new Meecrowave.Builder()
@@ -159,5 +198,52 @@ public class MeecrowaveTest {
 
         @CliOption(name = "my-prefix-bool", description = "")
         private boolean bool;
+    }
+
+    private static URL configUrl(final String content) throws MalformedURLException {
+        return new URL("memory", null, -1, "test.config.properties", new MemoryHandler(content));
+    }
+
+    private static void withConfigClassLoader(final Runnable test, final URL... urls) {
+        final Thread thread = Thread.currentThread();
+        final ClassLoader loader = thread.getContextClassLoader();
+        thread.setContextClassLoader(new ClassLoader(loader) {
+            @Override
+            public Enumeration<URL> getResources(final String name) throws IOException {
+                return "test.config.properties".equals(name) ? enumeration(asList(urls)) : super.getResources(name);
+            }
+        });
+        try {
+            test.run();
+        } finally {
+            thread.setContextClassLoader(loader);
+        }
+    }
+
+    private static class MemoryHandler extends URLStreamHandler
+    {
+        private final String content;
+
+        private MemoryHandler(final String content)
+        {
+            this.content = content;
+        }
+
+        @Override
+        protected URLConnection openConnection(final URL u) {
+            return new URLConnection(u)
+            {
+                @Override
+                public void connect()
+                {
+                    // no-op
+                }
+
+                @Override
+                public InputStream getInputStream() {
+                    return new ByteArrayInputStream(content.getBytes(StandardCharsets.UTF_8));
+                }
+            };
+        }
     }
 }
