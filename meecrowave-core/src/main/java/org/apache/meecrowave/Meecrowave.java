@@ -60,6 +60,7 @@ import java.util.Properties;
 import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
@@ -86,19 +87,17 @@ import org.apache.catalina.Host;
 import org.apache.catalina.Lifecycle;
 import org.apache.catalina.LifecycleException;
 import org.apache.catalina.LifecycleState;
-import org.apache.catalina.Manager;
 import org.apache.catalina.Pipeline;
 import org.apache.catalina.Realm;
 import org.apache.catalina.Server;
-import org.apache.catalina.Service;
 import org.apache.catalina.Valve;
 import org.apache.catalina.connector.Connector;
 import org.apache.catalina.core.StandardContext;
 import org.apache.catalina.core.StandardHost;
-import org.apache.catalina.session.ManagerBase;
 import org.apache.catalina.session.StandardManager;
 import org.apache.catalina.startup.Catalina;
 import org.apache.catalina.startup.Tomcat;
+import org.apache.catalina.util.StandardSessionIdGenerator;
 import org.apache.coyote.http2.Http2Protocol;
 import org.apache.meecrowave.api.StartListening;
 import org.apache.meecrowave.api.StopListening;
@@ -398,6 +397,21 @@ public class Meecrowave implements AutoCloseable {
         }
 
         ofNullable(meta.consumer).ifPresent(c -> c.accept(ctx));
+        if (configuration.isQuickSession() && ctx.getManager() == null) {
+            final StandardManager manager = new StandardManager();
+            manager.setSessionIdGenerator(new StandardSessionIdGenerator() {
+                @Override
+                protected void getRandomBytes(final byte bytes[]) {
+                    ThreadLocalRandom.current().nextBytes(bytes);
+                }
+
+                @Override
+                public String toString() {
+                    return "MeecrowaveSessionIdGenerator@" + System.identityHashCode(this);
+                }
+            });
+            ctx.setManager(manager);
+        }
         if (configuration.antiResourceLocking && StandardContext.class.isInstance(ctx)) {
             StandardContext.class.cast(ctx).setAntiResourceLocking(true);
         }
@@ -466,11 +480,7 @@ public class Meecrowave implements AutoCloseable {
 
         clearCatalinaSystemProperties = System.getProperty("catalina.base") == null && System.getProperty("catalina.home") == null;
 
-        if (configuration.quickSession) {
-            tomcat = new TomcatWithFastSessionIDs();
-        } else {
-            tomcat = new InternalTomcat();
-        }
+        tomcat = new InternalTomcat();
 
         { // setup
             base = new File(newBaseDir());
@@ -2578,31 +2588,6 @@ public class Meecrowave implements AutoCloseable {
 
         Connector getRawConnector() {
             return connector;
-        }
-    }
-
-    private static class TomcatWithFastSessionIDs extends InternalTomcat {
-        @Override
-        public void start() throws LifecycleException {
-            // Use fast, insecure session ID generation for all tests
-            final Server server = getServer();
-            for (final Service service : server.findServices()) {
-                final org.apache.catalina.Container e = service.getContainer();
-                for (final org.apache.catalina.Container h : e.findChildren()) {
-                    for (final org.apache.catalina.Container c : h.findChildren()) {
-                        Manager m = ((org.apache.catalina.Context) c).getManager();
-                        if (m == null) {
-                            m = new StandardManager();
-                            org.apache.catalina.Context.class.cast(c).setManager(m);
-                        }
-                        if (m instanceof ManagerBase) {
-                            ManagerBase.class.cast(m).setSecureRandomClass(
-                                    "org.apache.catalina.startup.FastNonSecureRandom");
-                        }
-                    }
-                }
-            }
-            super.start();
         }
     }
 

@@ -18,6 +18,7 @@
  */
 package org.apache.meecrowave;
 
+import org.apache.catalina.Context;
 import org.apache.cxf.helpers.FileUtils;
 import org.apache.meecrowave.io.IO;
 import org.apache.meecrowave.runner.cli.CliOption;
@@ -53,6 +54,18 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public class MeecrowaveTest {
+    @Test
+    public void fastStartupSessionId() {
+        try (final Meecrowave meecrowave = new Meecrowave(new Meecrowave.Builder().randomHttpPort())
+                .start().deployClasspath()) {
+            assertTrue(Context.class.cast(meecrowave.getTomcat()
+                    .getEngine()
+                    .findChildren()[0]
+                    .findChildren()[0])
+                    .getManager().getSessionIdGenerator().toString().startsWith("MeecrowaveSessionIdGenerator@"));
+        }
+    }
+
     @Test
     public void conflictingConfig() throws MalformedURLException {
         withConfigClassLoader(() -> {
