@@ -13,12 +13,19 @@ See https://openwebbeans.apache.org/community.html[OpenWebBeans Community] page 
 
 == Source code
 
-Source code can be found at https://svn.apache.org/repos/asf/openwebbeans/meecrowave/trunk/
+Source code can be found at https://gitbox.apache.org/repos/asf/openwebbeans-meecrowave.git
 
 [source]
 ----
-svn co https://svn.apache.org/repos/asf/openwebbeans/meecrowave/trunk/ meecrowave
+$> git clone https://gitbox.apache.org/repos/asf/openwebbeans-meecrowave.git
 ----
+
+A mirror is available on github at https://github.com/apache/openwebbeans-meecrowave.
+
+
+The github mirror is linked in both directions.
+That means it doesn't matter whether you push to GitHub or Apache GitBox.
+
 
 === Build it
 
