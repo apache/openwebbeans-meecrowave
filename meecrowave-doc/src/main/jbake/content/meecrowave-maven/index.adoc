@@ -138,3 +138,6 @@ Points to take care are:
   </dependencies>
 </plugin>
 ----
+
+TIP: starting with ̀ maven-shade-plugin` 3.2.2, you don't need `openwebbeans-maven` anymore. Just replace `org.apache.openwebbeans.maven.shade.OpenWebBeansPropertiesTransformer` by `org.apache.maven.plugins.shade.resource.properties.OpenWebBeansPropertiesTransformer`.
+
