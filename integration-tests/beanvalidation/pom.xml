@@ -53,6 +53,19 @@
     </dependency>
   </dependencies>
 
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.meecrowave</groupId>
+        <artifactId>meecrowave-maven-plugin</artifactId>
+        <version>${project.version}</version>
+        <configuration>
+          <scanningPackageIncludes>org.apache.meecrowave.beanvalidation</scanningPackageIncludes>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+
   <profiles>
     <profile>
       <id>java11</id>

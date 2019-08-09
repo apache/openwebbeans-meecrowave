@@ -34,11 +34,13 @@ import org.eclipse.aether.repository.LocalRepository;
 import org.junit.Rule;
 import org.junit.Test;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.ServerSocket;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -76,7 +78,7 @@ public class MeecrowaveRunMojoTest {
         final InputStream in = System.in;
         final CountDownLatch latch = new CountDownLatch(1);
         System.setIn(new InputStream() {
-            private int val = 2; // just to not return nothing
+            private final InputStream delegate = new ByteArrayInputStream("quit".getBytes(StandardCharsets.UTF_8));
 
             @Override
             public int read() throws IOException {
@@ -86,7 +88,7 @@ public class MeecrowaveRunMojoTest {
                     Thread.currentThread().interrupt();
                     fail(e.getMessage());
                 }
-                return val--;
+                return delegate.read();
             }
         });
         final Thread runner = new Thread() {

@@ -24,6 +24,14 @@ Here are the available options (see core configuration for the details):
 
 include::../../../../../target/generated-doc/MavenConfiguration.adoc[]
 
+== Run
+
+`mvn meecrowave:run` enables you to start a server configured in your `pom.xml`.
+Once started, you have a few commands you can use to interact with the server:
+
+- `quit`/`exit`: shutdown properly the server.
+- `reload` (since 1.2.9): optionally relaunch a maven compilation - see configuration - and reload the web context.
+
 == Bundling
 
 [source]

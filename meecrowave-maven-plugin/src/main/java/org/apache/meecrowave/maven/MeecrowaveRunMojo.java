@@ -18,20 +18,14 @@
  */
 package org.apache.meecrowave.maven;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.maven.artifact.Artifact;
-import org.apache.maven.plugin.AbstractMojo;
-import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.MojoFailureException;
-import org.apache.maven.plugins.annotations.Mojo;
-import org.apache.maven.plugins.annotations.Parameter;
-import org.apache.maven.project.MavenProject;
-import org.apache.meecrowave.Meecrowave;
+import static java.util.Collections.singletonList;
+import static java.util.Collections.singletonMap;
+import static java.util.Optional.ofNullable;
+import static java.util.function.Function.identity;
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toMap;
+import static org.apache.maven.plugins.annotations.ResolutionScope.RUNTIME_PLUS_SYSTEM;
 
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
-import javax.script.ScriptException;
-import javax.script.SimpleBindings;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
@@ -47,14 +41,25 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Scanner;
+import java.util.function.Supplier;
 
-import static java.util.Collections.singletonList;
-import static java.util.Collections.singletonMap;
-import static java.util.Optional.ofNullable;
-import static java.util.function.Function.identity;
-import static java.util.stream.Collectors.toList;
-import static java.util.stream.Collectors.toMap;
-import static org.apache.maven.plugins.annotations.ResolutionScope.RUNTIME_PLUS_SYSTEM;
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineManager;
+import javax.script.ScriptException;
+import javax.script.SimpleBindings;
+
+import org.apache.catalina.Context;
+import org.apache.logging.log4j.LogManager;
+import org.apache.maven.artifact.Artifact;
+import org.apache.maven.execution.MavenSession;
+import org.apache.maven.lifecycle.internal.LifecycleStarter;
+import org.apache.maven.plugin.AbstractMojo;
+import org.apache.maven.plugins.annotations.Component;
+import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.Parameter;
+import org.apache.maven.project.MavenProject;
+import org.apache.meecrowave.Meecrowave;
+import org.apache.meecrowave.tomcat.ProvidedLoader;
 
 @Mojo(name = "run", requiresDependencyResolution = RUNTIME_PLUS_SYSTEM)
 public class MeecrowaveRunMojo extends AbstractMojo {
@@ -214,6 +219,9 @@ public class MeecrowaveRunMojo extends AbstractMojo {
     @Parameter(defaultValue = "${project.build.outputDirectory}")
     private List<File> modules;
 
+    @Parameter(defaultValue = "${session}", readonly = true)
+    private MavenSession session;
+
     @Parameter(defaultValue = "${project}", readonly = true, required = true)
     private MavenProject project;
 
@@ -299,6 +307,9 @@ public class MeecrowaveRunMojo extends AbstractMojo {
     @Parameter(property = "meecrowave.jaxws-support", defaultValue = "true")
     private boolean jaxwsSupportIfAvailable;
 
+    @Parameter(property = "meecrowave.reload-goals", defaultValue = "process-classes")
+    private List<String> reloadGoals; // todo: add watching on project.build.directory?
+
     @Parameter(property = "meecrowave.default-ssl-hostconfig-name")
     private String defaultSSLHostConfigName;
 
@@ -308,12 +319,17 @@ public class MeecrowaveRunMojo extends AbstractMojo {
     @Parameter(property = "meecrowave.session-cookie-config")
     private String webSessionCookieConfig;
 
+    @Component
+    private LifecycleStarter lifecycleStarter;
+
     @Override
-    public void execute() throws MojoExecutionException, MojoFailureException {
+    public void execute() {
         if (skip) {
             getLog().warn("Mojo skipped");
             return;
         }
+        logConfigurationErrors();
+
         final Map<String, String> originalSystemProps;
         if (systemProperties != null) {
             originalSystemProps = systemProperties.keySet().stream()
@@ -326,8 +342,8 @@ public class MeecrowaveRunMojo extends AbstractMojo {
 
         final Thread thread = Thread.currentThread();
         final ClassLoader loader = thread.getContextClassLoader();
-        final ClassLoader appLoader = createClassLoader(loader);
-        thread.setContextClassLoader(appLoader);
+        final Supplier<ClassLoader> appLoaderSupplier = createClassLoader(loader);
+        thread.setContextClassLoader(appLoaderSupplier.get());
         try {
             final Meecrowave.Builder builder = getConfig();
             try (final Meecrowave meecrowave = new Meecrowave(builder) {
@@ -344,24 +360,34 @@ public class MeecrowaveRunMojo extends AbstractMojo {
                         jsContextCustomizer == null ?
                                 null : ctx -> scriptCustomization(
                                 singletonList(jsContextCustomizer), "js", singletonMap("context", ctx)));
-                if (useClasspathDeployment) {
-                    meecrowave.deployClasspath(deploymentMeta);
-                } else {
-                    meecrowave.deployWebapp(deploymentMeta);
+                deploy(meecrowave, deploymentMeta);
+                final Scanner scanner = new Scanner(System.in);
+                String cmd;
+                boolean quit = false;
+                while (!quit && (cmd = scanner.next()) != null) {
+                    cmd = cmd.trim();
+                    switch (cmd) {
+                        case "": // normally impossible with a Scanner but we can move to another "reader"
+                        case "q":
+                        case "quit":
+                        case "e":
+                        case "exit":
+                            quit = true;
+                            break;
+                        case "r":
+                        case "reload":
+                            reload(meecrowave, fixedContext, appLoaderSupplier, loader);
+                            break;
+                        default:
+                            getLog().error("Unknown command: '" + cmd + "', use 'quit' or 'exit' or 'reload'");
+                    }
                 }
-                new Scanner(System.in).next();
             }
         } finally {
             if (forceLog4j2Shutdown) {
                 LogManager.shutdown();
             }
-            if (appLoader != loader) {
-                try {
-                    URLClassLoader.class.cast(appLoader).close();
-                } catch (final IOException e) {
-                    getLog().warn(e.getMessage(), e);
-                }
-            }
+            destroyTcclIfNeeded(thread, loader);
             thread.setContextClassLoader(loader);
             if (originalSystemProps != null) {
                 systemProperties.keySet().forEach(k -> {
@@ -373,6 +399,51 @@ public class MeecrowaveRunMojo extends AbstractMojo {
                     }
                 });
             }
+        }
+    }
+
+    private void destroyTcclIfNeeded(final Thread thread, final ClassLoader loader) {
+        if (thread.getContextClassLoader() != loader) {
+            try {
+                URLClassLoader.class.cast(thread.getContextClassLoader()).close();
+            } catch (final IOException e) {
+                getLog().warn(e.getMessage(), e);
+            }
+        }
+    }
+
+    private void logConfigurationErrors() {
+        if (watcherBouncing > 0 && reloadGoals != null && !reloadGoals.isEmpty()) {
+            getLog().warn("You set reloadGoals and watcherBouncing > 1, behavior is undefined");
+        }
+    }
+
+    private void reload(final Meecrowave meecrowave, final String context,
+                        final Supplier<ClassLoader> loaderSupplier, final ClassLoader mojoLoader) {
+        if (reloadGoals != null && !reloadGoals.isEmpty()) {
+            final List<String> goals = session.getGoals();
+            session.getRequest().setGoals(reloadGoals);
+            try {
+                lifecycleStarter.execute(session);
+            } finally {
+                session.getRequest().setGoals(goals);
+            }
+        }
+        final Context ctx = Context.class.cast(meecrowave.getTomcat().getHost().findChild(context));
+        if (useClasspathDeployment) {
+            final Thread thread = Thread.currentThread();
+            destroyTcclIfNeeded(thread, mojoLoader);
+            thread.setContextClassLoader(loaderSupplier.get());
+            ctx.setLoader(new ProvidedLoader(thread.getContextClassLoader(), meecrowave.getConfiguration().isTomcatWrapLoader()));
+        }
+        ctx.reload();
+    }
+
+    private void deploy(final Meecrowave meecrowave, final Meecrowave.DeploymentMeta deploymentMeta) {
+        if (useClasspathDeployment) {
+            meecrowave.deployClasspath(deploymentMeta);
+        } else {
+            meecrowave.deployWebapp(deploymentMeta);
         }
     }
 
@@ -396,7 +467,7 @@ public class MeecrowaveRunMojo extends AbstractMojo {
         }
     }
 
-    private ClassLoader createClassLoader(final ClassLoader parent) {
+    private Supplier<ClassLoader> createClassLoader(final ClassLoader parent) {
         final List<URL> urls = new ArrayList<>();
         urls.addAll(project.getArtifacts().stream()
                 .filter(a -> !((applicationScopes == null && !(Artifact.SCOPE_COMPILE.equals(a.getScope()) || Artifact.SCOPE_RUNTIME.equals(a.getScope())))
@@ -416,7 +487,7 @@ public class MeecrowaveRunMojo extends AbstractMojo {
                 throw new IllegalArgumentException(e);
             }
         }).collect(toList()));
-        return urls.isEmpty() ? parent : new URLClassLoader(urls.toArray(new URL[urls.size()]), parent) {
+        return urls.isEmpty() ? () -> parent : () -> new URLClassLoader(urls.toArray(new URL[0]), parent) {
             @Override
             public boolean equals(final Object obj) {
                 return super.equals(obj) || parent.equals(obj);
