@@ -2062,7 +2062,8 @@ public class Meecrowave implements AutoCloseable {
         public Builder loadFrom(final String resource) {
             // load all of those files on the classpath, sorted by ordinal
             Properties config = PropertyLoader.getProperties(resource,
-                    sortedProperties -> mergeProperties(resource, sortedProperties));
+                    sortedProperties -> mergeProperties(resource, sortedProperties),
+                    () -> {});
             if (config == null || config.isEmpty()) {
                 final File file = new File(resource);
                 if (file.exists()) {
