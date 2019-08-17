@@ -16,11 +16,12 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.meecrowave.api;
+package org.apache.meecrowave.test.api;
 
-import org.apache.catalina.LifecycleException;
-import org.apache.meecrowave.Meecrowave;
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Observes;
@@ -31,14 +32,16 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.core.MediaType;
-import java.util.ArrayList;
-import java.util.List;
 
-import static org.junit.Assert.assertEquals;
+import org.apache.meecrowave.Meecrowave;
+import org.apache.meecrowave.api.ListeningBase;
+import org.apache.meecrowave.api.StartListening;
+import org.apache.meecrowave.api.StopListening;
+import org.junit.Test;
 
 public class ListeningTest {
     @Test
-    public void events() throws LifecycleException {
+    public void events() {
         final Listener listener;
         final String base;
         int count = 0;

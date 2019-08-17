@@ -19,13 +19,10 @@
 package org.apache.meecrowave.openwebbeans;
 
 import org.apache.meecrowave.Meecrowave;
-import org.apache.meecrowave.cxf.Cxfs;
-import org.apache.meecrowave.cxf.JAXRSFieldInjectionInterceptor;
 import org.apache.webbeans.annotation.DefaultLiteral;
 import org.apache.webbeans.config.WebBeansContext;
 import org.apache.webbeans.configurator.BeanConfiguratorImpl;
 import org.apache.webbeans.container.BeanManagerImpl;
-import org.apache.webbeans.intercept.InterceptorsManager;
 import org.apache.webbeans.servlet.WebBeansConfigurationListener;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -89,7 +86,6 @@ public class OWBAutoSetup implements ServletContainerInitializer {
 
         private void customizeContext(final WebBeansContext instance) {
             final BeanManagerImpl beanManager = instance.getBeanManagerImpl();
-            final InterceptorsManager interceptorsManager = instance.getInterceptorsManager();
 
             beanManager.addInternalBean(newBean(instance, configurator ->
                     configurator.beanClass(Meecrowave.Builder.class)
@@ -103,11 +99,6 @@ public class OWBAutoSetup implements ServletContainerInitializer {
                             .qualifiers(DefaultLiteral.INSTANCE)
                             .types(Meecrowave.class, AutoCloseable.class, Object.class)
                             .createWith(cc -> meecrowave)));
-
-            if (Cxfs.IS_PRESENT) {
-                interceptorsManager.addInterceptorBindingType(JAXRSFieldInjectionInterceptor.Binding.class);
-                beanManager.addAdditionalAnnotatedType(this, beanManager.createAnnotatedType(JAXRSFieldInjectionInterceptor.class));
-            }
         }
 
         private <T> Bean<?> newBean(final WebBeansContext instance, final Consumer<BeanConfigurator<T>> configurer) {

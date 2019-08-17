@@ -41,20 +41,45 @@ public class MeecrowaveExtension implements Extension {
 
     void addBeansFromJava(@Observes final BeforeBeanDiscovery bbd, final BeanManager bm) {
         if (Cxfs.IS_PRESENT) {
-            // stream not really needed but here for the pattern in case we need other beans
-            Stream.of(MeecrowaveBus.class)
+            bbd.addInterceptorBinding(JAXRSFieldInjectionInterceptor.Binding.class);
+
+            Stream.of(MeecrowaveBus.class, JAXRSFieldInjectionInterceptor.class)
                   .forEach(type -> bbd.addAnnotatedType(bm.createAnnotatedType(type)));
         }
     }
 
-    void enableContextFieldInjectionWorks(@Observes final ProcessAnnotatedType<?> pat, final BeanManager bm) {
+    void onPat(@Observes final ProcessAnnotatedType<?> pat, final BeanManager bm) {
         final AnnotatedType<?> at = pat.getAnnotatedType();
-        if (Cxfs.IS_PRESENT
+        if (isJaxRsEndpoint(bm, at)) {
+            pat.setAnnotatedType(new JAXRSFIeldInjectionAT(this, at));
+        } else if (isVetoedMeecrowaveCore(at.getJavaClass().getName())) {
+            pat.veto();
+        }
+    }
+
+    private boolean isJaxRsEndpoint(final BeanManager bm, final AnnotatedType<?> at) {
+        return Cxfs.IS_PRESENT
                 && at.isAnnotationPresent(Path.class)
                 && !at.isAnnotationPresent(JAXRSFieldInjectionInterceptor.Binding.class)
-                && at.getAnnotations().stream().anyMatch(a -> bm.isNormalScope(a.annotationType()))) {
-            pat.setAnnotatedType(new JAXRSFIeldInjectionAT(this, at));
-        }
+                && at.getAnnotations().stream().anyMatch(a -> bm.isNormalScope(a.annotationType()));
+    }
+
+    // for fatjars
+    private boolean isVetoedMeecrowaveCore(final String name) {
+        return !"org.apache.meecrowave.cxf.MeecrowaveBus".equals(name)
+                && !"org.apache.meecrowave.cxf.JAXRSFieldInjectionInterceptor".equals(name)
+                && (name.startsWith("org.apache.meecrowave.api.")
+                    || name.startsWith("org.apache.meecrowave.cdi.")
+                    || name.startsWith("org.apache.meecrowave.cxf.")
+                    || name.startsWith("org.apache.meecrowave.io.")
+                    || name.startsWith("org.apache.meecrowave.lang.")
+                    || name.startsWith("org.apache.meecrowave.logging.")
+                    || name.startsWith("org.apache.meecrowave.openwebbeans.")
+                    || name.startsWith("org.apache.meecrowave.runner.")
+                    || name.startsWith("org.apache.meecrowave.service.")
+                    || name.startsWith("org.apache.meecrowave.tomcat.")
+                    || name.startsWith("org.apache.meecrowave.watching.")
+                    || name.equals("org.apache.meecrowave.Meecrowave"));
     }
 
     private static class JAXRSFIeldInjectionAT<T> extends AnnotatedTypeWrapper<T> {
