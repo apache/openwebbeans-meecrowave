@@ -18,20 +18,19 @@
  */
 package org.apache.meecrowave.doc.generator;
 
-import org.apache.meecrowave.Meecrowave;
-import org.apache.meecrowave.runner.cli.CliOption;
+import static java.util.stream.Collectors.joining;
 
 import java.lang.reflect.Field;
 import java.util.Comparator;
 import java.util.stream.Stream;
 
-import static java.util.stream.Collectors.joining;
+import org.apache.meecrowave.runner.cli.CliOption;
 
 public class Configuration extends BaseGenerator {
     @Override
     protected String generate() {
         return super.tableConfig() + "|===\n|Name|Description\n" +
-                Stream.of(Meecrowave.Builder.class.getDeclaredFields())
+                Stream.of(org.apache.meecrowave.configuration.Configuration.class.getDeclaredFields())
                         .filter(f -> f.isAnnotationPresent(CliOption.class))
                         .sorted(Comparator.comparing(Field::getName))
                         .map(f -> "|" + f.getName() + "|" + f.getAnnotation(CliOption.class).description())

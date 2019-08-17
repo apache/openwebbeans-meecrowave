@@ -60,7 +60,9 @@ try (final SeContainer container = SeContainerInitializer.newInstance()
         .initialize()) {
 
     // use the configuration to access extensions, custom config or even server port
-    Meecrowave.Builder config = container.select(Meecrowave.Builder.class).get();
+    Configuration config = container.select(Configuration.class).get();
+    // or
+    Meecrowave.Builder config2 = container.select(Meecrowave.Builder.class).get();
     int port = config.getHttpPort();
 
     // default wait implementation relying on tomcat one

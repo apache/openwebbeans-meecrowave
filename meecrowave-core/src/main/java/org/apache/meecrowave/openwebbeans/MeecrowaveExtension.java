@@ -70,6 +70,7 @@ public class MeecrowaveExtension implements Extension {
                 && !"org.apache.meecrowave.cxf.JAXRSFieldInjectionInterceptor".equals(name)
                 && (name.startsWith("org.apache.meecrowave.api.")
                     || name.startsWith("org.apache.meecrowave.cdi.")
+                    || name.startsWith("org.apache.meecrowave.configuration.")
                     || name.startsWith("org.apache.meecrowave.cxf.")
                     || name.startsWith("org.apache.meecrowave.io.")
                     || name.startsWith("org.apache.meecrowave.lang.")

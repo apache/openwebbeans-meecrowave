@@ -18,7 +18,7 @@
  */
 package org.apache.meecrowave.openwebbeans;
 
-import org.apache.meecrowave.Meecrowave;
+import org.apache.meecrowave.configuration.Configuration;
 import org.apache.xbean.finder.filter.Filter;
 
 import java.util.HashSet;
@@ -171,7 +171,7 @@ public class KnownClassesFilter implements Filter { // one easy and efficient so
         delegateAccept = new OptimizedExclusionFilter(included);
     }
 
-    public void init(final Meecrowave.Builder config) {
+    public void init(final Configuration config) {
         forced = buildArray(config.getScanningPackageIncludes()).orElse(forced);
         skipped = buildArray(config.getScanningPackageExcludes()).orElse(skipped);
 

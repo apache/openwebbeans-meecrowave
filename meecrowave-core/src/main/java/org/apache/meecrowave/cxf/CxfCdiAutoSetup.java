@@ -34,6 +34,7 @@ import org.apache.cxf.transport.ChainInitiationObserver;
 import org.apache.cxf.transport.http.DestinationRegistry;
 import org.apache.cxf.transport.servlet.ServletDestination;
 import org.apache.meecrowave.Meecrowave;
+import org.apache.meecrowave.configuration.Configuration;
 import org.apache.meecrowave.logging.tomcat.LogFacade;
 
 import javax.servlet.DispatcherType;
@@ -76,8 +77,8 @@ public class CxfCdiAutoSetup implements ServletContainerInitializer {
     private static final String NAME = "cxf-cdi";
 
     @Override
-    public void onStartup(final Set<Class<?>> c, final ServletContext ctx) throws ServletException {
-        final Meecrowave.Builder builder = Meecrowave.Builder.class.cast(ctx.getAttribute("meecrowave.configuration"));
+    public void onStartup(final Set<Class<?>> c, final ServletContext ctx) {
+        final Configuration builder = Configuration.class.cast(ctx.getAttribute("meecrowave.configuration"));
         final MeecrowaveCXFCdiServlet delegate = new MeecrowaveCXFCdiServlet();
         final FilterRegistration.Dynamic jaxrs = ctx.addFilter(NAME, new Filter() {
             private final String servletPath = builder.getJaxrsMapping().endsWith("/*") ?
@@ -403,7 +404,7 @@ public class CxfCdiAutoSetup implements ServletContainerInitializer {
                     resourcesToLog.clear();
 
                     // log @Providers
-                    if (Meecrowave.Builder.class.cast(sc.getServletContext().getAttribute("meecrowave.configuration")).isJaxrsLogProviders()) {
+                    if (Configuration.class.cast(sc.getServletContext().getAttribute("meecrowave.configuration")).isJaxrsLogProviders()) {
                         final ServerProviderFactory spf = ServerProviderFactory.class.cast(endpoint.get(ServerProviderFactory.class.getName()));
                         dump(log, spf, "MessageBodyReaders", "messageReaders");
                         dump(log, spf, "MessageBodyWriters", "messageWriters");

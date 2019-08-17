@@ -19,6 +19,7 @@
 package org.apache.meecrowave.openwebbeans;
 
 import org.apache.meecrowave.Meecrowave;
+import org.apache.meecrowave.configuration.Configuration;
 import org.apache.webbeans.annotation.DefaultLiteral;
 import org.apache.webbeans.config.WebBeansContext;
 import org.apache.webbeans.configurator.BeanConfiguratorImpl;
@@ -35,15 +36,14 @@ import javax.servlet.FilterRegistration;
 import javax.servlet.ServletContainerInitializer;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
-import javax.servlet.ServletException;
 import java.util.EnumSet;
 import java.util.Set;
 import java.util.function.Consumer;
 
 public class OWBAutoSetup implements ServletContainerInitializer {
     @Override
-    public void onStartup(final Set<Class<?>> c, final ServletContext ctx) throws ServletException {
-        final Meecrowave.Builder builder = Meecrowave.Builder.class.cast(ctx.getAttribute("meecrowave.configuration"));
+    public void onStartup(final Set<Class<?>> c, final ServletContext ctx) {
+        final Configuration builder = Configuration.class.cast(ctx.getAttribute("meecrowave.configuration"));
         final Meecrowave instance = Meecrowave.class.cast(ctx.getAttribute("meecrowave.instance"));
         if (builder.isCdiConversation()) {
             try {
@@ -91,7 +91,7 @@ public class OWBAutoSetup implements ServletContainerInitializer {
                     configurator.beanClass(Meecrowave.Builder.class)
                             .scope(ApplicationScoped.class)
                             .qualifiers(DefaultLiteral.INSTANCE)
-                            .types(Meecrowave.Builder.class, Object.class)
+                            .types(Configuration.class, Meecrowave.Builder.class, Object.class)
                             .createWith(cc -> meecrowave.getConfiguration())));
             beanManager.addInternalBean(newBean(instance, configurator ->
                     configurator.beanClass(Meecrowave.class)

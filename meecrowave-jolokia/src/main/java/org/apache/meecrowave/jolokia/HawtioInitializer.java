@@ -42,7 +42,6 @@ import org.apache.catalina.WebResourceRoot;
 import org.apache.catalina.realm.GenericPrincipal;
 import org.apache.catalina.webresources.JarResourceSet;
 import org.apache.commons.fileupload.servlet.FileCleanerCleanup;
-import org.apache.meecrowave.Meecrowave;
 import org.apache.meecrowave.runner.Cli;
 import org.apache.meecrowave.runner.cli.CliOption;
 
@@ -95,7 +94,8 @@ public class HawtioInitializer implements ServletContainerInitializer {
         }
 
         private static void doSetup(final ServletContext servletContext) {
-            final Meecrowave.Builder config = Meecrowave.Builder.class.cast(servletContext.getAttribute("meecrowave.configuration"));
+            final org.apache.meecrowave.configuration.Configuration config = org.apache.meecrowave.configuration.Configuration.class.cast(
+                    servletContext.getAttribute("meecrowave.configuration"));
             final HawtioConfiguration configuration = config.getExtension(HawtioConfiguration.class);
             final JolokiaInitializer.JolokiaConfiguration jolokia = config.getExtension(JolokiaInitializer.JolokiaConfiguration.class);
             if (!configuration.isActive()) {

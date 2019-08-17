@@ -20,6 +20,7 @@ package org.apache.meecrowave;
 
 import org.apache.catalina.Context;
 import org.apache.cxf.helpers.FileUtils;
+import org.apache.meecrowave.configuration.Configuration;
 import org.apache.meecrowave.io.IO;
 import org.apache.meecrowave.runner.cli.CliOption;
 import org.junit.Test;
@@ -52,6 +53,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+
+import javax.enterprise.inject.spi.CDI;
 
 public class MeecrowaveTest {
     @Test
@@ -168,11 +171,20 @@ public class MeecrowaveTest {
     @Test
     public void classpath() {
         try (final Meecrowave meecrowave = new Meecrowave(new Meecrowave.Builder().randomHttpPort().includePackages("org.superbiz.app")).bake()) {
-            assertEquals("simplefalse", slurp(new URL("http://localhost:" + meecrowave.getConfiguration().getHttpPort() + "/api/test")));
-            assertEquals("simplefiltertrue", slurp(new URL("http://localhost:" + meecrowave.getConfiguration().getHttpPort() + "/filter")));
-            assertEquals(
-                    "sci:" + Bounced.class.getName() + Endpoint.class.getName() + InterfaceApi.class.getName() + RsApp.class.getName() + TestJsonEndpoint.class.getName(),
-                    slurp(new URL("http://localhost:" + meecrowave.getConfiguration().getHttpPort() + "/sci")));
+            assertClasspath(meecrowave);
+        } catch (final IOException e) {
+            fail(e.getMessage());
+        }
+    }
+
+    @Test
+    public void classpathUsingConfigurationAndNotBuilder() {
+        final Meecrowave.Builder randomPortHolder = new Meecrowave.Builder().randomHttpPort();
+        final Configuration configuration = new Configuration();
+        configuration.setHttpPort(randomPortHolder.getHttpPort());
+        configuration.setScanningPackageIncludes("org.superbiz.app");
+        try (final Meecrowave meecrowave = new Meecrowave(new Configuration()).bake()) {
+            assertClasspath(meecrowave);
         } catch (final IOException e) {
             fail(e.getMessage());
         }
@@ -185,6 +197,15 @@ public class MeecrowaveTest {
         } catch (final IOException e) {
             fail(e.getMessage());
         }
+    }
+
+    private void assertClasspath(final Meecrowave meecrowave) throws MalformedURLException {
+        assertEquals(CDI.current().select(Configuration.class).get(), meecrowave.getConfiguration()); // not symmetric cause of proxy!
+        assertEquals("simplefalse", slurp(new URL("http://localhost:" + meecrowave.getConfiguration().getHttpPort() + "/api/test")));
+        assertEquals("simplefiltertrue", slurp(new URL("http://localhost:" + meecrowave.getConfiguration().getHttpPort() + "/filter")));
+        assertEquals(
+                "sci:" + Bounced.class.getName() + Endpoint.class.getName() + InterfaceApi.class.getName() + RsApp.class.getName() + TestJsonEndpoint.class.getName(),
+                slurp(new URL("http://localhost:" + meecrowave.getConfiguration().getHttpPort() + "/sci")));
     }
 
     private String slurp(final URL url) {

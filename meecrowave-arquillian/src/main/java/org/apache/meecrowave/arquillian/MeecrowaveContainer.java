@@ -18,11 +18,15 @@
  */
 package org.apache.meecrowave.arquillian;
 
+import static java.util.Optional.ofNullable;
+
+import java.io.File;
+
 import org.apache.meecrowave.Meecrowave;
+import org.apache.meecrowave.configuration.Configuration;
 import org.apache.meecrowave.io.IO;
 import org.jboss.arquillian.container.spi.client.container.DeployableContainer;
 import org.jboss.arquillian.container.spi.client.container.DeploymentException;
-import org.jboss.arquillian.container.spi.client.container.LifecycleException;
 import org.jboss.arquillian.container.spi.client.protocol.ProtocolDescription;
 import org.jboss.arquillian.container.spi.client.protocol.metadata.HTTPContext;
 import org.jboss.arquillian.container.spi.client.protocol.metadata.ProtocolMetaData;
@@ -31,12 +35,8 @@ import org.jboss.shrinkwrap.api.Archive;
 import org.jboss.shrinkwrap.api.exporter.ZipExporter;
 import org.jboss.shrinkwrap.descriptor.api.Descriptor;
 
-import java.io.File;
-
-import static java.util.Optional.ofNullable;
-
 public class MeecrowaveContainer implements DeployableContainer<MeecrowaveConfiguration> {
-    private Meecrowave.Builder configuration;
+    private Configuration configuration;
     private Meecrowave container;
     private ProtocolDescription defaultProtocol;
 
@@ -52,13 +52,13 @@ public class MeecrowaveContainer implements DeployableContainer<MeecrowaveConfig
     }
 
     @Override
-    public void start() throws LifecycleException {
+    public void start() {
         this.container = new Meecrowave(this.configuration);
         this.container.start();
     }
 
     @Override
-    public void stop() throws LifecycleException {
+    public void stop() {
         ofNullable(this.container).ifPresent(Meecrowave::close);
     }
 

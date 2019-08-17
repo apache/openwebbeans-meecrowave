@@ -25,7 +25,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.stream.Stream;
 
-import org.apache.meecrowave.Meecrowave;
+import org.apache.meecrowave.configuration.Configuration;
 import org.apache.tomcat.JarScanFilter;
 import org.apache.tomcat.JarScanType;
 
@@ -362,7 +362,7 @@ public class KnownJarsFilter implements JarScanFilter {
         // no-op
     }
 
-    KnownJarsFilter(final Meecrowave.Builder config) {
+    KnownJarsFilter(final Configuration config) {
         ofNullable(config.getScanningIncludes()).ifPresent(i -> {
             forceIncludes.clear();
             forceIncludes.addAll(Stream.of(i.split(",")).map(String::trim).filter(j -> !j.isEmpty()).collect(toSet()));

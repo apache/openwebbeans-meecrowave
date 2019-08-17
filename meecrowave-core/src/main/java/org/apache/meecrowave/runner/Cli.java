@@ -27,6 +27,7 @@ import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.ParseException;
 import org.apache.meecrowave.Meecrowave;
+import org.apache.meecrowave.configuration.Configuration;
 import org.apache.meecrowave.runner.cli.CliOption;
 import org.apache.xbean.recipe.ObjectRecipe;
 
@@ -291,7 +292,7 @@ public class Cli implements Runnable, AutoCloseable {
             options.addOption(null, "context", true, "The context to use to deploy the webapp");
             options.addOption(null, "webapp", true, "Location of the webapp, if not set the classpath will be deployed");
             options.addOption(null, "docbase", true, "Location of the docbase for a classpath deployment");
-            final List<Field> fields = Stream.of(Meecrowave.Builder.class.getDeclaredFields())
+            final List<Field> fields = Stream.of(Configuration.class.getDeclaredFields())
                     .filter(f -> f.isAnnotationPresent(CliOption.class))
                     .collect(toList());
             final Map<Object, List<Field>> propertiesOptions = StreamSupport.stream(ServiceLoader.load(Options.class).spliterator(), false)

@@ -26,8 +26,6 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.annotation.Annotation;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -49,9 +47,8 @@ import org.apache.catalina.Lifecycle;
 import org.apache.catalina.LifecycleEvent;
 import org.apache.catalina.startup.ContextConfig;
 import org.apache.catalina.startup.WebappServiceLoader;
-import org.apache.juli.logging.Log;
-import org.apache.juli.logging.LogFactory;
 import org.apache.meecrowave.Meecrowave;
+import org.apache.meecrowave.configuration.Configuration;
 import org.apache.meecrowave.logging.tomcat.LogFacade;
 import org.apache.meecrowave.openwebbeans.OWBTomcatWebScannerService;
 import org.apache.meecrowave.watching.ReloadOnChangeController;
@@ -64,18 +61,16 @@ import org.apache.webbeans.corespi.scanner.xbean.OwbAnnotationFinder;
 import org.xml.sax.InputSource;
 
 public class MeecrowaveContextConfig extends ContextConfig {
-    private static final Log LOG = LogFactory.getLog(ContextConfig.class);
-
     private static final byte[] DEFAULT_WEB_XML = "<web-app version=\"3.1\" />".getBytes(StandardCharsets.UTF_8);
 
-    private final Meecrowave.Builder configuration;
+    private final Configuration configuration;
     private final Map<String, Collection<Class<?>>> webClasses = new HashMap<>();
     private final boolean fixDocBase;
     private final ServletContainerInitializer intializer;
     private OwbAnnotationFinder finder;
     private ReloadOnChangeController watcher;
 
-    public MeecrowaveContextConfig(final Meecrowave.Builder configuration, final boolean fixDocBase, final ServletContainerInitializer intializer) {
+    public MeecrowaveContextConfig(final Configuration configuration, final boolean fixDocBase, final ServletContainerInitializer intializer) {
         this.configuration = configuration;
         this.fixDocBase = fixDocBase;
         this.intializer= intializer;
@@ -92,7 +87,8 @@ public class MeecrowaveContextConfig extends ContextConfig {
     @Override
     protected void webConfig() {
         if (context.getServletContext().getAttribute("meecrowave.configuration") == null) { // redeploy
-            context.getServletContext().setAttribute("meecrowave.configuration", configuration);
+            context.getServletContext().setAttribute("meecrowave.configuration",
+                    Meecrowave.Builder.class.isInstance(configuration) ? configuration : new Meecrowave.Builder(configuration));
             context.addServletContainerInitializer(intializer, emptySet());
         }
 
@@ -211,29 +207,5 @@ public class MeecrowaveContextConfig extends ContextConfig {
         } catch (final IOException e) {
             ok = false;
         }
-    }
-
-    private Object invokePrivate(final String mtdName, final Class<?> paramType, final Object param) {
-        try {
-            final Method declaredMethod = ContextConfig.class.getDeclaredMethod(mtdName, paramType);
-            if (!declaredMethod.isAccessible()) {
-                declaredMethod.setAccessible(true);
-            }
-            return declaredMethod.invoke(this, param);
-        } catch (final InvocationTargetException ite) {
-            return rethrow(ite.getTargetException());
-        } catch (final Exception ex) {
-            return rethrow(ex);
-        }
-    }
-
-    private Object rethrow(final Throwable ex) {
-        if (RuntimeException.class.isInstance(ex)) {
-            throw RuntimeException.class.cast(ex);
-        }
-        if (Error.class.isInstance(ex)) {
-            throw Error.class.cast(ex);
-        }
-        throw new IllegalStateException(ex);
     }
 }

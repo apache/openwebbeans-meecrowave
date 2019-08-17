@@ -59,6 +59,7 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 import org.apache.meecrowave.Meecrowave;
+import org.apache.meecrowave.configuration.Configuration;
 import org.apache.meecrowave.tomcat.ProvidedLoader;
 
 @Mojo(name = "run", requiresDependencyResolution = RUNTIME_PLUS_SYSTEM)
@@ -345,7 +346,7 @@ public class MeecrowaveRunMojo extends AbstractMojo {
         final Supplier<ClassLoader> appLoaderSupplier = createClassLoader(loader);
         thread.setContextClassLoader(appLoaderSupplier.get());
         try {
-            final Meecrowave.Builder builder = getConfig();
+            final Configuration builder = getConfig();
             try (final Meecrowave meecrowave = new Meecrowave(builder) {
                 @Override
                 protected void beforeStart() {
@@ -495,14 +496,14 @@ public class MeecrowaveRunMojo extends AbstractMojo {
         };
     }
 
-    private Meecrowave.Builder getConfig() {
-        final Meecrowave.Builder config = new Meecrowave.Builder();
+    private Configuration getConfig() {
+        final Configuration config = new Configuration();
         for (final Field field : MeecrowaveRunMojo.class.getDeclaredFields()) {
             if ("properties".equals(field.getName())) {
                 continue;
             }
             try {
-                final Field configField = Meecrowave.Builder.class.getDeclaredField(field.getName());
+                final Field configField = Configuration.class.getDeclaredField(field.getName());
                 field.setAccessible(true);
                 configField.setAccessible(true);
 

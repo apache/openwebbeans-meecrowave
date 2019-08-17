@@ -123,7 +123,8 @@ public class CliTest {
         @Override
         public void onStartup(final Set<Class<?>> set, final ServletContext servletContext) throws ServletException {
             OPTS_SET.set("val".equals(
-                    Meecrowave.Builder.class.cast(servletContext.getAttribute("meecrowave.configuration")).getExtension(MyOpts.class).opt));
+                    Meecrowave.Builder.class.cast(servletContext.getAttribute("meecrowave.configuration"))
+                            .getExtension(MyOpts.class).opt));
         }
     }
 }

@@ -18,7 +18,7 @@
  */
 package org.apache.meecrowave.cxf;
 
-import org.apache.meecrowave.Meecrowave;
+import org.apache.meecrowave.configuration.Configuration;
 import org.apache.meecrowave.logging.tomcat.LogFacade;
 import org.apache.webbeans.component.OwbBean;
 
@@ -82,7 +82,7 @@ public class JAXWSCdiExtension implements Extension {
 
         public void load(@Observes final AfterDeploymentValidation afterDeploymentValidation, final BeanManager beanManager) {
             if (!active || serviceBeans.isEmpty() ||
-                    !Meecrowave.Builder.class.cast(beanManager.getReference(beanManager.resolve(beanManager.getBeans(Meecrowave.Builder.class)), Meecrowave.Builder.class, null))
+                    !Configuration.class.cast(beanManager.getReference(beanManager.resolve(beanManager.getBeans(Configuration.class)), Configuration.class, null))
                                              .isJaxwsSupportIfAvailable()) {
                 return;
             }

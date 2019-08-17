@@ -19,7 +19,6 @@
 package org.apache.meecrowave;
 
 import static java.util.Collections.emptyList;
-import static java.util.Collections.emptyMap;
 import static java.util.Collections.emptySet;
 import static java.util.Comparator.comparing;
 import static java.util.Locale.ROOT;
@@ -50,9 +49,7 @@ import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -68,7 +65,6 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-import javax.annotation.Priority;
 import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
 import javax.enterprise.context.spi.CreationalContext;
@@ -101,6 +97,7 @@ import org.apache.catalina.util.StandardSessionIdGenerator;
 import org.apache.coyote.http2.Http2Protocol;
 import org.apache.meecrowave.api.StartListening;
 import org.apache.meecrowave.api.StopListening;
+import org.apache.meecrowave.configuration.Configuration;
 import org.apache.meecrowave.cxf.ConfigurableBus;
 import org.apache.meecrowave.cxf.CxfCdiAutoSetup;
 import org.apache.meecrowave.cxf.Cxfs;
@@ -113,7 +110,7 @@ import org.apache.meecrowave.logging.openwebbeans.Log4j2LoggerFactory;
 import org.apache.meecrowave.logging.tomcat.Log4j2Log;
 import org.apache.meecrowave.logging.tomcat.LogFacade;
 import org.apache.meecrowave.openwebbeans.OWBAutoSetup;
-import org.apache.meecrowave.runner.cli.CliOption;
+import org.apache.meecrowave.service.Priotities;
 import org.apache.meecrowave.service.ValueTransformer;
 import org.apache.meecrowave.tomcat.CDIInstanceManager;
 import org.apache.meecrowave.tomcat.LoggingAccessLogPattern;
@@ -127,7 +124,6 @@ import org.apache.tomcat.util.descriptor.web.SecurityCollection;
 import org.apache.tomcat.util.descriptor.web.SecurityConstraint;
 import org.apache.tomcat.util.modeler.Registry;
 import org.apache.tomcat.util.net.SSLHostConfig;
-import org.apache.webbeans.config.PropertyLoader;
 import org.apache.webbeans.config.WebBeansContext;
 import org.apache.xbean.finder.ResourceFinder;
 import org.apache.xbean.recipe.ObjectRecipe;
@@ -137,7 +133,7 @@ import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
 public class Meecrowave implements AutoCloseable {
-    private final Builder configuration;
+    private final Configuration configuration;
     protected ConfigurableBus clientBus;
     protected File base;
     protected final File ownedTempDir;
@@ -155,13 +151,15 @@ public class Meecrowave implements AutoCloseable {
         this(new Builder());
     }
 
-    public Meecrowave(final Builder builder) {
-        this.configuration = builder;
-        this.ownedTempDir = new File(configuration.tempDir, "meecrowave_" + System.nanoTime());
+    public Meecrowave(final Configuration configuration) {
+        this.configuration = configuration;
+        this.ownedTempDir = new File(this.configuration.getTempDir(), "meecrowave_" + System.nanoTime());
     }
 
     public Builder getConfiguration() {
-        return configuration;
+        return Builder.class.isInstance(configuration) ?
+                Builder.class.cast(configuration) :
+                new Builder(configuration);
     }
 
     public File getBase() {
@@ -266,7 +264,7 @@ public class Meecrowave implements AutoCloseable {
                 ctx.setDocBase(meta.docBase.getAbsolutePath());
             }
         });
-        ofNullable(configuration.tomcatFilter).ifPresent(filter -> {
+        ofNullable(configuration.getTomcatFilter()).ifPresent(filter -> {
             try {
                 scanner.setJarScanFilter(JarScanFilter.class.cast(Thread.currentThread().getContextClassLoader().loadClass(filter).newInstance()));
             } catch (final ClassNotFoundException | InstantiationException | IllegalAccessException e) {
@@ -276,7 +274,7 @@ public class Meecrowave implements AutoCloseable {
 
         final AtomicReference<Runnable> releaseSCI = new AtomicReference<>();
         final ServletContainerInitializer meecrowaveInitializer = (c, ctx1) -> {
-            ctx1.setAttribute("meecrowave.configuration", configuration);
+            ctx1.setAttribute("meecrowave.configuration", getConfiguration());
             ctx1.setAttribute("meecrowave.instance", Meecrowave.this);
 
             new OWBAutoSetup().onStartup(c, ctx1);
@@ -355,17 +353,17 @@ public class Meecrowave implements AutoCloseable {
                     }
                     break;
                 case Lifecycle.AFTER_START_EVENT:
-                    ctx.getResources().setCachingAllowed(configuration.webResourceCached);
+                    ctx.getResources().setCachingAllowed(configuration.isWebResourceCached());
                     break;
                 case Lifecycle.BEFORE_INIT_EVENT:
-                    if (configuration.loginConfig != null) {
-                        ctx.setLoginConfig(configuration.loginConfig.build());
+                    if (configuration.getLoginConfig() != null) {
+                        ctx.setLoginConfig(configuration.getLoginConfig().build());
                     }
-                    for (final SecurityConstaintBuilder sc : configuration.securityConstraints) {
+                    for (final SecurityConstaintBuilder sc : configuration.getSecurityConstraints()) {
                         ctx.addConstraint(sc.build());
                     }
-                    if (configuration.webXml != null) {
-                        ctx.getServletContext().setAttribute(Globals.ALT_DD_ATTR, configuration.webXml);
+                    if (configuration.getWebXml() != null) {
+                        ctx.getServletContext().setAttribute(Globals.ALT_DD_ATTR, configuration.getWebXml());
                     }
                     break;
                 default:
@@ -412,7 +410,7 @@ public class Meecrowave implements AutoCloseable {
             });
             ctx.setManager(manager);
         }
-        if (configuration.antiResourceLocking && StandardContext.class.isInstance(ctx)) {
+        if (configuration.isAntiResourceLocking() && StandardContext.class.isInstance(ctx)) {
             StandardContext.class.cast(ctx).setAntiResourceLocking(true);
         }
         configuration.getInitializers().forEach(i -> ctx.addServletContainerInitializer(i, emptySet()));
@@ -455,7 +453,7 @@ public class Meecrowave implements AutoCloseable {
             System.setProperty("java.util.logging.manager", "org.apache.logging.log4j.jul.LogManager");
         }
 
-        if (configuration.loggingGlobalSetup && Log4j2s.IS_PRESENT) {
+        if (configuration.isLoggingGlobalSetup() && Log4j2s.IS_PRESENT) {
 
             setSystemProperty(systemPropsToRestore, "log4j.shutdownHookEnabled", "false");
             setSystemProperty(systemPropsToRestore, "openwebbeans.logging.factory", Log4j2LoggerFactory.class.getName());
@@ -503,19 +501,19 @@ public class Meecrowave implements AutoCloseable {
                 workDir = createDirectory(tempDir, "work");
             }
 
-            synchronize(new File(base, "conf"), configuration.conf);
+            synchronize(new File(base, "conf"), configuration.getConf());
         }
 
-        final Properties props = configuration.properties;
+        final Properties props = configuration.getProperties();
         Substitutor substitutor = null;
         for (final String s : props.stringPropertyNames()) {
             final String v = props.getProperty(s);
             if (v != null && v.contains("${")) {
                 if (substitutor == null) {
                     final Map<String, String> placeHolders = new HashMap<>();
-                    placeHolders.put("meecrowave.embedded.http", Integer.toString(configuration.httpPort));
-                    placeHolders.put("meecrowave.embedded.https", Integer.toString(configuration.httpsPort));
-                    placeHolders.put("meecrowave.embedded.stop", Integer.toString(configuration.stopPort));
+                    placeHolders.put("meecrowave.embedded.http", Integer.toString(configuration.getHttpPort()));
+                    placeHolders.put("meecrowave.embedded.https", Integer.toString(configuration.getHttpsPort()));
+                    placeHolders.put("meecrowave.embedded.stop", Integer.toString(configuration.getStopPort()));
                     substitutor = new Substitutor(placeHolders);
                 }
                 props.put(s, substitutor.replace(v));
@@ -525,13 +523,13 @@ public class Meecrowave implements AutoCloseable {
         final File conf = new File(base, "conf");
 
         tomcat.setBaseDir(base.getAbsolutePath());
-        tomcat.setHostname(configuration.host);
+        tomcat.setHostname(configuration.getHost());
 
         final boolean initialized;
-        if (configuration.serverXml != null) {
+        if (configuration.getServerXml() != null) {
             final File file = new File(conf, "server.xml");
-            if (!file.equals(configuration.serverXml)) {
-                try (final InputStream is = new FileInputStream(configuration.serverXml);
+            if (!file.equals(configuration.getServerXml())) {
+                try (final InputStream is = new FileInputStream(configuration.getServerXml());
                      final FileOutputStream fos = new FileOutputStream(file)) {
                     IO.copy(is, fos);
                 } catch (final IOException e) {
@@ -541,14 +539,14 @@ public class Meecrowave implements AutoCloseable {
 
             // respect config (host/port) of the Configuration
             final QuickServerXmlParser ports = QuickServerXmlParser.parse(file);
-            if (configuration.keepServerXmlAsThis) {
-                configuration.httpPort = Integer.parseInt(ports.http());
-                configuration.stopPort = Integer.parseInt(ports.stop());
+            if (configuration.isKeepServerXmlAsThis()) {
+                configuration.setHttpPort(Integer.parseInt(ports.http()));
+                configuration.setStopPort(Integer.parseInt(ports.stop()));
             } else {
                 final Map<String, String> replacements = new HashMap<>();
-                replacements.put(ports.http(), String.valueOf(configuration.httpPort));
-                replacements.put(ports.https(), String.valueOf(configuration.httpsPort));
-                replacements.put(ports.stop(), String.valueOf(configuration.stopPort));
+                replacements.put(ports.http(), String.valueOf(configuration.getHttpPort()));
+                replacements.put(ports.https(), String.valueOf(configuration.getHttpsPort()));
+                replacements.put(ports.stop(), String.valueOf(configuration.getStopPort()));
 
                 String serverXmlContent;
                 try (final InputStream stream = new FileInputStream(file)) {
@@ -569,7 +567,7 @@ public class Meecrowave implements AutoCloseable {
             tomcat.server(createServer(file.getAbsolutePath()));
             initialized = true;
         } else {
-            tomcat.getServer().setPort(configuration.stopPort);
+            tomcat.getServer().setPort(configuration.getStopPort());
             initialized = false;
         }
 
@@ -593,10 +591,10 @@ public class Meecrowave implements AutoCloseable {
         });
 
         if (!initialized) {
-            tomcat.setHostname(configuration.host);
-            tomcat.getEngine().setDefaultHost(configuration.host);
+            tomcat.setHostname(configuration.getHost());
+            tomcat.getEngine().setDefaultHost(configuration.getHost());
             final StandardHost host = new StandardHost();
-            host.setName(configuration.host);
+            host.setName(configuration.getHost());
 
             try {
                 final File webapps = createDirectory(base, "webapps");
@@ -623,13 +621,13 @@ public class Meecrowave implements AutoCloseable {
             valves.forEach(pipeline::addValve);
         }
 
-        if (configuration.realm != null) {
-            tomcat.getEngine().setRealm(configuration.realm);
+        if (configuration.getRealm() != null) {
+            tomcat.getEngine().setRealm(configuration.getRealm());
         }
 
-        if (tomcat.getRawConnector() == null && !configuration.skipHttp) {
+        if (tomcat.getRawConnector() == null && !configuration.isSkipHttp()) {
             final Connector connector = createConnector();
-            connector.setPort(configuration.httpPort);
+            connector.setPort(configuration.getHttpPort());
             if (connector.getAttribute("connectionTimeout") == null) {
                 connector.setAttribute("connectionTimeout", "3000");
             }
@@ -639,33 +637,33 @@ public class Meecrowave implements AutoCloseable {
         }
 
         // create https connector
-        if (configuration.ssl) {
+        if (configuration.isSsl()) {
             final Connector httpsConnector = createConnector();
-            httpsConnector.setPort(configuration.httpsPort);
+            httpsConnector.setPort(configuration.getHttpsPort());
             httpsConnector.setSecure(true);
             httpsConnector.setScheme("https");
             httpsConnector.setProperty("SSLEnabled", "true");
-            if (configuration.sslProtocol != null) {
-                configuration.property("connector.sslhostconfig.sslProtocol", configuration.sslProtocol);
+            if (configuration.getSslProtocol() != null) {
+                configuration.getProperties().setProperty("connector.sslhostconfig.sslProtocol", configuration.getSslProtocol());
             }
-            if (configuration.properties.getProperty("connector.sslhostconfig.hostName") != null) {
-                httpsConnector.setAttribute("defaultSSLHostConfigName", configuration.properties.getProperty("connector.sslhostconfig.hostName"));
+            if (configuration.getProperties().getProperty("connector.sslhostconfig.hostName") != null) {
+                httpsConnector.setAttribute("defaultSSLHostConfigName", configuration.getProperties().getProperty("connector.sslhostconfig.hostName"));
             }
-            if (configuration.keystoreFile != null) {
-                configuration.property("connector.sslhostconfig.certificateKeystoreFile", configuration.keystoreFile);
+            if (configuration.getKeystoreFile() != null) {
+                configuration.getProperties().setProperty("connector.sslhostconfig.certificateKeystoreFile", configuration.getKeystoreFile());
             }
-            if (configuration.keystorePass != null) {
-                configuration.property("connector.sslhostconfig.certificateKeystorePassword", configuration.keystorePass);
+            if (configuration.getKeystorePass() != null) {
+                configuration.getProperties().setProperty("connector.sslhostconfig.certificateKeystorePassword", configuration.getKeystorePass());
             }
-            configuration.property("connector.sslhostconfig.certificateKeystoreType", configuration.keystoreType);
-            if (configuration.clientAuth != null) {
-                httpsConnector.setAttribute("clientAuth", configuration.clientAuth);
+            configuration.getProperties().setProperty("connector.sslhostconfig.certificateKeystoreType", configuration.getKeystoreType());
+            if (configuration.getClientAuth() != null) {
+                httpsConnector.setAttribute("clientAuth", configuration.getClientAuth());
             }
 
-            if (configuration.keyAlias != null) {
-                configuration.property("connector.sslhostconfig.certificateKeyAlias", configuration.keyAlias);
+            if (configuration.getKeyAlias() != null) {
+                configuration.getProperties().setProperty("connector.sslhostconfig.certificateKeyAlias", configuration.getKeyAlias());
             }
-            if (configuration.http2) {
+            if (configuration.isHttp2()) {
                 httpsConnector.addUpgradeProtocol(new Http2Protocol());
             }
             final List<SSLHostConfig> buildSslHostConfig = buildSslHostConfig();
@@ -695,29 +693,29 @@ public class Meecrowave implements AutoCloseable {
 
             buildSslHostConfig.forEach(httpsConnector::addSslHostConfig);
 
-            if (configuration.defaultSSLHostConfigName != null) {
-                httpsConnector.setAttribute("defaultSSLHostConfigName", configuration.defaultSSLHostConfigName);
+            if (configuration.getDefaultSSLHostConfigName() != null) {
+                httpsConnector.setAttribute("defaultSSLHostConfigName", configuration.getDefaultSSLHostConfigName());
             }
             tomcat.getService().addConnector(httpsConnector);
-            if (configuration.skipHttp) {
+            if (configuration.isSkipHttp()) {
                 tomcat.setConnector(httpsConnector);
             }
         }
 
-        for (final Connector c : configuration.connectors) {
+        for (final Connector c : configuration.getConnectors()) {
             tomcat.getService().addConnector(c);
         }
-        if (!configuration.skipHttp && !configuration.ssl && !configuration.connectors.isEmpty()) {
-            tomcat.setConnector(configuration.connectors.iterator().next());
+        if (!configuration.isSkipHttp() && !configuration.isSsl() && !configuration.getConnectors().isEmpty()) {
+            tomcat.setConnector(configuration.getConnectors().iterator().next());
         }
 
-        if (configuration.users != null) {
-            for (final Map.Entry<String, String> user : configuration.users.entrySet()) {
+        if (configuration.getUsers() != null) {
+            for (final Map.Entry<String, String> user : configuration.getUsers().entrySet()) {
                 tomcat.addUser(user.getKey(), user.getValue());
             }
         }
-        if (configuration.roles != null) {
-            for (final Map.Entry<String, String> user : configuration.roles.entrySet()) {
+        if (configuration.getRoles() != null) {
+            for (final Map.Entry<String, String> user : configuration.getRoles().entrySet()) {
                 for (final String role : user.getValue().split(" *, *")) {
                     tomcat.addRole(user.getKey(), role);
                 }
@@ -730,9 +728,9 @@ public class Meecrowave implements AutoCloseable {
                         MeecrowaveAwareInstanceCustomizer.class.cast(i).setMeecrowave(this);
                     }
                 })
-                .sorted(Meecrowave::sortByPriority)
+                .sorted(Priotities::sortByPriority)
                 .forEach(c -> c.accept(tomcat));
-        configuration.instanceCustomizers.forEach(c -> c.accept(tomcat));
+        configuration.getInstanceCustomizers().forEach(c -> c.accept(tomcat));
 
         StreamSupport.stream(ServiceLoader.load(Meecrowave.ContextCustomizer.class).spliterator(), false)
                 .peek(i -> {
@@ -740,13 +738,13 @@ public class Meecrowave implements AutoCloseable {
                         MeecrowaveAwareContextCustomizer.class.cast(i).setMeecrowave(this);
                     }
                 })
-                .sorted(Meecrowave::sortByPriority)
+                .sorted(Priotities::sortByPriority)
                 .forEach(configuration::addGlobalContextCustomizer);
 
         beforeStart();
 
 
-        if (configuration.initializeClientBus && Cxfs.IS_PRESENT && !Cxfs.hasDefaultBus()) {
+        if (configuration.isInitializeClientBus() && Cxfs.IS_PRESENT && !Cxfs.hasDefaultBus()) {
             clientBus = new ConfigurableBus();
             clientBus.initProviders(configuration,
                     ofNullable(Thread.currentThread().getContextClassLoader()).orElseGet(ClassLoader::getSystemClassLoader));
@@ -905,19 +903,19 @@ public class Meecrowave implements AutoCloseable {
      */
     private List<Valve> buildValves() {
         final List<Valve> valves = new ArrayList<>();
-        configuration.properties.stringPropertyNames().stream()
+        configuration.getProperties().stringPropertyNames().stream()
                                 .filter(key -> key.startsWith("valves.") && key.endsWith("._className"))
-                                .sorted(comparing(key -> Integer.parseInt(configuration.properties
+                                .sorted(comparing(key -> Integer.parseInt(configuration.getProperties()
                                         .getProperty(key.replaceFirst("\\._className$", "._order"), "0"))))
                                 .map(key -> key.split("\\."))
                                 .filter(parts -> parts.length == 3)
                                 .forEach(key -> {
             final String prefix = key[0] + '.' + key[1] + '.';
-            final ObjectRecipe recipe = newRecipe(configuration.properties.getProperty(prefix + key[2]));
-            configuration.properties.stringPropertyNames().stream()
+            final ObjectRecipe recipe = newRecipe(configuration.getProperties().getProperty(prefix + key[2]));
+            configuration.getProperties().stringPropertyNames().stream()
                     .filter(it -> it.startsWith(prefix) && !it.endsWith("._order") && !it.endsWith("._className"))
                     .forEach(propKey -> {
-                        final String value = configuration.properties.getProperty(propKey);
+                        final String value = configuration.getProperties().getProperty(propKey);
                         recipe.setProperty(propKey.substring(prefix.length()), value);
                     });
             valves.add(Valve.class.cast(recipe.create(Thread.currentThread().getContextClassLoader())));
@@ -929,17 +927,17 @@ public class Meecrowave implements AutoCloseable {
         final List<SSLHostConfig> sslHostConfigs = new ArrayList<>();
         // Configures default SSLHostConfig
         final ObjectRecipe defaultSslHostConfig = newRecipe(SSLHostConfig.class.getName());
-        for (final String key : configuration.properties.stringPropertyNames()) {
+        for (final String key : configuration.getProperties().stringPropertyNames()) {
             if (key.startsWith("connector.sslhostconfig.") && key.split("\\.").length == 3) {
                 final String substring = key.substring("connector.sslhostconfig.".length());
-                defaultSslHostConfig.setProperty(substring, configuration.properties.getProperty(key));
+                defaultSslHostConfig.setProperty(substring, configuration.getProperties().getProperty(key));
             }
         }
         if (!defaultSslHostConfig.getProperties().isEmpty()) {
             sslHostConfigs.add(SSLHostConfig.class.cast(defaultSslHostConfig.create()));
         }
         // Allows to add N Multiple SSLHostConfig elements not including the default one.
-        final Collection<Integer> itemNumbers = configuration.properties.stringPropertyNames()
+        final Collection<Integer> itemNumbers = configuration.getProperties().stringPropertyNames()
                                 .stream()
                                 .filter(key -> (key.startsWith("connector.sslhostconfig.") && key.split("\\.").length == 4))
                                 .map(key -> Integer.parseInt(key.split("\\.")[2]))
@@ -947,11 +945,11 @@ public class Meecrowave implements AutoCloseable {
         itemNumbers.stream().sorted().forEach(itemNumber -> {
             final ObjectRecipe recipe = newRecipe(SSLHostConfig.class.getName());
             final String prefix = "connector.sslhostconfig." + itemNumber + '.';
-            configuration.properties.stringPropertyNames().stream()
+            configuration.getProperties().stringPropertyNames().stream()
                                     .filter(k -> k.startsWith(prefix))
                                     .forEach(key -> {
                                         final String keyName = key.split("\\.")[3];
-                                        recipe.setProperty(keyName, configuration.properties.getProperty(key));
+                                        recipe.setProperty(keyName, configuration.getProperties().getProperty(key));
                                     });
             if (!recipe.getProperties().isEmpty()) {
                 final SSLHostConfig sslHostConfig = SSLHostConfig.class.cast(recipe.create());
@@ -1039,7 +1037,7 @@ public class Meecrowave implements AutoCloseable {
 
     protected Connector createConnector() {
         final Connector connector;
-        final Properties properties = configuration.properties;
+        final Properties properties = configuration.getProperties();
         if (properties != null) {
             final Map<String, String> attributes = new HashMap<>();
             final ObjectRecipe recipe = newRecipe(Connector.class.getName());
@@ -1125,11 +1123,11 @@ public class Meecrowave implements AutoCloseable {
 
     private String newBaseDir() {
         deleteBase = false;
-        String dir = configuration.dir;
+        String dir = configuration.getDir();
         if (dir != null) {
             final File dirFile = new File(dir);
             if (dirFile.exists()) {
-                if (base != null && base.exists() && configuration.deleteBaseOnStartup) {
+                if (base != null && base.exists() && configuration.isDeleteBaseOnStartup()) {
                     IO.delete(base);
                 }
                 return dir;
@@ -1167,389 +1165,27 @@ public class Meecrowave implements AutoCloseable {
         return recipe;
     }
 
-    private static int priorityOf(final Object i) {
-        return ofNullable(i.getClass().getAnnotation(Priority.class))
-                .map(Priority::value)
-                .orElse(0);
-    }
-
-    private static <T> int sortByPriority(final T a, final T b) {
-        return priorityOf(a) - priorityOf(b);
-    }
-
     // this class holds all the built-in config,
     // extension can use extensions feature (see cli.html) which is basically the same kind of bean
     // accessible through builder.getExtension(type) builder being accessible through the meecrowave.configuration
     // attribute of the ServletContext.
-    public static class Builder {
-        @CliOption(name = "pid-file", description = "A file path to write the process id if the server starts")
-        private File pidFile;
-
-        @CliOption(name = "watcher-bouncing", description = "Activate redeployment on directories update using this bouncing.")
-        private int watcherBouncing = 500;
-
-        @CliOption(name = "http", description = "HTTP port")
-        private int httpPort = 8080;
-
-        @CliOption(name = "https", description = "HTTPS port")
-        private int httpsPort = 8443;
-
-        @CliOption(name = "stop", description = "Shutdown port if used or -1")
-        private int stopPort = -1;
-
-        @CliOption(name = "host", description = "Default host")
-        private String host = "localhost";
-
-        @CliOption(name = "dir", description = "Root folder if provided otherwise a fake one is created in tmp-dir")
-        private String dir;
-
-        @CliOption(name = "server-xml", description = "Provided server.xml")
-        private File serverXml;
-
-        @CliOption(name = "keep-server-xml-as-this", description = "Don't replace ports in server.xml")
-        private boolean keepServerXmlAsThis;
-
-        @CliOption(name = "properties", description = "Passthrough properties")
-        private Properties properties = new Properties();
-
-        @CliOption(name = "quick-session", description = "Should an unsecured but fast session id generator be used")
-        private boolean quickSession = true;
-
-        @CliOption(name = "skip-http", description = "Skip HTTP connector")
-        private boolean skipHttp;
-
-        @CliOption(name = "ssl", description = "Use HTTPS")
-        private boolean ssl;
-
-        @CliOption(name = "keystore-file", description = "HTTPS keystore location")
-        private String keystoreFile;
-
-        @CliOption(name = "keystore-password", description = "HTTPS keystore password")
-        private String keystorePass;
-
-        @CliOption(name = "keystore-type", description = "HTTPS keystore type")
-        private String keystoreType = "JKS";
-
-        @CliOption(name = "client-auth", description = "HTTPS keystore client authentication")
-        private String clientAuth;
-
-        @CliOption(name = "keystore-alias", description = "HTTPS keystore alias")
-        private String keyAlias;
-
-        @CliOption(name = "ssl-protocol", description = "HTTPS protocol")
-        private String sslProtocol;
-
-        @CliOption(name = "web-xml", description = "Global web.xml")
-        private String webXml;
-
-        @CliOption(name = "login-config", description = "web.xml login config")
-        private LoginConfigBuilder loginConfig;
-
-        @CliOption(name = "security-constraint", description = "web.xml security constraint")
-        private Collection<SecurityConstaintBuilder> securityConstraints = new LinkedList<>();
-
-        @CliOption(name = "realm", description = "realm")
-        private Realm realm;
-
-        @CliOption(name = "users", description = "In memory users")
-        private Map<String, String> users;
-
-        @CliOption(name = "roles", description = "In memory roles")
-        private Map<String, String> roles;
-
-        @CliOption(name = "http2", description = "Activate HTTP 2")
-        private boolean http2;
-
-        @CliOption(name = "connector", description = "Custom connectors")
-        private final Collection<Connector> connectors = new ArrayList<>();
-
-        @CliOption(name = "tmp-dir", description = "Temporary directory")
-        private String tempDir = System.getProperty("java.io.tmpdir");
-
-        @CliOption(name = "web-resource-cached", description = "Cache web resources")
-        private boolean webResourceCached = true;
-
-        @CliOption(name = "conf", description = "Conf folder to synchronize")
-        private String conf;
-
-        @CliOption(name = "delete-on-startup", description = "Should the directory be cleaned on startup if existing")
-        private boolean deleteBaseOnStartup = true;
-
-        @CliOption(name = "jaxrs-mapping", description = "Default jaxrs mapping")
-        private String jaxrsMapping = "/*";
-
-        @CliOption(name = "cdi-conversation", description = "Should CDI conversation be activated")
-        private boolean cdiConversation;
-
-        @CliOption(name = "jaxrs-provider-setup", description = "Should default JAX-RS provider be configured")
-        private boolean jaxrsProviderSetup = true;
-
-        @CliOption(name = "jaxrs-default-providers", description = "If jaxrsProviderSetup is true the list of default providers to load (or defaulting to johnson jsonb and jsonp ones)")
-        private String jaxrsDefaultProviders;
-
-        @CliOption(name = "jaxrs-beanvalidation", description = "Should bean validation be activated on JAX-RS endpoint if present in the classpath.")
-        private boolean jaxrsAutoActivateBeanValidation = true;
-
-        @CliOption(name = "jaxrs-log-provider", description = "Should JAX-RS providers be logged")
-        private boolean jaxrsLogProviders = false;
-
-        @CliOption(name = "jsonp-buffer-strategy", description = "JSON-P JAX-RS provider buffer strategy (see johnzon)")
-        private String jsonpBufferStrategy = "QUEUE";
-
-        @CliOption(name = "jsonp-max-string-length", description = "JSON-P JAX-RS provider max string limit size (see johnzon)")
-        private int jsonpMaxStringLen = 64 * 1024;
-
-        @CliOption(name = "jsonp-read-buffer-length", description = "JSON-P JAX-RS provider read buffer limit size (see johnzon)")
-        private int jsonpMaxReadBufferLen = 64 * 1024;
-
-        @CliOption(name = "jsonp-write-buffer-length", description = "JSON-P JAX-RS provider write buffer limit size (see johnzon)")
-        private int jsonpMaxWriteBufferLen = 64 * 1024;
-
-        @CliOption(name = "jsonp-supports-comment", description = "Should JSON-P JAX-RS provider support comments (see johnzon)")
-        private boolean jsonpSupportsComment = false;
-
-        @CliOption(name = "jsonp-supports-comment", description = "Should JSON-P JAX-RS provider prettify the outputs (see johnzon)")
-        private boolean jsonpPrettify = false;
-
-        @CliOption(name = "jsonb-encoding", description = "Which encoding provider JSON-B should use")
-        private String jsonbEncoding = "UTF-8";
-
-        @CliOption(name = "jsonb-nulls", description = "Should JSON-B provider serialize nulls")
-        private boolean jsonbNulls = false;
-
-        @CliOption(name = "jsonb-ijson", description = "Should JSON-B provider comply to I-JSON")
-        private boolean jsonbIJson = false;
-
-        @CliOption(name = "jsonb-prettify", description = "Should JSON-B provider prettify the output")
-        private boolean jsonbPrettify = false;
-
-        @CliOption(name = "jsonb-binary-strategy", description = "Should JSON-B provider prettify the output")
-        private String jsonbBinaryStrategy;
-
-        @CliOption(name = "jsonb-naming-strategy", description = "Should JSON-B provider prettify the output")
-        private String jsonbNamingStrategy;
-
-        @CliOption(name = "jsonb-order-strategy", description = "Should JSON-B provider prettify the output")
-        private String jsonbOrderStrategy;
-
-        @CliOption(name = "logging-global-setup", description = "Should logging be configured to use log4j2 (it is global)")
-        private boolean loggingGlobalSetup = true;
-
-        @CliOption(name = "cxf-servlet-params", description = "Init parameters passed to CXF servlet")
-        private Map<String, String> cxfServletParams;
-
-        @CliOption(name = "tomcat-scanning", description = "Should Tomcat scanning be used (@HandleTypes, @WebXXX)")
-        private boolean tomcatScanning = true;
-
-        @CliOption(name = "tomcat-default-setup", description = "Add default servlet")
-        private boolean tomcatAutoSetup = true;
-
-        @CliOption(name = "tomcat-default-setup-jsp-development", description = "Should JSP support if available be set in development mode")
-        private boolean tomcatJspDevelopment = false;
-
-        @CliOption(name = "use-shutdown-hook", description = "Use shutdown hook to automatically stop the container on Ctrl+C")
-        private boolean useShutdownHook = true;
-
-        @CliOption(name = "tomcat-filter", description = "A Tomcat JarScanFilter")
-        private String tomcatFilter;
-
-        @CliOption(name = "scanning-include", description = "A forced include list of jar names (comma separated values)")
-        private String scanningIncludes;
-
-        @CliOption(name = "scanning-exclude", description = "A forced exclude list of jar names (comma separated values)")
-        private String scanningExcludes;
-
-        @CliOption(name = "scanning-package-include", description = "A forced include list of packages names (comma separated values)")
-        private String scanningPackageIncludes;
-
-        @CliOption(name = "scanning-package-exclude", description = "A forced exclude list of packages names (comma separated values)")
-        private String scanningPackageExcludes;
-
-        @CliOption(name = "web-session-timeout", description = "Force the session timeout for webapps")
-        private Integer webSessionTimeout;
-
-        @CliOption(name = "web-session-cookie-config", description = "Force the cookie-config, it uses a properties syntax with the keys being the web.xml tag names.")
-        private String webSessionCookieConfig;
-
-        @CliOption(name = "tomcat-default", description = "Should Tomcat default be set (session timeout, mime mapping etc...)")
-        private boolean useTomcatDefaults = true;
-
-        @CliOption(name = "tomcat-wrap-loader", description = "(Experimental) When deploying a classpath (current classloader), " +
-                "should meecrowave wrap the loader to define another loader identity but still use the same classes and resources.")
-        private boolean tomcatWrapLoader = false;
-
-        @CliOption(name = "tomcat-skip-jmx", description = "(Experimental) Should Tomcat MBeans be skipped.")
-        private boolean tomcatNoJmx = true;
-
-        @CliOption(name = "shared-libraries", description = "A folder containing shared libraries.", alias = "shared-librairies")
-        private String sharedLibraries;
-
-        @CliOption(name = "log4j2-jul-bridge", description = "Should JUL logs be redirected to Log4j2 - only works before JUL usage.")
-        private boolean useLog4j2JulLogManager = System.getProperty("java.util.logging.manager") == null;
-
-        @CliOption(name = "servlet-container-initializer-injection", description = "Should ServletContainerInitialize support injections.")
-        private boolean injectServletContainerInitializer = true;
-
-        @CliOption(
-                name = "tomcat-access-log-pattern",
-                description = "Activates and configure the access log valve. Value example: '%h %l %u %t \"%r\" %s %b \"%{Referer}i\" \"%{User-Agent}i\"'")
-        private String tomcatAccessLogPattern;
-
-        @CliOption(
-                name = "meecrowave-properties",
-                description = "Loads a meecrowave properties, defaults to meecrowave.properties.")
-        private String meecrowaveProperties = "meecrowave.properties";
-
-        @CliOption(name = "jaxws-support-if-present", description = "Should @WebService CDI beans be deployed if cxf-rt-frontend-jaxws is in the classpath.")
-        private boolean jaxwsSupportIfAvailable = true;
-
-        @CliOption(name = "default-ssl-hostconfig-name", description = "The name of the default SSLHostConfig that will be used for secure https connections.")
-        private String defaultSSLHostConfigName;
-
-        @CliOption(name = "cxf-initialize-client-bus", description = "Should the client bus be set. If false the server one will likely be reused.")
-        private boolean initializeClientBus = true;
-
-        private final Map<Class<?>, Object> extensions = new HashMap<>();
-        private final Collection<Consumer<Tomcat>> instanceCustomizers = new ArrayList<>();
-
-        @CliOption(name = "servlet-container-initializer", description = "ServletContainerInitializer instances.")
-        private Collection<ServletContainerInitializer> initializers = new ArrayList<>();
-
-        @CliOption(name = "tomcat-antiresourcelocking", description = "Should Tomcat anti resource locking feature be activated on StandardContext.")
-        private boolean antiResourceLocking;
-
-        @CliOption(name = "tomcat-context-configurer", description = "Configurers for all webapps. The Consumer<Context> instances will be applied to all deployments.")
-        private Collection<Consumer<Context>> contextConfigurers;
-
-        public Builder() { // load defaults
-            extensions.put(ValueTransformers.class, new ValueTransformers());
-            StreamSupport.stream(ServiceLoader.load(Meecrowave.ConfigurationCustomizer.class).spliterator(), false)
-                    .sorted(Meecrowave::sortByPriority)
-                    .forEach(c -> c.accept(this));
-            loadFrom(meecrowaveProperties);
+    public static class Builder extends Configuration /* inheritance for backward compatibility */ {
+        // IMPORTANT: this must stay without any field, use parent class to add config please
+        //            this only holds builder methods
+
+        public Builder() {
+            // no-op
         }
 
-        public <T> T getExtension(final Class<T> extension) {
-            // in the cli we read the values from the cli but in other mode from properties
-            // to ensure we can do the same in all modes keeping a nice cli
-            return extension.cast(extensions.computeIfAbsent(extension, k -> {
-                try {
-                    return bind(k.newInstance());
-                } catch (final InstantiationException | IllegalAccessException e) {
-                    throw new IllegalArgumentException(e);
-                }
-            }));
+        // mainly for backward compat
+        public Builder(final Configuration configuration) {
+            super(configuration);
         }
 
-        public boolean isAntiResourceLocking() {
-            return antiResourceLocking;
-        }
-
-        public void setAntiResourceLocking(final boolean antiResourceLocking) {
-            this.antiResourceLocking = antiResourceLocking;
-        }
-
-        public Collection<Consumer<Context>> getGlobalContextConfigurers() {
-            return ofNullable(contextConfigurers).orElseGet(Collections::emptySet);
-        }
-
-        public boolean isTomcatJspDevelopment() {
-            return tomcatJspDevelopment;
-        }
-
-        public void setTomcatJspDevelopment(final boolean tomcatJspDevelopment) {
-            this.tomcatJspDevelopment = tomcatJspDevelopment;
-        }
-
-        public Integer getWebSessionTimeout() {
-            return webSessionTimeout;
-        }
-
-        public void setWebSessionTimeout(final Integer webSessionTimeout) {
-            this.webSessionTimeout = webSessionTimeout;
-        }
-
-        public String getWebSessionCookieConfig() {
-            return webSessionCookieConfig;
-        }
-
-        public void setWebSessionCookieConfig(final String webSessionCookieConfig) {
-            this.webSessionCookieConfig = webSessionCookieConfig;
-        }
-
-        public boolean isInitializeClientBus() {
-            return initializeClientBus;
-        }
-
-        public void setInitializeClientBus(final boolean initializeClientBus) {
-            this.initializeClientBus = initializeClientBus;
-        }
-
-        public boolean isJaxwsSupportIfAvailable() {
-            return jaxwsSupportIfAvailable;
-        }
-
-        public void setJaxwsSupportIfAvailable(final boolean jaxwsSupportIfAvailable) {
-            this.jaxwsSupportIfAvailable = jaxwsSupportIfAvailable;
-        }
-
-        public int getWatcherBouncing() {
-            return watcherBouncing;
-        }
-
-        public void setWatcherBouncing(final int watcherBouncing) {
-            this.watcherBouncing = watcherBouncing;
-        }
-
-        public String getTomcatAccessLogPattern() {
-            return tomcatAccessLogPattern;
-        }
-
-        public void setTomcatAccessLogPattern(final String tomcatAccessLogPattern) {
-            this.tomcatAccessLogPattern = tomcatAccessLogPattern;
-        }
-
-        public boolean isTomcatNoJmx() {
-            return tomcatNoJmx;
-        }
-
-        public void setTomcatNoJmx(final boolean tomcatNoJmx) {
-            this.tomcatNoJmx = tomcatNoJmx;
-        }
-
-        public File getPidFile() {
-            return pidFile;
-        }
-
-        public void setPidFile(final File pidFile) {
-            this.pidFile = pidFile;
-        }
-
-        public String getScanningPackageIncludes() {
-            return scanningPackageIncludes;
-        }
-
-        /**
-         * Define some package names (startsWith) which must get scanned for beans.
-         * This rule get's applied before {@link #setScanningPackageExcludes(String)}
-         */
-        public void setScanningPackageIncludes(final String scanningPackageIncludes) {
-            this.scanningPackageIncludes = scanningPackageIncludes;
-        }
-
-        public String getScanningPackageExcludes() {
-            return scanningPackageExcludes;
-        }
-
-        /**
-         * Define some package names (startsWith) which must <em>NOT</em> get scanned for beans.
-         * This rule get's applied after {@link #setScanningPackageIncludes(String)}.
-         *
-         * Defining just a '*' will be a marker for skipping all not-included packages.
-         * Otherwise we will defer to the standard OpenWebBeans class Filter mechanism.
-         */
-        public void setScanningPackageExcludes(final String scanningPackageExcludes) {
-            this.scanningPackageExcludes = scanningPackageExcludes;
+        @Override
+        public Builder loadFrom(String resource) {
+            super.loadFrom(resource);
+            return this;
         }
 
         public Builder excludePackages(final String packages) {
@@ -1575,475 +1211,22 @@ public class Meecrowave implements AutoCloseable {
             return this;
         }
 
-        public void setExtension(final Class<?> type, final Object value) {
-            extensions.put(type, value);
-        }
-
-        public String getScanningIncludes() {
-            return scanningIncludes;
-        }
-
-        public void setScanningIncludes(final String scanningIncludes) {
-            this.scanningIncludes = scanningIncludes;
-        }
-
-        public String getScanningExcludes() {
-            return scanningExcludes;
-        }
-
-        public void setScanningExcludes(final String scanningExcludes) {
-            this.scanningExcludes = scanningExcludes;
-        }
-
-        public String getJsonpBufferStrategy() {
-            return jsonpBufferStrategy;
-        }
-
-        public String getJsonbEncoding() {
-            return jsonbEncoding;
-        }
-
-        public void setJsonbEncoding(final String jsonbEncoding) {
-            this.jsonbEncoding = jsonbEncoding;
-        }
-
-        public boolean isJsonbNulls() {
-            return jsonbNulls;
-        }
-
-        public void setJsonbNulls(final boolean jsonbNulls) {
-            this.jsonbNulls = jsonbNulls;
-        }
-
-        public boolean isJsonbIJson() {
-            return jsonbIJson;
-        }
-
-        public void setJsonbIJson(final boolean jsonbIJson) {
-            this.jsonbIJson = jsonbIJson;
-        }
-
-        public boolean isJsonbPrettify() {
-            return jsonbPrettify;
-        }
-
-        public void setJsonbPrettify(final boolean jsonbPrettify) {
-            this.jsonbPrettify = jsonbPrettify;
-        }
-
-        public String getJsonbBinaryStrategy() {
-            return jsonbBinaryStrategy;
-        }
-
-        public void setJsonbBinaryStrategy(final String jsonbBinaryStrategy) {
-            this.jsonbBinaryStrategy = jsonbBinaryStrategy;
-        }
-
-        public String getJsonbNamingStrategy() {
-            return jsonbNamingStrategy;
-        }
-
-        public void setJsonbNamingStrategy(final String jsonbNamingStrategy) {
-            this.jsonbNamingStrategy = jsonbNamingStrategy;
-        }
-
-        public String getJsonbOrderStrategy() {
-            return jsonbOrderStrategy;
-        }
-
-        public void setJsonbOrderStrategy(final String jsonbOrderStrategy) {
-            this.jsonbOrderStrategy = jsonbOrderStrategy;
-        }
-
-        public Builder withJsonpBufferStrategy(final String jsonpBufferStrategy) {
-            this.jsonpBufferStrategy = jsonpBufferStrategy;
-            return this;
-        }
-
-        public void setJsonpBufferStrategy(final String jsonpBufferStrategy) {
-            this.jsonpBufferStrategy = jsonpBufferStrategy;
-        }
-
-        public int getJsonpMaxStringLen() {
-            return jsonpMaxStringLen;
-        }
-
-        public void setJsonpMaxStringLen(final int jsonpMaxStringLen) {
-            this.jsonpMaxStringLen = jsonpMaxStringLen;
-        }
-
-        public int getJsonpMaxReadBufferLen() {
-            return jsonpMaxReadBufferLen;
-        }
-
-        public void setJsonpMaxReadBufferLen(final int jsonpMaxReadBufferLen) {
-            this.jsonpMaxReadBufferLen = jsonpMaxReadBufferLen;
-        }
-
-        public int getJsonpMaxWriteBufferLen() {
-            return jsonpMaxWriteBufferLen;
-        }
-
-        public void setJsonpMaxWriteBufferLen(final int jsonpMaxWriteBufferLen) {
-            this.jsonpMaxWriteBufferLen = jsonpMaxWriteBufferLen;
-        }
-
-        public boolean isJsonpSupportsComment() {
-            return jsonpSupportsComment;
-        }
-
-        public void setJsonpSupportsComment(final boolean jsonpSupportsComment) {
-            this.jsonpSupportsComment = jsonpSupportsComment;
-        }
-
-        public boolean isJsonpPrettify() {
-            return jsonpPrettify;
-        }
-
-        public void setJsonpPrettify(final boolean jsonpPrettify) {
-            this.jsonpPrettify = jsonpPrettify;
-        }
-
-        public String getSharedLibraries() {
-            return sharedLibraries;
-        }
-
         public Builder sharedLibraries(final String sharedLibraries) {
             setSharedLibraries(sharedLibraries);
             return this;
         }
 
-        public void setSharedLibraries(final String sharedLibraries) {
-            this.sharedLibraries = sharedLibraries;
-        }
-
-        public boolean isJaxrsLogProviders() {
-            return jaxrsLogProviders;
-        }
-
-        public void setJaxrsLogProviders(final boolean jaxrsLogProviders) {
-            this.jaxrsLogProviders = jaxrsLogProviders;
-        }
-
-        public boolean isUseTomcatDefaults() {
-            return useTomcatDefaults;
-        }
-
-        public void setUseTomcatDefaults(final boolean useTomcatDefaults) {
-            this.useTomcatDefaults = useTomcatDefaults;
-        }
-
-        public String getTomcatFilter() {
-            return tomcatFilter;
-        }
-
-        public void setTomcatFilter(final String tomcatFilter) {
-            this.tomcatFilter = tomcatFilter;
-        }
-
-        public boolean isTomcatScanning() {
-            return tomcatScanning;
-        }
-
-        public void setTomcatScanning(final boolean tomcatScanning) {
-            this.tomcatScanning = tomcatScanning;
-        }
-
-        public Map<String, String> getCxfServletParams() {
-            return cxfServletParams;
-        }
-
-        public void setCxfServletParams(final Map<String, String> cxfServletParams) {
-            this.cxfServletParams = cxfServletParams;
-        }
-
-        public boolean isLoggingGlobalSetup() {
-            return loggingGlobalSetup;
-        }
-
-        public void setLoggingGlobalSetup(final boolean loggingGlobalSetup) {
-            this.loggingGlobalSetup = loggingGlobalSetup;
-        }
-
-        public boolean isJaxrsAutoActivateBeanValidation() {
-            return jaxrsAutoActivateBeanValidation;
-        }
-
-        public void setJaxrsAutoActivateBeanValidation(final boolean jaxrsAutoActivateBeanValidation) {
-            this.jaxrsAutoActivateBeanValidation = jaxrsAutoActivateBeanValidation;
-        }
-
-        public boolean isJaxrsProviderSetup() {
-            return jaxrsProviderSetup;
-        }
-
-        public void setJaxrsProviderSetup(final boolean jaxrsProviderSetup) {
-            this.jaxrsProviderSetup = jaxrsProviderSetup;
-        }
-
-        public int getHttpPort() {
-            return httpPort;
-        }
-
-        public void setHttpPort(final int httpPort) {
-            this.httpPort = httpPort;
-        }
-
-        public int getHttpsPort() {
-            return httpsPort;
-        }
-
-        public void setHttpsPort(final int httpsPort) {
-            this.httpsPort = httpsPort;
-        }
-
-        public int getStopPort() {
-            return stopPort;
-        }
-
-        public void setStopPort(final int stopPort) {
-            this.stopPort = stopPort;
-        }
-
-        public String getHost() {
-            return host;
-        }
-
-        public void setHost(final String host) {
-            this.host = host;
-        }
-
-        public String getDir() {
-            return dir;
-        }
-
-        public void setDir(final String dir) {
-            this.dir = dir;
-        }
-
-        public File getServerXml() {
-            return serverXml;
-        }
-
-        public void setServerXml(final File serverXml) {
-            this.serverXml = serverXml;
-        }
-
-        public boolean isKeepServerXmlAsThis() {
-            return keepServerXmlAsThis;
-        }
-
-        public void setKeepServerXmlAsThis(final boolean keepServerXmlAsThis) {
-            this.keepServerXmlAsThis = keepServerXmlAsThis;
-        }
-
-        public Properties getProperties() {
-            return properties;
-        }
-
-        public void setProperties(final Properties properties) {
-            this.properties = properties;
-        }
-
-        public boolean isQuickSession() {
-            return quickSession;
-        }
-
-        public void setQuickSession(final boolean quickSession) {
-            this.quickSession = quickSession;
-        }
-
-        public boolean isSkipHttp() {
-            return skipHttp;
-        }
-
-        public void setSkipHttp(final boolean skipHttp) {
-            this.skipHttp = skipHttp;
-        }
-
-        public boolean isSsl() {
-            return ssl;
-        }
-
-        public void setSsl(final boolean ssl) {
-            this.ssl = ssl;
-        }
-
-        public String getKeystoreFile() {
-            return keystoreFile;
-        }
-
-        public void setKeystoreFile(final String keystoreFile) {
-            this.keystoreFile = keystoreFile;
-        }
-
-        public String getKeystorePass() {
-            return keystorePass;
-        }
-
-        public void setKeystorePass(final String keystorePass) {
-            this.keystorePass = keystorePass;
-        }
-
-        public String getKeystoreType() {
-            return keystoreType;
-        }
-
-        public void setKeystoreType(final String keystoreType) {
-            this.keystoreType = keystoreType;
-        }
-
-        public String getClientAuth() {
-            return clientAuth;
-        }
-
-        public void setClientAuth(final String clientAuth) {
-            this.clientAuth = clientAuth;
-        }
-
-        public String getKeyAlias() {
-            return keyAlias;
-        }
-
-        public void setKeyAlias(final String keyAlias) {
-            this.keyAlias = keyAlias;
-        }
-
-        public String getSslProtocol() {
-            return sslProtocol;
-        }
-
-        public void setSslProtocol(final String sslProtocol) {
-            this.sslProtocol = sslProtocol;
-        }
-
-        public String getWebXml() {
-            return webXml;
-        }
-
-        public void setWebXml(final String webXml) {
-            this.webXml = webXml;
-        }
-
-        public LoginConfigBuilder getLoginConfig() {
-            return loginConfig;
-        }
-
-        public Builder loginConfig(final LoginConfigBuilder loginConfig) {
-            setLoginConfig(loginConfig);
+        public Builder securityConstraints(final Meecrowave.SecurityConstaintBuilder securityConstraint) {
+            if (getSecurityConstraints() == null) {
+                setSecurityConstraints(new ArrayList<>());
+            }
+            getSecurityConstraints().add(securityConstraint);
             return this;
-        }
-
-        public void setLoginConfig(final LoginConfigBuilder loginConfig) {
-            this.loginConfig = loginConfig;
-        }
-
-        public Collection<SecurityConstaintBuilder> getSecurityConstraints() {
-            return securityConstraints;
-        }
-
-        public Builder securityConstraints(final SecurityConstaintBuilder securityConstraint) {
-            securityConstraints = securityConstraints == null ? new ArrayList<>() : securityConstraints;
-            securityConstraints.add(securityConstraint);
-            return this;
-        }
-
-        public void setSecurityConstraints(final Collection<SecurityConstaintBuilder> securityConstraints) {
-            this.securityConstraints = securityConstraints;
-        }
-
-        public Realm getRealm() {
-            return realm;
-        }
-
-        public Builder realm(final Realm realm) {
-            setRealm(realm);
-            return this;
-        }
-
-        public void setRealm(final Realm realm) {
-            this.realm = realm;
-        }
-
-        public Map<String, String> getUsers() {
-            return users;
-        }
-
-        public void setUsers(final Map<String, String> users) {
-            this.users = users;
-        }
-
-        public Map<String, String> getRoles() {
-            return roles;
-        }
-
-        public void setRoles(final Map<String, String> roles) {
-            this.roles = roles;
-        }
-
-        public boolean isHttp2() {
-            return http2;
-        }
-
-        public void setHttp2(final boolean http2) {
-            this.http2 = http2;
-        }
-
-        public Collection<Connector> getConnectors() {
-            return connectors;
-        }
-
-        public String getTempDir() {
-            return tempDir;
-        }
-
-        public void setTempDir(final String tempDir) {
-            this.tempDir = tempDir;
-        }
-
-        public boolean isWebResourceCached() {
-            return webResourceCached;
-        }
-
-        public void setWebResourceCached(final boolean webResourceCached) {
-            this.webResourceCached = webResourceCached;
-        }
-
-        public String getConf() {
-            return conf;
-        }
-
-        public void setConf(final String conf) {
-            this.conf = conf;
-        }
-
-        public boolean isDeleteBaseOnStartup() {
-            return deleteBaseOnStartup;
-        }
-
-        public void setDeleteBaseOnStartup(final boolean deleteBaseOnStartup) {
-            this.deleteBaseOnStartup = deleteBaseOnStartup;
-        }
-
-        public String getJaxrsMapping() {
-            return jaxrsMapping;
-        }
-
-        public void setJaxrsMapping(final String jaxrsMapping) {
-            this.jaxrsMapping = jaxrsMapping;
-        }
-
-        public boolean isCdiConversation() {
-            return cdiConversation;
-        }
-
-        public void setCdiConversation(final boolean cdiConversation) {
-            this.cdiConversation = cdiConversation;
         }
 
         public Builder randomHttpPort() {
             try (final ServerSocket serverSocket = new ServerSocket(0)) {
-                this.httpPort = serverSocket.getLocalPort();
+                setHttpPort(serverSocket.getLocalPort());
             } catch (final IOException e) {
                 throw new IllegalStateException(e);
             }
@@ -2052,99 +1235,47 @@ public class Meecrowave implements AutoCloseable {
 
         public Builder randomHttpsPort() {
             try (final ServerSocket serverSocket = new ServerSocket(0)) {
-                this.httpsPort = serverSocket.getLocalPort();
+                setHttpsPort(serverSocket.getLocalPort());
             } catch (final IOException e) {
                 throw new IllegalStateException(e);
             }
             return this;
         }
 
-        public Builder loadFrom(final String resource) {
-            // load all of those files on the classpath, sorted by ordinal
-            Properties config = PropertyLoader.getProperties(resource,
-                    sortedProperties -> mergeProperties(resource, sortedProperties),
-                    () -> {});
-            if (config == null || config.isEmpty()) {
-                final File file = new File(resource);
-                if (file.exists()) {
-                    config = new Properties();
-                    try (InputStream is = new FileInputStream(file)) {
-                        config.load(is);
-                    }
-                    catch (IOException e) {
-                        throw new IllegalStateException(e);
-                    }
-                }
-            }
-            if (config != null) {
-                loadFromProperties(config);
-            }
-            return this;
-        }
-
-        public void setServerXml(final String file) {
-            if (file == null) {
-                serverXml = null;
-            } else {
-                final File sXml = new File(file);
-                if (sXml.exists()) {
-                    serverXml = sXml;
-                }
-            }
-        }
-
         public Builder property(final String key, final String value) {
-            properties.setProperty(key, value);
+            getProperties().setProperty(key, value);
             return this;
         }
 
 
         public Builder user(final String name, final String pwd) {
-            if (users == null) {
-                users = new HashMap<>();
+            if (getUsers() == null) {
+                setUsers(new HashMap<>());
             }
-            this.users.put(name, pwd);
+            getUsers().put(name, pwd);
             return this;
         }
 
         public Builder role(final String user, final String roles) {
-            if (this.roles == null) {
-                this.roles = new HashMap<>();
+            if (getRoles() == null) {
+                setRoles(new HashMap<>());
             }
-            this.roles.put(user, roles);
+            getRoles().put(user, roles);
             return this;
         }
 
         public Builder cxfServletParam(final String key, final String value) {
-            if (this.cxfServletParams == null) {
-                this.cxfServletParams = new HashMap<>();
+            if (getCxfServletParams() == null) {
+                setCxfServletParams(new HashMap<>());
             }
-            this.cxfServletParams.put(key, value);
+            getCxfServletParams().put(key, value);
             return this;
         }
 
-        public String getActiveProtocol() {
-            return isSkipHttp() ? "https" : "http";
-        }
-
-        public int getActivePort() {
-            return isSkipHttp() ? getHttpsPort() : getHttpPort();
-        }
-
-        public boolean isTomcatAutoSetup() {
-            return tomcatAutoSetup;
-        }
-
-        public void setTomcatAutoSetup(final boolean tomcatAutoSetup) {
-            this.tomcatAutoSetup = tomcatAutoSetup;
-        }
-
-        public boolean isUseShutdownHook() {
-            return useShutdownHook;
-        }
-
-        public void setUseShutdownHook(final boolean useShutdownHook) {
-            this.useShutdownHook = useShutdownHook;
+        @Deprecated // withers are deprecated, we prefer the no fluent API
+        public Builder withJsonpBufferStrategy(final String jsonpBufferStrategy) {
+            setJsonpBufferStrategy(jsonpBufferStrategy);
+            return this;
         }
 
         public Builder noShutdownHook() {
@@ -2152,255 +1283,416 @@ public class Meecrowave implements AutoCloseable {
             return this;
         }
 
-        public boolean isTomcatWrapLoader() {
-            return tomcatWrapLoader;
-        }
-
-        public void setTomcatWrapLoader(final boolean tomcatWrapLoader) {
-            this.tomcatWrapLoader = tomcatWrapLoader;
-        }
-
-        public void addInstanceCustomizer(final Consumer<Tomcat> customizer) {
-            instanceCustomizers.add(customizer);
-        }
-
         public Builder instanceCustomizer(final Consumer<Tomcat> customizer) {
             addInstanceCustomizer(customizer);
             return this;
         }
 
-        public void addCustomizer(final Consumer<Builder> configurationCustomizer) {
-            configurationCustomizer.accept(this);
+        public Builder pidFile(final Path pidFile) {
+            setPidFile(pidFile.toFile());
+            return this;
         }
 
-        public void addGlobalContextCustomizer(final Consumer<Context> contextConfigurer) {
-            if (contextConfigurers == null) {
-                contextConfigurers = new ArrayList<>();
+        public Builder watcherBouncing(final int watcherBouncing) {
+            setWatcherBouncing(watcherBouncing);
+            return this;
+        }
+
+        public Builder httpPort(final int httpPort) {
+            if (httpPort <= 0) {
+                randomHttpPort();
+            } else {
+                setHttpPort(httpPort);
             }
-            contextConfigurers.add(contextConfigurer);
+            return this;
         }
 
-        public void addServletContextInitializer(final ServletContainerInitializer initializer) {
-            initializers.add(initializer);
-        }
-
-        public Collection<ServletContainerInitializer> getInitializers() {
-            return initializers;
-        }
-
-        public String getJaxrsDefaultProviders() {
-            return jaxrsDefaultProviders;
-        }
-
-        public void setJaxrsDefaultProviders(final String jaxrsDefaultProviders) {
-            this.jaxrsDefaultProviders = jaxrsDefaultProviders;
-        }
-
-        public boolean isUseLog4j2JulLogManager() {
-            return useLog4j2JulLogManager;
-        }
-
-        public void setUseLog4j2JulLogManager(final boolean useLog4j2JulLogManager) {
-            this.useLog4j2JulLogManager = useLog4j2JulLogManager;
-        }
-
-        public String getDefaultSSLHostConfigName() {
-            return defaultSSLHostConfigName;
-        }
-
-        public void setDefaultSSLHostConfigName(final String defaultSSLHostConfigName) {
-            this.defaultSSLHostConfigName = defaultSSLHostConfigName;
-        }
-
-        public void loadFromProperties(final Properties config) {
-            // filtering properties with system properties or themself
-            final Substitutor strSubstitutor = new Substitutor(emptyMap()) {
-                @Override
-                public String getOrDefault(final String key, final String or) {
-                    final String property = System.getProperty(key);
-                    return property == null ? config.getProperty(key, or) : or;
-                }
-            };
-
-            final ValueTransformers transformers = getExtension(ValueTransformers.class);
-            for (final String key : config.stringPropertyNames()) {
-                final String val = config.getProperty(key);
-                if (val == null || val.trim().isEmpty()) {
-                    continue;
-                }
-                final String newVal = transformers.apply(strSubstitutor.replace(config.getProperty(key)));
-                if (!val.equals(newVal)) {
-                    config.setProperty(key, newVal);
-                }
+        public Builder httpsPort(final int httpsPort) {
+            if (httpsPort <= 0) {
+                randomHttpsPort();
+            } else {
+                setHttpsPort(httpsPort);
             }
+            return this;
+        }
 
-            for (final Field field : Builder.class.getDeclaredFields()) {
-                final CliOption annotation = field.getAnnotation(CliOption.class);
-                if (annotation == null) {
-                    continue;
-                }
-                final String name = field.getName();
-                Stream.of(Stream.of(annotation.name()), Stream.of(annotation.alias()))
-                        .flatMap(a -> a)
-                        .map(config::getProperty)
-                        .filter(Objects::nonNull)
-                        .findAny().ifPresent(val -> {
-                    final Object toSet;
-                    if (field.getType() == String.class) {
-                        toSet = val;
-                    } else if (field.getType() == int.class) {
-                        if ("httpPort".equals(name) && "-1".equals(val)) { // special case in case of random port
-                            randomHttpPort();
-                            toSet = null;
-                        } else {
-                            toSet = Integer.parseInt(val);
-                        }
-                    } else if (field.getType() == boolean.class) {
-                        toSet = Boolean.parseBoolean(val);
-                    } else if (field.getType() == File.class) {
-                        toSet = new File(val);
-                    } else {
-                        toSet = null;
-                    }
-                    if (toSet == null) { // handled elsewhere
-                        return;
-                    }
+        public Builder stopPort(final int stopPort) {
+            setStopPort(stopPort);
+            return this;
+        }
 
-                    if (!field.isAccessible()) {
-                        field.setAccessible(true);
-                    }
-                    try {
-                        field.set(this, toSet);
-                    } catch (final IllegalAccessException e) {
-                        throw new IllegalStateException(e);
-                    }
-                });
+        public Builder host(final String host) {
+            setHost(host);
+            return this;
+        }
+
+        public Builder dir(final String dir) {
+            setDir(dir);
+            return this;
+        }
+
+        public Builder serverXml(final Path serverXml) {
+            setServerXml(serverXml.toFile());
+            return this;
+        }
+
+        public Builder keepServerXmlAsThis(final boolean keepServerXmlAsThis) {
+            setKeepServerXmlAsThis(keepServerXmlAsThis);
+            return this;
+        }
+
+        public Builder properties(final Properties properties) {
+            getProperties().putAll(properties);
+            return this;
+        }
+
+        public Builder quickSession(final boolean quickSession) {
+            setQuickSession(quickSession);
+            return this;
+        }
+
+        public Builder skipHttp(final boolean skipHttp) {
+            setSkipHttp(skipHttp);
+            return this;
+        }
+
+        public Builder ssl(final boolean ssl) {
+            setSsl(ssl);
+            return this;
+        }
+
+        public Builder keystoreFile(final String keystoreFile) {
+            setKeystoreFile(keystoreFile);
+            return this;
+        }
+
+        public Builder keystorePass(final String keystorePass) {
+            setKeystorePass(keystorePass);
+            return this;
+        }
+
+        public Builder keystoreType(final String keystoreType) {
+            setKeystoreType(keystoreType);
+            return this;
+        }
+
+        public Builder clientAuth(final String clientAuth) {
+            setClientAuth(clientAuth);
+            return this;
+        }
+
+        public Builder keyAlias(final String keyAlias) {
+            setKeyAlias(keyAlias);
+            return this;
+        }
+
+        public Builder sslProtocol(final String sslProtocol) {
+            setSslProtocol(sslProtocol);
+            return this;
+        }
+
+        public Builder webXml(final String webXml) {
+            setWebXml(webXml);
+            return this;
+        }
+
+        public Builder loginConfig(final LoginConfigBuilder loginConfig) {
+            setLoginConfig(loginConfig);
+            return this;
+        }
+
+        public Builder securityConstraint(final SecurityConstaintBuilder securityConstraint) {
+            if (getSecurityConstraints() == null) {
+                setSecurityConstraints(new ArrayList<>());
             }
+            getSecurityConstraints().add(securityConstraint);
+            return this;
+        }
 
-            // not trivial types
-            for (final String prop : config.stringPropertyNames()) {
-                if (prop.startsWith("properties.")) {
-                    property(prop.substring("properties.".length()), config.getProperty(prop));
-                } else if (prop.startsWith("users.")) {
-                    user(prop.substring("users.".length()), config.getProperty(prop));
-                } else if (prop.startsWith("roles.")) {
-                    role(prop.substring("roles.".length()), config.getProperty(prop));
-                } else if (prop.startsWith("cxf.servlet.params.")) {
-                    cxfServletParam(prop.substring("cxf.servlet.params.".length()), config.getProperty(prop));
-                } else if (prop.startsWith("connector.")) { // created in container
-                    property(prop, config.getProperty(prop));
-                } else if (prop.equals("realm")) {
-                    final ObjectRecipe recipe = newRecipe(config.getProperty(prop));
-                    for (final String realmConfig : config.stringPropertyNames()) {
-                        if (realmConfig.startsWith("realm.")) {
-                            recipe.setProperty(realmConfig.substring("realm.".length()), config.getProperty(realmConfig));
-                        }
-                    }
-                    this.realm = Realm.class.cast(recipe.create());
-                } else if (prop.equals("login")) {
-                    final ObjectRecipe recipe = newRecipe(LoginConfigBuilder.class.getName());
-                    for (final String nestedConfig : config.stringPropertyNames()) {
-                        if (nestedConfig.startsWith("login.")) {
-                            recipe.setProperty(nestedConfig.substring("login.".length()), config.getProperty(nestedConfig));
-                        }
-                    }
-                    loginConfig = LoginConfigBuilder.class.cast(recipe.create());
-                } else if (prop.equals("securityConstraint")) {
-                    final ObjectRecipe recipe = newRecipe(SecurityConstaintBuilder.class.getName());
-                    for (final String nestedConfig : config.stringPropertyNames()) {
-                        if (nestedConfig.startsWith("securityConstraint.")) {
-                            recipe.setProperty(nestedConfig.substring("securityConstraint.".length()), config.getProperty(nestedConfig));
-                        }
-                    }
-                    securityConstraints.add(SecurityConstaintBuilder.class.cast(recipe.create()));
-                } else if (prop.equals("configurationCustomizer")) {
-                    final ObjectRecipe recipe = newRecipe(prop);
-                    for (final String nestedConfig : config.stringPropertyNames()) {
-                        if (nestedConfig.startsWith(prop + '.')) {
-                            recipe.setProperty(nestedConfig.substring(prop.length() + 2 /*dot*/), config.getProperty(nestedConfig));
-                        }
-                    }
-                    addCustomizer(Consumer.class.cast(recipe.create()));
-                }
+        public Builder realm(final Realm realm) {
+            setRealm(realm);
+            return this;
+        }
+
+        public Builder users(final Map<String, String> users) {
+            if (getUsers() == null) {
+                setUsers(new HashMap<>());
             }
+            getUsers().putAll(users);
+            return this;
         }
 
-        public <T> T bind(final T instance) {
-            final ValueTransformers transformers = getExtension(ValueTransformers.class);
-            Class<? extends Object> type = instance.getClass();
-            do {
-                Stream.of(type.getDeclaredFields())
-                        .filter(f -> f.isAnnotationPresent(CliOption.class))
-                        .forEach(f -> {
-                            final CliOption annotation = f.getAnnotation(CliOption.class);
-                            String value = properties.getProperty(annotation.name());
-                            if (value == null) {
-                                value = Stream.of(annotation.alias()).map(properties::getProperty).findFirst().orElse(null);
-                                if (value == null) {
-                                    return;
-                                }
-                            }
-
-                            value = transformers.apply(value);
-
-                            if (!f.isAccessible()) {
-                                f.setAccessible(true);
-                            }
-                            final Class<?> t = f.getType();
-                            try {
-                                if (t == String.class) {
-                                    f.set(instance, value);
-                                } else if (t == int.class) {
-                                    f.set(instance, Integer.parseInt(value));
-                                } else if (t == boolean.class) {
-                                    f.set(instance, Boolean.parseBoolean(value));
-                                } else {
-                                    throw new IllegalArgumentException("Unsupported type " + t);
-                                }
-                            } catch (final IllegalAccessException iae) {
-                                throw new IllegalStateException(iae);
-                            }
-                        });
-                type = type.getSuperclass();
-            } while (type != Object.class);
-            return instance;
-        }
-
-        public boolean isInjectServletContainerInitializer() {
-            return injectServletContainerInitializer;
-        }
-
-        public void setInjectServletContainerInitializer(final boolean injectServletContainerInitializer) {
-            this.injectServletContainerInitializer = injectServletContainerInitializer;
-        }
-
-        public String getMeecrowaveProperties() {
-            return meecrowaveProperties;
-        }
-
-        public void setMeecrowaveProperties(final String meecrowaveProperties) {
-            this.meecrowaveProperties = meecrowaveProperties;
-        }
-
-        private Properties mergeProperties(final String resource, final List<Properties> sortedProperties) {
-            Properties mergedProperties = new Properties();
-            Properties master = null;
-            for (final Properties p : sortedProperties)
-            {
-                if (Boolean.parseBoolean(p.getProperty("configuration.complete", "false"))) {
-                    if (master != null) {
-                        throw new IllegalArgumentException("Ambiguous '" + resource + "', " +
-                                "multiple " + resource + " with configuration.complete=true");
-                    }
-                    master = p;
-                }
-                mergedProperties.putAll(p);
+        public Builder roles(final Map<String, String> roles) {
+            if (getRoles() == null) {
+                setRoles(new HashMap<>());
             }
+            getRoles().putAll(roles);
+            return this;
+        }
 
-            if (master != null) {
-                return master;
-            }
-            return mergedProperties;
+        public Builder http2(final boolean http2) {
+            setHttp2(http2);
+            return this;
+        }
+
+        public Builder connector(final Connector connector) {
+            getConnectors().add(connector);
+            return this;
+        }
+
+        public Builder tempDir(final String tempDir) {
+            setTempDir(tempDir);
+            return this;
+        }
+
+        public Builder webResourceCached(final boolean webResourceCached) {
+            setWebResourceCached(webResourceCached);
+            return this;
+        }
+
+        public Builder conf(final String conf) {
+            setConf(conf);
+            return this;
+        }
+
+        public Builder deleteBaseOnStartup(final boolean deleteBaseOnStartup) {
+            setDeleteBaseOnStartup(deleteBaseOnStartup);
+            return this;
+        }
+
+        public Builder jaxrsMapping(final String jaxrsMapping) {
+            setJaxrsMapping(jaxrsMapping);
+            return this;
+        }
+
+        public Builder cdiConversation(final boolean cdiConversation) {
+            setCdiConversation(cdiConversation);
+            return this;
+        }
+
+        public Builder jaxrsProviderSetup(final boolean jaxrsProviderSetup) {
+            setJaxrsProviderSetup(jaxrsProviderSetup);
+            return this;
+        }
+
+        public Builder jaxrsDefaultProviders(final String jaxrsDefaultProviders) {
+            setJaxrsDefaultProviders(jaxrsDefaultProviders);
+            return this;
+        }
+
+        public Builder jaxrsAutoActivateBeanValidation(final boolean jaxrsAutoActivateBeanValidation) {
+            setJaxrsAutoActivateBeanValidation(jaxrsAutoActivateBeanValidation);
+            return this;
+        }
+
+        public Builder jaxrsLogProviders(final boolean jaxrsLogProviders) {
+            setJaxrsLogProviders(jaxrsLogProviders);
+            return this;
+        }
+
+        public Builder jsonpBufferStrategy(final String jsonpBufferStrategy) {
+            setJsonpBufferStrategy(jsonpBufferStrategy);
+            return this;
+        }
+
+        public Builder jsonpMaxStringLen(final int jsonpMaxStringLen) {
+            setJsonpMaxStringLen(jsonpMaxStringLen);
+            return this;
+        }
+
+        public Builder jsonpMaxReadBufferLen(final int jsonpMaxReadBufferLen) {
+            setJsonpMaxReadBufferLen(jsonpMaxReadBufferLen);
+            return this;
+        }
+
+        public Builder jsonpMaxWriteBufferLen(final int jsonpMaxWriteBufferLen) {
+            setJsonpMaxWriteBufferLen(jsonpMaxWriteBufferLen);
+            return this;
+        }
+
+        public Builder jsonpSupportsComment(final boolean jsonpSupportsComment) {
+            setJsonpSupportsComment(jsonpSupportsComment);
+            return this;
+        }
+
+        public Builder jsonpPrettify(final boolean jsonpPrettify) {
+            setJsonpPrettify(jsonpPrettify);
+            return this;
+        }
+
+        public Builder jsonbEncoding(final String jsonbEncoding) {
+            setJsonbEncoding(jsonbEncoding);
+            return this;
+        }
+
+        public Builder jsonbNulls(final boolean jsonbNulls) {
+            setJsonbNulls(jsonbNulls);
+            return this;
+        }
+
+        public Builder jsonbIJson(final boolean jsonbIJson) {
+            setJsonbIJson(jsonbIJson);
+            return this;
+        }
+
+        public Builder jsonbPrettify(final boolean jsonbPrettify) {
+            setJsonbPrettify(jsonbPrettify);
+            return this;
+        }
+
+        public Builder jsonbBinaryStrategy(final String jsonbBinaryStrategy) {
+            setJsonbBinaryStrategy(jsonbBinaryStrategy);
+            return this;
+        }
+
+        public Builder jsonbNamingStrategy(final String jsonbNamingStrategy) {
+            setJsonbNamingStrategy(jsonbNamingStrategy);
+            return this;
+        }
+
+        public Builder jsonbOrderStrategy(final String jsonbOrderStrategy) {
+            setJsonbOrderStrategy(jsonbOrderStrategy);
+            return this;
+        }
+
+        public Builder loggingGlobalSetup(final boolean loggingGlobalSetup) {
+            setLoggingGlobalSetup(loggingGlobalSetup);
+            return this;
+        }
+
+        public Builder tomcatScanning(final boolean tomcatScanning) {
+            setTomcatScanning(tomcatScanning);
+            return this;
+        }
+
+        public Builder tomcatAutoSetup(final boolean tomcatAutoSetup) {
+            setTomcatAutoSetup(tomcatAutoSetup);
+            return this;
+        }
+
+        public Builder tomcatJspDevelopment(final boolean tomcatJspDevelopment) {
+            setTomcatJspDevelopment(tomcatJspDevelopment);
+            return this;
+        }
+
+        public Builder useShutdownHook(final boolean useShutdownHook) {
+            setUseShutdownHook(useShutdownHook);
+            return this;
+        }
+
+        public Builder tomcatFilter(final String tomcatFilter) {
+            setTomcatFilter(tomcatFilter);
+            return this;
+        }
+
+        public Builder scanningIncludes(final String scanningIncludes) {
+            setScanningIncludes(scanningIncludes);
+            return this;
+        }
+
+        public Builder scanningExcludes(final String scanningExcludes) {
+            setScanningExcludes(scanningExcludes);
+            return this;
+        }
+
+        public Builder scanningPackageIncludes(final String scanningPackageIncludes) {
+            setScanningPackageIncludes(scanningPackageIncludes);
+            return this;
+        }
+
+        public Builder scanningPackageIncludes(final Collection<String> scanningPackageIncludes) {
+            setScanningPackageIncludes(String.join(",", scanningPackageIncludes));
+            return this;
+        }
+
+        public Builder scanningPackageExcludes(final String scanningPackageExcludes) {
+            setScanningPackageExcludes(scanningPackageExcludes);
+            return this;
+        }
+
+        public Builder scanningPackageExcludes(final Collection<String> scanningPackageExcludes) {
+            setScanningPackageExcludes(String.join(",", scanningPackageExcludes));
+            return this;
+        }
+
+        public Builder webSessionTimeout(final int webSessionTimeout) {
+            setWebSessionTimeout(webSessionTimeout);
+            return this;
+        }
+
+        public Builder webSessionCookieConfig(final String webSessionCookieConfig) {
+            setWebSessionCookieConfig(webSessionCookieConfig);
+            return this;
+        }
+
+        public Builder useTomcatDefaults(final boolean useTomcatDefaults) {
+            setUseTomcatDefaults(useTomcatDefaults);
+            return this;
+        }
+
+        public Builder tomcatWrapLoader(final boolean tomcatWrapLoader) {
+            setTomcatWrapLoader(tomcatWrapLoader);
+            return this;
+        }
+
+        public Builder tomcatNoJmx(final boolean tomcatNoJmx) {
+            setTomcatNoJmx(tomcatNoJmx);
+            return this;
+        }
+
+        public Builder useLog4j2JulLogManager(final boolean useLog4j2JulLogManager) {
+            setUseLog4j2JulLogManager(useLog4j2JulLogManager);
+            return this;
+        }
+
+        public Builder injectServletContainerInitializer(final boolean injectServletContainerInitializer) {
+            setInjectServletContainerInitializer(injectServletContainerInitializer);
+            return this;
+        }
+
+        public Builder tomcatAccessLogPattern(final String tomcatAccessLogPattern) {
+            setTomcatAccessLogPattern(tomcatAccessLogPattern);
+            return this;
+        }
+
+        public Builder meecrowaveProperties(final String meecrowaveProperties) {
+            setMeecrowaveProperties(meecrowaveProperties);
+            return this;
+        }
+
+        public Builder jaxwsSupportIfAvailable(final boolean jaxwsSupportIfAvailable) {
+            setJaxwsSupportIfAvailable(jaxwsSupportIfAvailable);
+            return this;
+        }
+
+        public Builder defaultSSLHostConfigName(final String defaultSSLHostConfigName) {
+            setDefaultSSLHostConfigName(defaultSSLHostConfigName);
+            return this;
+        }
+
+        public Builder initializeClientBus(final boolean initializeClientBus) {
+            setInitializeClientBus(initializeClientBus);
+            return this;
+        }
+
+        public Builder instanceCustomizers(final Consumer<Tomcat> instanceCustomizer) {
+            addInstanceCustomizer(instanceCustomizer);
+            return this;
+        }
+
+        public Builder initializer(final ServletContainerInitializer initializer) {
+            addServletContextInitializer(initializer);
+            return this;
+        }
+
+        public Builder antiResourceLocking(final boolean antiResourceLocking) {
+            setAntiResourceLocking(antiResourceLocking);
+            return this;
+        }
+
+        public Builder contextConfigurer(final Consumer<Context> contextConfigurers) {
+            addGlobalContextCustomizer(contextConfigurers);
+            return this;
         }
     }
 
@@ -2708,7 +2000,7 @@ public class Meecrowave implements AutoCloseable {
     }
 
     // just to type it and allow some extensions to use a ServiceLoader
-    public interface ConfigurationCustomizer extends Consumer<Meecrowave.Builder> {
+    public interface ConfigurationCustomizer extends Consumer<Configuration> {
     }
 
     /**

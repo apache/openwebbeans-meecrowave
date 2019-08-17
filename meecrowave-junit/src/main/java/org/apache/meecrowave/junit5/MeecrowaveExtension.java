@@ -29,6 +29,7 @@ import java.util.Optional;
 import javax.enterprise.context.spi.CreationalContext;
 
 import org.apache.meecrowave.Meecrowave;
+import org.apache.meecrowave.configuration.Configuration;
 import org.apache.meecrowave.testing.Injector;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.AfterEachCallback;
@@ -71,7 +72,7 @@ public class MeecrowaveExtension extends BaseLifecycle
                 try {
                     final Object value = method.invoke(config);
 
-                    final Field configField = Meecrowave.Builder.class.getDeclaredField(method.getName());
+                    final Field configField = Configuration.class.getDeclaredField(method.getName());
                     if (!configField.isAccessible()) {
                         configField.setAccessible(true);
                     }

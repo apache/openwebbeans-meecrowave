@@ -75,10 +75,10 @@ import org.apache.johnzon.jaxrs.DelegateProvider;
 import org.apache.johnzon.jaxrs.JsrMessageBodyReader;
 import org.apache.johnzon.jaxrs.JsrMessageBodyWriter;
 import org.apache.johnzon.jaxrs.jsonb.jaxrs.JsonbJaxrsProvider;
-import org.apache.meecrowave.Meecrowave;
+import org.apache.meecrowave.configuration.Configuration;
 
 public class ConfigurableBus extends ExtensionManagerBus {
-    public void initProviders(final Meecrowave.Builder builder,
+    public void initProviders(final Configuration builder,
                               final ClassLoader loader) {
         final List<Object> providers =
                 ofNullable(builder.getJaxrsDefaultProviders())

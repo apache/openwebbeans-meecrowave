@@ -34,6 +34,7 @@ import org.apache.cxf.feature.Feature;
 import org.apache.cxf.interceptor.Interceptor;
 import org.apache.cxf.message.Message;
 import org.apache.meecrowave.Meecrowave;
+import org.apache.meecrowave.configuration.Configuration;
 
 @Named("cxf")
 @Typed({MeecrowaveBus.class, Bus.class})
@@ -50,7 +51,7 @@ public class MeecrowaveBus implements Bus, ClassUnwrapper {
         final ClassLoader appLoader = context.getClassLoader();
 
         final Meecrowave meecrowave = Meecrowave.class.cast(context.getAttribute("meecrowave.instance"));
-        final Meecrowave.Builder builder = Meecrowave.Builder.class.cast(context.getAttribute("meecrowave.configuration"));
+        final Configuration builder = Configuration.class.cast(context.getAttribute("meecrowave.configuration"));
         if (meecrowave.getClientBus() == null) {
             delegate = new ConfigurableBus();
             if (builder != null && builder.isJaxrsProviderSetup()) {

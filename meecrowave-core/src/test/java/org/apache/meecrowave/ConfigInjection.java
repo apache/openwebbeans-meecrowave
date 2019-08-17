@@ -18,18 +18,19 @@
  */
 package org.apache.meecrowave;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
+import javax.inject.Inject;
+
+import org.apache.meecrowave.configuration.Configuration;
 import org.apache.webbeans.config.WebBeansContext;
 import org.apache.webbeans.inject.OWBInjector;
 import org.junit.Test;
 
-import javax.inject.Inject;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-
 public class ConfigInjection {
     @Inject
-    private Meecrowave.Builder builder;
+    private Configuration configuration;
 
     @Test
     public void inject() {
@@ -38,8 +39,8 @@ public class ConfigInjection {
                         .randomHttpPort()
                         .includePackages(ConfigInjection.class.getName())).bake()) {
             OWBInjector.inject(WebBeansContext.currentInstance().getBeanManagerImpl(), this, null);
-            assertNotNull(builder);
-            assertEquals(ConfigInjection.class.getName(), builder.getScanningPackageIncludes());
+            assertNotNull(configuration);
+            assertEquals(ConfigInjection.class.getName(), configuration.getScanningPackageIncludes());
         }
     }
 }

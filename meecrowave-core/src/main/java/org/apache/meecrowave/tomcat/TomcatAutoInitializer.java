@@ -25,12 +25,12 @@ import javax.servlet.ServletContext;
 import javax.servlet.ServletRegistration;
 
 import org.apache.catalina.servlets.DefaultServlet;
-import org.apache.meecrowave.Meecrowave;
+import org.apache.meecrowave.configuration.Configuration;
 
 public class TomcatAutoInitializer implements ServletContainerInitializer {
     @Override
     public void onStartup(final Set<Class<?>> c, final ServletContext ctx) {
-        final Meecrowave.Builder builder = Meecrowave.Builder.class.cast(ctx.getAttribute("meecrowave.configuration"));
+        final Configuration builder = Configuration.class.cast(ctx.getAttribute("meecrowave.configuration"));
         if (!builder.isTomcatAutoSetup()) {
             return;
         }

@@ -19,6 +19,7 @@
 package org.apache.meecrowave.cdi;
 
 import org.apache.meecrowave.Meecrowave;
+import org.apache.meecrowave.configuration.Configuration;
 import org.apache.meecrowave.logging.jul.Log4j2Logger;
 import org.apache.meecrowave.logging.openwebbeans.Log4j2LoggerFactory;
 import org.apache.meecrowave.logging.tomcat.Log4j2Log;
@@ -55,18 +56,18 @@ public class MeecrowaveSeContainerInitializer extends OWBInitializer {
                 System.getProperty("org.apache.tomcat.Logger", Log4j2Log.class.getName()));
     }
 
-    private Meecrowave.Builder builder = new Meecrowave.Builder();
+    private Configuration builder = new Meecrowave.Builder();
 
     @Override
     public SeContainerInitializer addProperty(final String s, final Object o) {
-        if (Meecrowave.Builder.class.isInstance(o)) {
-            builder = Meecrowave.Builder.class.cast(o);
+        if (Configuration.class.isInstance(o)) {
+            builder = Configuration.class.cast(o);
             return this;
         }
 
         final String setter = "set" + Character.toUpperCase(s.charAt(0)) + s.substring(1);
-        final Class<? extends Meecrowave.Builder> builderClass = builder.getClass();
-        final Optional<Method> setterOpt = Stream.of(builderClass.getMethods())
+        final Class<? extends Configuration> builderClass = builder.getClass();
+        final Optional<Method> setterOpt = Stream.of(Configuration.class.getMethods())
                 .filter(m -> m.getName().equals(setter) && m.getParameterCount() == 1)
                 .findFirst();
         if (!setterOpt.isPresent()) {

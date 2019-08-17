@@ -25,7 +25,7 @@ import static java.util.stream.Collectors.joining;
 import java.lang.reflect.Field;
 import java.util.stream.Stream;
 
-import org.apache.meecrowave.Meecrowave;
+import org.apache.meecrowave.configuration.Configuration;
 import org.apache.meecrowave.gradle.MeecrowaveExtension;
 import org.apache.meecrowave.runner.cli.CliOption;
 
@@ -62,7 +62,7 @@ public class GradleConfiguration extends BaseGenerator {
                 return "Should the extension be skipped completely";
             default:
                 try {
-                    return Meecrowave.Builder.class.getDeclaredField(opt).getAnnotation(CliOption.class).description();
+                    return Configuration.class.getDeclaredField(opt).getAnnotation(CliOption.class).description();
                 } catch (final NoSuchFieldException e) {
                     throw new IllegalArgumentException("option " + opt + " not found");
                 }

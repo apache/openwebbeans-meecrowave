@@ -18,12 +18,9 @@
  */
 package org.apache.meecrowave.arquillian;
 
-import org.apache.catalina.Realm;
-import org.apache.meecrowave.Meecrowave;
-import org.apache.xbean.recipe.ObjectRecipe;
-import org.jboss.arquillian.config.descriptor.api.Multiline;
-import org.jboss.arquillian.container.spi.ConfigurationException;
-import org.jboss.arquillian.container.spi.client.container.ContainerConfiguration;
+import static java.util.function.Function.identity;
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toMap;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -33,9 +30,13 @@ import java.nio.charset.StandardCharsets;
 import java.util.Properties;
 import java.util.stream.Stream;
 
-import static java.util.function.Function.identity;
-import static java.util.stream.Collectors.toList;
-import static java.util.stream.Collectors.toMap;
+import org.apache.catalina.Realm;
+import org.apache.meecrowave.Meecrowave;
+import org.apache.xbean.recipe.ObjectRecipe;
+import org.jboss.arquillian.config.descriptor.api.Multiline;
+import org.jboss.arquillian.container.spi.ConfigurationException;
+import org.jboss.arquillian.container.spi.client.container.ContainerConfiguration;
+import org.jboss.shrinkwrap.api.Configuration;
 
 public class MeecrowaveConfiguration implements ContainerConfiguration {
     private int httpPort = -1;
@@ -119,7 +120,7 @@ public class MeecrowaveConfiguration implements ContainerConfiguration {
         // no-op
     }
 
-    Meecrowave.Builder toMeecrowaveConfiguration() {
+    org.apache.meecrowave.configuration.Configuration toMeecrowaveConfiguration() {
         final Meecrowave.Builder builder = new Meecrowave.Builder();
         for (final Field field : MeecrowaveConfiguration.class.getDeclaredFields()) {
             final String name = field.getName();
@@ -130,7 +131,7 @@ public class MeecrowaveConfiguration implements ContainerConfiguration {
             }
 
             try {
-                final Field configField = Meecrowave.Builder.class.getDeclaredField(field.getName());
+                final Field configField = Configuration.class.getDeclaredField(field.getName());
                 if (!configField.getType().equals(field.getType())) {
                     continue;
                 }

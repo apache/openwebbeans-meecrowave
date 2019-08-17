@@ -19,6 +19,7 @@
 package org.apache.meecrowave.openwebbeans;
 
 import org.apache.meecrowave.Meecrowave;
+import org.apache.meecrowave.configuration.Configuration;
 import org.apache.meecrowave.logging.tomcat.LogFacade;
 import org.apache.tomcat.JarScanFilter;
 import org.apache.webbeans.config.WebBeansContext;
@@ -299,7 +300,7 @@ public class OWBTomcatWebScannerService extends WebScannerService {
         this.filter = filter;
 
         super.init(ctx);
-        final Meecrowave.Builder config = Meecrowave.Builder.class.cast(ServletContext.class.cast(ctx).getAttribute("meecrowave.configuration"));
+        final Configuration config = Configuration.class.cast(ServletContext.class.cast(ctx).getAttribute("meecrowave.configuration"));
         if (this.filter == null) {
             this.filter = new KnownJarsFilter(config);
         }

@@ -18,7 +18,7 @@
  */
 package org.apache.meecrowave.jolokia;
 
-import org.apache.meecrowave.Meecrowave;
+import org.apache.meecrowave.configuration.Configuration;
 import org.apache.meecrowave.runner.Cli;
 import org.apache.meecrowave.runner.cli.CliOption;
 import org.jolokia.http.AgentServlet;
@@ -34,7 +34,7 @@ import static java.util.Optional.ofNullable;
 public class JolokiaInitializer implements ServletContainerInitializer {
     @Override
     public void onStartup(final Set<Class<?>> set, final ServletContext servletContext) throws ServletException {
-        final Meecrowave.Builder config = Meecrowave.Builder.class.cast(servletContext.getAttribute("meecrowave.configuration"));
+        final Configuration config = Configuration.class.cast(servletContext.getAttribute("meecrowave.configuration"));
         final JolokiaConfiguration configuration = config.getExtension(JolokiaConfiguration.class);
         if (!configuration.isActive()) {
             return;
