@@ -46,9 +46,8 @@ link:{context_rootpath}/testing/index.html[Read More]
 
 == Meecrowave and Monitoring
 
-Meecrowave provides few integration for the monitoring:
-
-link:{context_rootpath}/meecrowave-jolokia/index.html[Jolokia (JMX)]
+For monitoring, link:https://microprofile.io/[Microprofile] can be a neat companion of Apache Meecrowave.
+You can have a look to link:http://geronimo.apache.org/microprofile/[Geronimo] implementation.
 
 == Meecrowave and JTA
 
