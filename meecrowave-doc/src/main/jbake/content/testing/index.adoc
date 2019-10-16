@@ -17,6 +17,7 @@ Coordinates:
   <groupId>org.apache.meecrowave</groupId>
   <artifactId>meecrowave-junit</artifactId>
   <version>${meecrowave.version}</version>
+  <scope>test</scope>
 </dependency>
 ----
 
@@ -118,6 +119,7 @@ Container dependency:
   <groupId>org.apache.meecrowave</groupId>
   <artifactId>meecrowave-arquillian</artifactId>
   <version>${meecrowave.version}</version>
+  <scope>test</scope>
 </dependency>
 ----
 
