@@ -103,6 +103,14 @@ public class ReloadOnChangeController implements AutoCloseable, Runnable {
                 Thread.interrupted();
             }
         }
+        if (watchService != null) {
+            try {
+                watchService.close();
+            } catch (final IOException ex) {
+                new LogFacade(ReloadOnChangeController.class.getName())
+                        .warn(ex.getMessage(), ex);
+            }
+        }
     }
 
     public boolean shouldRun() {
