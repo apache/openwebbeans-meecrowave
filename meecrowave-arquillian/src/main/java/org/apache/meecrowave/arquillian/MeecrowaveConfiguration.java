@@ -32,11 +32,11 @@ import java.util.stream.Stream;
 
 import org.apache.catalina.Realm;
 import org.apache.meecrowave.Meecrowave;
+import org.apache.meecrowave.configuration.Configuration;
 import org.apache.xbean.recipe.ObjectRecipe;
 import org.jboss.arquillian.config.descriptor.api.Multiline;
 import org.jboss.arquillian.container.spi.ConfigurationException;
 import org.jboss.arquillian.container.spi.client.container.ContainerConfiguration;
-import org.jboss.shrinkwrap.api.Configuration;
 
 public class MeecrowaveConfiguration implements ContainerConfiguration {
     private int httpPort = -1;
@@ -120,7 +120,7 @@ public class MeecrowaveConfiguration implements ContainerConfiguration {
         // no-op
     }
 
-    org.apache.meecrowave.configuration.Configuration toMeecrowaveConfiguration() {
+    Configuration toMeecrowaveConfiguration() {
         final Meecrowave.Builder builder = new Meecrowave.Builder();
         for (final Field field : MeecrowaveConfiguration.class.getDeclaredFields()) {
             final String name = field.getName();
