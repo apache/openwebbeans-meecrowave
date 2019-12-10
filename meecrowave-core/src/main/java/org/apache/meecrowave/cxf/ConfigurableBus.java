@@ -26,6 +26,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Reader;
 import java.io.Writer;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Collection;
@@ -71,9 +73,6 @@ import org.apache.cxf.endpoint.ClientLifeCycleManager;
 import org.apache.johnzon.core.AbstractJsonFactory;
 import org.apache.johnzon.core.JsonGeneratorFactoryImpl;
 import org.apache.johnzon.core.JsonParserFactoryImpl;
-import org.apache.johnzon.jaxrs.DelegateProvider;
-import org.apache.johnzon.jaxrs.JsrMessageBodyReader;
-import org.apache.johnzon.jaxrs.JsrMessageBodyWriter;
 import org.apache.johnzon.jaxrs.jsonb.jaxrs.JsonbJaxrsProvider;
 import org.apache.meecrowave.configuration.Configuration;
 
@@ -125,8 +124,7 @@ public class ConfigurableBus extends ExtensionManagerBus {
                                             builder.isJsonbIJson(), builder.isJsonbPrettify(),
                                             builder.getJsonbBinaryStrategy(), builder.getJsonbNamingStrategy(),
                                             builder.getJsonbOrderStrategy(),
-                                            new DelegateJsonProvider(provider, readerFactory, writerFactory)),
-                                    new ConfiguredJsrProvider(readerFactory, writerFactory))
+                                            new DelegateJsonProvider(provider, readerFactory, writerFactory)))
                                     .collect(toList());
                         });
 
@@ -192,15 +190,17 @@ public class ConfigurableBus extends ExtensionManagerBus {
         protected Jsonb createJsonb() {
             return jsonb;
         }
-    }
 
-    @Provider
-    @Produces({MediaType.APPLICATION_JSON, "application/*+json"})
-    @Consumes({MediaType.APPLICATION_JSON, "application/*+json"})
-    public static class ConfiguredJsrProvider extends DelegateProvider<JsonStructure> { // TODO: probably wire the encoding in johnzon
-        private ConfiguredJsrProvider(final JsonReaderFactory readerFactory,
-                                      final JsonWriterFactory writerFactory) {
-            super(new JsrMessageBodyReader(readerFactory, false), new JsrMessageBodyWriter(writerFactory, false));
+        @Override
+        public boolean isReadable(final Class<?> type, final Type genericType,
+                                  final Annotation[] annotations, final MediaType mediaType) {
+            return super.isReadable(type, genericType, annotations, mediaType) || JsonValue.class.isAssignableFrom(type);
+        }
+
+        @Override
+        public boolean isWriteable(final Class<?> type, final Type genericType,
+                                   final Annotation[] annotations, final MediaType mediaType) {
+            return super.isWriteable(type, genericType, annotations, mediaType) || JsonValue.class.isAssignableFrom(type);
         }
     }
 

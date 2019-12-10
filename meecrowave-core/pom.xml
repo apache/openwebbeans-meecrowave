@@ -151,11 +151,6 @@
     </dependency>
     <dependency>
       <groupId>org.apache.johnzon</groupId>
-      <artifactId>johnzon-jaxrs</artifactId>
-      <version>${johnzon.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.johnzon</groupId>
       <artifactId>johnzon-jsonb</artifactId>
       <version>${johnzon.version}</version>
     </dependency>
