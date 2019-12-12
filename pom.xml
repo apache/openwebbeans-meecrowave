@@ -51,7 +51,7 @@
     <meecrowave.build.name>${project.groupId}.${project.artifactId}</meecrowave.build.name>
 
     <junit.version>4.13-beta-3</junit.version>
-    <tomcat.version>9.0.29</tomcat.version>
+    <tomcat.version>9.0.30</tomcat.version>
     <openwebbeans.version>2.0.13</openwebbeans.version>
     <cxf.version>3.3.4</cxf.version>
     <johnzon.version>1.2.2</johnzon.version>
@@ -63,7 +63,7 @@
     <h2.version>1.4.196</h2.version>
     <dbcp2.version>2.7.0</dbcp2.version>
     <commons-cli.version>1.4</commons-cli.version>
-    <xbean.version>4.14</xbean.version>
+    <xbean.version>4.15</xbean.version>
 
     <java11.jaxb.version>2.3.0</java11.jaxb.version>
   </properties>
