@@ -82,24 +82,15 @@ public class ProxyServlet extends HttpServlet {
         final AsyncContext asyncContext = req.startAsync();
         asyncContext.setTimeout(route.clientConfiguration.timeouts.execution);
 
-        return doRequest(route, req, resp, prefix).handle((response, error) -> {
-            try {
-                if (error != null) {
-                    onError(route, req, resp, error);
-                } else {
+        return doRequest(route, req, resp, prefix)
+                .thenAccept(response -> {
                     try {
                         forwardResponse(route, response, req, resp, identity());
                     } catch (final IOException e) {
                         onError(route, req, resp, e);
                     }
-                }
-            } catch (final IOException ioe) {
-                getServletContext().log("Error Proxying " + req.getMethod() + " " + req.getRequestURI() + ": " + ioe.getMessage(), ioe);
-            } finally {
-                asyncContext.complete();
-            }
-            return resp;
-        });
+        }).exceptionally(error -> onError(route, req, resp, error)).whenComplete((a, b) -> asyncContext.complete())
+                .thenApply(i -> resp);
     }
 
     protected CompletionStage<Response> doRequest(final Routes.Route route,
@@ -168,17 +159,23 @@ public class ProxyServlet extends HttpServlet {
         return !HttpMethod.HEAD.equalsIgnoreCase(req.getMethod()) && !HttpMethod.GET.equalsIgnoreCase(req.getMethod());
     }
 
-    protected void onError(final Routes.Route route,
+    protected Void onError(final Routes.Route route,
                            final HttpServletRequest request, final HttpServletResponse resp,
-                           final Throwable error) throws IOException {
-        if (WebApplicationException.class.isInstance(error)) {
-            final WebApplicationException wae = WebApplicationException.class.cast(error);
-            if (wae.getResponse() != null) {
-                forwardResponse(route, wae.getResponse(), request, resp, identity());
-                return;
+                           final Throwable error) {
+        try {
+            if (WebApplicationException.class.isInstance(error)) {
+                final WebApplicationException wae = WebApplicationException.class.cast(error);
+                if (wae.getResponse() != null) {
+                    forwardResponse(route, wae.getResponse(), request, resp, identity());
+                    return null;
+                }
             }
+            onDefaultError(resp, error);
+        } catch (final IOException ioe) {
+            getServletContext().log(ioe.getMessage(), ioe);
+            throw new IllegalStateException(ioe);
         }
-        onDefaultError(resp, error);
+        return null;
     }
 
     protected void onDefaultError(HttpServletResponse resp, Throwable error) throws IOException {
@@ -209,7 +206,9 @@ public class ProxyServlet extends HttpServlet {
         final NewCookie nc = cookie.getValue();
         final Cookie servletCookie = new Cookie(cookie.getKey(), nc.getValue());
         servletCookie.setComment(nc.getComment());
-        servletCookie.setDomain(nc.getDomain());
+        if (nc.getDomain() != null) {
+            servletCookie.setDomain(nc.getDomain());
+        }
         servletCookie.setHttpOnly(nc.isHttpOnly());
         servletCookie.setSecure(nc.isSecure());
         servletCookie.setMaxAge(nc.getMaxAge());
