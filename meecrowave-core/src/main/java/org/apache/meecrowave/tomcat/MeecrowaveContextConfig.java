@@ -141,9 +141,18 @@ public class MeecrowaveContextConfig extends ContextConfig {
             final WebXml annotations = new WebXml();
             annotations.setDistributable(true);
             final URL url = fragment.getURL();
-            final Collection<Class<?>> classes = webClasses.get(url.toExternalForm());
-            if (classes == null) {
-                return;
+            String urlString = url.toExternalForm();
+            Collection<Class<?>> classes = webClasses.get(urlString);
+            if (classes == null) { // mainly java 11, no need on java 8
+                if (urlString.startsWith("file:") && urlString.endsWith("jar")) {
+                    urlString = "jar:" + urlString + "!/";
+                } else {
+                    return;
+                }
+                classes = webClasses.get(urlString);
+                if (classes == null) {
+                    return;
+                }
             }
             classes.forEach(clazz -> {
                 try (final InputStream stream = loader.getResourceAsStream(clazz.getName().replace('.', '/') + ".class")) {
