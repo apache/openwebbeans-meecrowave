@@ -50,8 +50,8 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <meecrowave.build.name>${project.groupId}.${project.artifactId}</meecrowave.build.name>
 
-    <junit.version>4.13-beta-3</junit.version>
-    <tomcat.version>9.0.30</tomcat.version>
+    <junit.version>4.13</junit.version>
+    <tomcat.version>9.0.31</tomcat.version>
     <openwebbeans.version>2.0.14</openwebbeans.version>
     <cxf.version>3.3.5</cxf.version>
     <johnzon.version>1.2.2</johnzon.version>
