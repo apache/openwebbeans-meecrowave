@@ -378,18 +378,7 @@ public class Meecrowave implements AutoCloseable {
             ctx.setSessionTimeout(configuration.getWebSessionTimeout() != null ? configuration.getWebSessionTimeout() : 30);
             ctx.addWelcomeFile("index.html");
             ctx.addWelcomeFile("index.htm");
-            try {
-                final Field mimesField = Tomcat.class.getDeclaredField("DEFAULT_MIME_MAPPINGS");
-                if (!mimesField.isAccessible()) {
-                    mimesField.setAccessible(true);
-                }
-                final String[] defaultMimes = String[].class.cast(mimesField.get(null));
-                for (int i = 0; i < defaultMimes.length; ) {
-                    ctx.addMimeMapping(defaultMimes[i++], defaultMimes[i++]);
-                }
-            } catch (final NoSuchFieldException | IllegalAccessException e) {
-                throw new IllegalStateException("Incompatible Tomcat", e);
-            }
+            Tomcat.addDefaultMimeTypeMappings(ctx);
         } else if (configuration.getWebSessionTimeout() != null) {
             ctx.setSessionTimeout(configuration.getWebSessionTimeout());
         }
