@@ -308,7 +308,7 @@ public class MeecrowaveRunMojo extends AbstractMojo {
     @Parameter(property = "meecrowave.jaxws-support", defaultValue = "true")
     private boolean jaxwsSupportIfAvailable;
 
-    @Parameter(property = "meecrowave.reload-goals", defaultValue = "process-classes")
+    @Parameter(property = "meecrowave.reload-goals")
     private List<String> reloadGoals; // todo: add watching on project.build.directory?
 
     @Parameter(property = "meecrowave.default-ssl-hostconfig-name")
@@ -328,6 +328,13 @@ public class MeecrowaveRunMojo extends AbstractMojo {
         if (skip) {
             getLog().warn("Mojo skipped");
             return;
+        }
+        if (watcherBouncing <= 0 && (reloadGoals == null || reloadGoals.isEmpty())) {
+            try {
+                reloadGoals = singletonList("process-classes");
+            } catch (final RuntimeException re) { // mojo in read only mode
+                // no-op
+            }
         }
         logConfigurationErrors();
 
