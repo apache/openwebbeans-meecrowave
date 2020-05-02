@@ -1093,6 +1093,8 @@ public class Configuration {
                     toSet = Boolean.parseBoolean(val);
                 } else if (field.getType() == File.class) {
                     toSet = new File(val);
+                } else if (field.getType() == long.class) {
+                    toSet = Long.parseLong(val);
                 } else {
                     toSet = null;
                 }
@@ -1195,6 +1197,8 @@ public class Configuration {
                                 f.set(instance, value);
                             } else if (t == int.class) {
                                 f.set(instance, Integer.parseInt(value));
+                            } else if (t == long.class) {
+                                f.set(instance, Long.parseLong(value));
                             } else if (t == boolean.class) {
                                 f.set(instance, Boolean.parseBoolean(value));
                             } else {

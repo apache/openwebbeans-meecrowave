@@ -171,6 +171,9 @@ public class Cli implements Runnable, AutoCloseable {
         if (int.class == type) {
             return Integer.parseInt(optionValues[0]);
         }
+        if (long.class == type) {
+            return Long.parseLong(optionValues[0]);
+        }
         if (File.class == type) {
             return new File(optionValues[0]);
         }
