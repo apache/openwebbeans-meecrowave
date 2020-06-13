@@ -88,7 +88,7 @@ Points to take care are:
 <plugin>
   <groupId>org.apache.maven.plugins</groupId>
   <artifactId>maven-shade-plugin</artifactId>
-  <version>3.2.1</version>
+  <version>3.2.4</version>
   <executions>
     <execution>
       <id>bundle</id>
@@ -110,9 +110,8 @@ Points to take care are:
           <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
             <resource>log4j2.component.properties</resource>
           </transformer>
-          <transformer
-              implementation="com.github.edwgiz.mavenShadePlugin.log4j2CacheTransformer.PluginsCacheFileTransformer"/>
-          <transformer implementation="org.apache.openwebbeans.maven.shade.OpenWebBeansPropertiesTransformer"/>
+          <transformer implementation="com.github.edwgiz.maven_shade_plugin.log4j2_cache_transformer.PluginsCacheFileTransformer" />
+          <transformer implementation="org.apache.maven.plugins.shade.resource.properties.OpenWebBeansPropertiesTransformer" />
           <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
         </transformers>
         <filters>
@@ -134,18 +133,11 @@ Points to take care are:
   </executions>
   <dependencies>
     <dependency>
-      <groupId>org.apache.openwebbeans</groupId>
-      <artifactId>openwebbeans-maven</artifactId>
-      <version>1.7.0</version>
-    </dependency>
-    <dependency>
       <groupId>com.github.edwgiz</groupId>
       <artifactId>maven-shade-plugin.log4j2-cachefile-transformer</artifactId>
-      <version>2.1</version>
+      <version>2.13.3</version>
     </dependency>
   </dependencies>
 </plugin>
 ----
-
-TIP: starting with ̀ maven-shade-plugin` 3.2.2, you don't need `openwebbeans-maven` anymore. Just replace `org.apache.openwebbeans.maven.shade.OpenWebBeansPropertiesTransformer` by `org.apache.maven.plugins.shade.resource.properties.OpenWebBeansPropertiesTransformer`.
 
