@@ -53,17 +53,17 @@
     <junit.version>4.13</junit.version>
     <tomcat.version>9.0.37</tomcat.version>
     <openwebbeans.version>2.0.17</openwebbeans.version>
-    <cxf.version>3.3.7</cxf.version>
-    <johnzon.version>1.2.7</johnzon.version>
+    <cxf.version>3.4.0</cxf.version>
+    <johnzon.version>1.2.8</johnzon.version>
     <log4j2.version>2.13.3</log4j2.version>
     <deltaspike.version>1.8.2</deltaspike.version>
     <jaxb.version>2.2.11</jaxb.version>
-    <openjpa.version>3.1.1</openjpa.version>
+    <openjpa.version>3.1.2</openjpa.version>
     <jpa-spec.version>1.0-alpha-1</jpa-spec.version>
-    <h2.version>1.4.196</h2.version>
+    <h2.version>1.4.200</h2.version>
     <dbcp2.version>2.7.0</dbcp2.version>
     <commons-cli.version>1.4</commons-cli.version>
-    <xbean.version>4.16</xbean.version>
+    <xbean.version>4.17</xbean.version>
 
     <java11.jaxb.version>2.3.0</java11.jaxb.version>
   </properties>

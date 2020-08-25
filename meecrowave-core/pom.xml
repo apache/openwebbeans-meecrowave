@@ -56,7 +56,7 @@
     </dependency>
     <dependency>
       <groupId>org.apache.xbean</groupId>
-      <artifactId>xbean-asm7-shaded</artifactId>
+      <artifactId>xbean-asm8-shaded</artifactId>
       <version>${xbean.version}</version>
     </dependency>
     <dependency>
@@ -100,6 +100,10 @@
       <version>${cxf.version}</version>
       <exclusions>
         <exclusion>
+          <groupId>jakarta.annotation</groupId>
+          <artifactId>jakarta.annotation-api</artifactId>
+        </exclusion>
+        <exclusion>
           <groupId>org.glassfish.jaxb</groupId>
           <artifactId>jaxb-runtime</artifactId>
         </exclusion>
@@ -135,12 +139,16 @@
       <version>${cxf.version}</version>
       <exclusions>
         <exclusion>
-          <groupId>javax.inject</groupId>
-          <artifactId>javax.inject</artifactId>
+          <groupId>jakarta.annotation</groupId>
+          <artifactId>jakarta.annotation-api</artifactId>
         </exclusion>
         <exclusion>
-          <groupId>javax.enterprise</groupId>
-          <artifactId>cdi-api</artifactId>
+          <groupId>jakarta.inject</groupId>
+          <artifactId>jakarta.inject-api</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>jakarta.enterprise</groupId>
+          <artifactId>jakarta.enterprise.cdi-api</artifactId>
         </exclusion>
       </exclusions>
     </dependency>
