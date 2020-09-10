@@ -52,7 +52,7 @@
 
     <junit.version>4.13</junit.version>
     <tomcat.version>9.0.37</tomcat.version>
-    <openwebbeans.version>2.0.17</openwebbeans.version>
+    <openwebbeans.version>2.0.18</openwebbeans.version>
     <cxf.version>3.4.0</cxf.version>
     <johnzon.version>1.2.8</johnzon.version>
     <log4j2.version>2.13.3</log4j2.version>
