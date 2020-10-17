@@ -93,6 +93,7 @@ public class OWBAutoSetup implements ServletContainerInitializer {
                             .qualifiers(DefaultLiteral.INSTANCE)
                             .types(Configuration.class, Meecrowave.Builder.class, Object.class)
                             .createWith(cc -> meecrowave.getConfiguration())));
+
             beanManager.addInternalBean(newBean(instance, configurator ->
                     configurator.beanClass(Meecrowave.class)
                             .scope(ApplicationScoped.class)
