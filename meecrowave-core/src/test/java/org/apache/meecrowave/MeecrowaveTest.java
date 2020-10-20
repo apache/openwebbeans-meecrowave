@@ -58,6 +58,15 @@ import javax.enterprise.inject.spi.CDI;
 
 public class MeecrowaveTest {
     @Test
+    public void noTomcatScanning() {
+        try (final Meecrowave meecrowave = new Meecrowave(
+                new Meecrowave.Builder().tomcatScanning(false).randomHttpPort())
+                .bake()) {
+            // ok it started, before the fix it was failing due to a NPE
+        }
+    }
+
+    @Test
     public void fastStartupSessionId() {
         try (final Meecrowave meecrowave = new Meecrowave(new Meecrowave.Builder().randomHttpPort())
                 .start().deployClasspath()) {

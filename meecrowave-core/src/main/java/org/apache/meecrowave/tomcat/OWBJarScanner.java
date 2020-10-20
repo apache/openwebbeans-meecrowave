@@ -27,6 +27,7 @@ import org.apache.tomcat.util.scan.Constants;
 import org.apache.tomcat.util.scan.JarFactory;
 import org.apache.webbeans.config.WebBeansContext;
 import org.apache.webbeans.corespi.scanner.xbean.CdiArchive;
+import org.apache.webbeans.corespi.scanner.xbean.OwbAnnotationFinder;
 import org.apache.webbeans.web.scanner.WebScannerService;
 import org.apache.xbean.finder.util.Files;
 
@@ -43,7 +44,12 @@ public class OWBJarScanner implements JarScanner {
     public void scan(final JarScanType jarScanType, final ServletContext servletContext, final JarScannerCallback callback) {
         switch (jarScanType) {
             case PLUGGABILITY:
-                CdiArchive.class.cast(WebScannerService.class.cast(WebBeansContext.getInstance().getScannerService()).getFinder().getArchive())
+                final WebBeansContext owb = WebBeansContext.getInstance();
+                final OwbAnnotationFinder finder = WebScannerService.class.cast(owb.getScannerService()).getFinder();
+                if (finder == null) {
+                    return;
+                }
+                CdiArchive.class.cast(finder.getArchive())
                         .classesByUrl().keySet().stream()
                         .filter(u -> !"jar:file://!/".equals(u)) // not a fake in memory url
                         .forEach(u -> {

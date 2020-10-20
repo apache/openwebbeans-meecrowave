@@ -80,6 +80,11 @@
       <version>${openwebbeans.version}</version>
       <scope>provided</scope>
     </dependency>
+    <dependency>
+      <groupId>org.apache.openwebbeans</groupId>
+      <artifactId>openwebbeans-spi</artifactId>
+      <version>${openwebbeans.version}</version>
+    </dependency>
     <dependency> <!-- not that if a user adds owb-se this should get excluded -->
       <groupId>org.apache.openwebbeans</groupId>
       <artifactId>openwebbeans-web</artifactId>
