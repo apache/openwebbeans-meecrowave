@@ -26,7 +26,7 @@ import org.apache.webbeans.configurator.BeanConfiguratorImpl;
 import org.apache.webbeans.container.BeanManagerImpl;
 import org.apache.webbeans.servlet.WebBeansConfigurationListener;
 
-import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.context.Dependent;
 import javax.enterprise.inject.spi.Bean;
 import javax.enterprise.inject.spi.Extension;
 import javax.enterprise.inject.spi.configurator.BeanConfigurator;
@@ -89,14 +89,14 @@ public class OWBAutoSetup implements ServletContainerInitializer {
 
             beanManager.addInternalBean(newBean(instance, configurator ->
                     configurator.beanClass(Meecrowave.Builder.class)
-                            .scope(ApplicationScoped.class)
+                            .scope(Dependent.class)
                             .qualifiers(DefaultLiteral.INSTANCE)
                             .types(Configuration.class, Meecrowave.Builder.class, Object.class)
                             .createWith(cc -> meecrowave.getConfiguration())));
 
             beanManager.addInternalBean(newBean(instance, configurator ->
                     configurator.beanClass(Meecrowave.class)
-                            .scope(ApplicationScoped.class)
+                            .scope(Dependent.class)
                             .qualifiers(DefaultLiteral.INSTANCE)
                             .types(Meecrowave.class, AutoCloseable.class, Object.class)
                             .createWith(cc -> meecrowave)));
