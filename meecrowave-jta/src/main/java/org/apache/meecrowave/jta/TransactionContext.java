@@ -38,7 +38,7 @@ public class TransactionContext implements AlterableContext, Synchronization {
     private TransactionManager transactionManager;
     private Map<Contextual<?>, BeanInstanceBag<?>> componentInstanceMap;
 
-    void init(final TransactionManager transactionManager, final TransactionSynchronizationRegistry transactionSynchronizationRegistry) {
+    public void init(final TransactionManager transactionManager, final TransactionSynchronizationRegistry transactionSynchronizationRegistry) {
         this.transactionManager = transactionManager;
         this.componentInstanceMap = Map.class.cast(Proxy.newProxyInstance(
                 Thread.currentThread().getContextClassLoader(), new Class<?>[]{Map.class},

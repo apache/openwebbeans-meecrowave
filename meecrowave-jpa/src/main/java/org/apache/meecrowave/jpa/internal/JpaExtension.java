@@ -168,7 +168,7 @@ public class JpaExtension implements Extension {
         return builder.toInfo();
     }
 
-    EntityManagerContext getEntityManagerContext() {
+    public EntityManagerContext getEntityManagerContext() {
         return entityManagerContext;
     }
 
