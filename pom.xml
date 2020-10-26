@@ -54,7 +54,7 @@
     <tomcat.version>9.0.39</tomcat.version>
     <openwebbeans.version>2.0.19</openwebbeans.version>
     <cxf.version>3.4.0</cxf.version>
-    <openwebbeans.version>2.0.19</openwebbeans.version>
+    <openwebbeans.version>2.0.20-SNAPSHOT</openwebbeans.version>
     <cxf.version>3.4.1-SNAPSHOT</cxf.version>
     <johnzon.version>1.2.8</johnzon.version>
     <log4j2.version>2.13.3</log4j2.version>
