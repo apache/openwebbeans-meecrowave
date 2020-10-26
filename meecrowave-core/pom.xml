@@ -115,6 +115,14 @@
       <version>${cxf.version}</version>
       <exclusions>
         <exclusion>
+          <groupId>org.apache.geronimo.specs</groupId>
+          <artifactId>geronimo-jta_1.1_spec</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.jboss.spec.javax.rmi</groupId>
+          <artifactId>jboss-rmi-api_1.0_spec</artifactId>
+        </exclusion>
+        <exclusion>
           <groupId>jakarta.xml.ws</groupId>
           <artifactId>*</artifactId>
         </exclusion>
