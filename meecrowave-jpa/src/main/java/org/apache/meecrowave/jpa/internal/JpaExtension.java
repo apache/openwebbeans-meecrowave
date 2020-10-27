@@ -201,5 +201,13 @@ public class JpaExtension implements Extension {
         public int hashCode() {
             return hash;
         }
+
+        @Override
+        public String toString() {
+            return "UnitKey{" +
+                    "unitName='" + unitName + '\'' +
+                    ", synchronizationType=" + synchronizationType +
+                    '}';
+        }
     }
 }
