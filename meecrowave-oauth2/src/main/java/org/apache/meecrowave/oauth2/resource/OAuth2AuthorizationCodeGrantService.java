@@ -18,11 +18,12 @@
  */
 package org.apache.meecrowave.oauth2.resource;
 
-import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static javax.ws.rs.core.MediaType.APPLICATION_XHTML_XML;
-import static javax.ws.rs.core.MediaType.APPLICATION_XML;
-import static javax.ws.rs.core.MediaType.TEXT_HTML;
-import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
+import org.apache.cxf.jaxrs.ext.MessageContext;
+import org.apache.cxf.rs.security.oauth2.common.UserSubject;
+import org.apache.cxf.rs.security.oauth2.services.AuthorizationCodeGrantService;
+import org.apache.cxf.rs.security.oauth2.services.RedirectionBasedGrantService;
+import org.apache.cxf.security.SecurityContext;
+import org.apache.meecrowave.oauth2.configuration.OAuth2Configurer;
 
 import javax.enterprise.context.RequestScoped;
 import javax.enterprise.inject.Typed;
@@ -34,10 +35,13 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
+import java.security.Principal;
 
-import org.apache.cxf.rs.security.oauth2.services.AuthorizationCodeGrantService;
-import org.apache.cxf.rs.security.oauth2.services.RedirectionBasedGrantService;
-import org.apache.meecrowave.oauth2.configuration.OAuth2Configurer;
+import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
+import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static javax.ws.rs.core.MediaType.APPLICATION_XHTML_XML;
+import static javax.ws.rs.core.MediaType.APPLICATION_XML;
+import static javax.ws.rs.core.MediaType.TEXT_HTML;
 
 @RequestScoped
 @Path("authorize")
@@ -51,7 +55,7 @@ public class OAuth2AuthorizationCodeGrantService extends AuthorizationCodeGrantS
 
     @Override
     @GET
-    @Produces({ APPLICATION_XHTML_XML, TEXT_HTML, APPLICATION_XML, APPLICATION_JSON })
+    @Produces({APPLICATION_XHTML_XML, TEXT_HTML, APPLICATION_XML, APPLICATION_JSON})
     public Response authorize() {
         return getDelegate().authorize();
     }
@@ -73,6 +77,7 @@ public class OAuth2AuthorizationCodeGrantService extends AuthorizationCodeGrantS
 
     private RedirectionBasedGrantService getDelegate() {
         delegate.setMessageContext(getMessageContext());
+        delegate.setConfigurer(configurer);
         configurer.accept(delegate);
         return delegate;
     }
@@ -80,5 +85,22 @@ public class OAuth2AuthorizationCodeGrantService extends AuthorizationCodeGrantS
     @RequestScoped
     @Typed(LazyImpl.class)
     static class LazyImpl extends AuthorizationCodeGrantService {
+        private OAuth2Configurer configurer;
+
+        public void setConfigurer(final OAuth2Configurer configurer) {
+            this.configurer = configurer;
+        }
+
+        @Override
+        protected UserSubject createUserSubject(final SecurityContext securityContext,
+                                                final MultivaluedMap<String, String> params) {
+            final MessageContext mc = getMessageContext();
+            final UserSubject subject = mc.getContent(UserSubject.class);
+            if (subject != null) {
+                return subject;
+            }
+            final Principal principal = securityContext.getUserPrincipal();
+            return configurer.doCreateUserSubject(principal);
+        }
     }
 }

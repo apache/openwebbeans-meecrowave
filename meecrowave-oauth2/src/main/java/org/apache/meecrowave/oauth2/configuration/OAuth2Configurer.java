@@ -18,41 +18,12 @@
  */
 package org.apache.meecrowave.oauth2.configuration;
 
-import static java.util.Arrays.asList;
-import static java.util.Collections.emptySet;
-import static java.util.Locale.ENGLISH;
-import static java.util.Optional.ofNullable;
-import static java.util.function.Function.identity;
-import static java.util.stream.Collectors.toMap;
-import static org.apache.cxf.rs.security.oauth2.common.AuthenticationMethod.PASSWORD;
-
-import java.io.IOException;
-import java.io.StringReader;
-import java.nio.charset.StandardCharsets;
-import java.security.Principal;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.function.Consumer;
-import java.util.function.Function;
-
-import javax.annotation.PostConstruct;
-import javax.crypto.spec.SecretKeySpec;
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.core.Response;
-
 import org.apache.catalina.realm.GenericPrincipal;
 import org.apache.cxf.Bus;
 import org.apache.cxf.common.util.StringUtils;
 import org.apache.cxf.interceptor.security.AuthenticationException;
 import org.apache.cxf.jaxrs.ext.MessageContext;
+import org.apache.cxf.jaxrs.utils.JAXRSUtils;
 import org.apache.cxf.message.Message;
 import org.apache.cxf.phase.PhaseInterceptorChain;
 import org.apache.cxf.rs.security.jose.jwe.JweEncryptionProvider;
@@ -61,10 +32,10 @@ import org.apache.cxf.rs.security.jose.jwe.JweUtils;
 import org.apache.cxf.rs.security.jose.jws.JwsSignatureProvider;
 import org.apache.cxf.rs.security.jose.jws.JwsUtils;
 import org.apache.cxf.rs.security.jose.jwt.JwtClaims;
-import org.apache.cxf.rs.security.oauth2.common.AccessToken;
+import org.apache.cxf.rs.security.oauth2.common.AuthenticationMethod;
+import org.apache.cxf.rs.security.oauth2.common.Client;
 import org.apache.cxf.rs.security.oauth2.common.OAuthRedirectionState;
 import org.apache.cxf.rs.security.oauth2.common.ServerAccessToken;
-import org.apache.cxf.rs.security.oauth2.common.TokenIntrospection;
 import org.apache.cxf.rs.security.oauth2.common.UserSubject;
 import org.apache.cxf.rs.security.oauth2.grants.AbstractGrantHandler;
 import org.apache.cxf.rs.security.oauth2.grants.clientcred.ClientCredentialsGrantHandler;
@@ -92,6 +63,34 @@ import org.apache.cxf.rs.security.oauth2.utils.OAuthUtils;
 import org.apache.meecrowave.Meecrowave;
 import org.apache.meecrowave.oauth2.data.RefreshTokenEnabledProvider;
 import org.apache.meecrowave.oauth2.provider.JCacheCodeDataProvider;
+
+import javax.annotation.PostConstruct;
+import javax.crypto.spec.SecretKeySpec;
+import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.core.MultivaluedMap;
+import java.io.IOException;
+import java.io.StringReader;
+import java.nio.charset.StandardCharsets;
+import java.security.Principal;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.function.Consumer;
+import java.util.function.Function;
+
+import static java.util.Arrays.asList;
+import static java.util.Collections.emptySet;
+import static java.util.Locale.ENGLISH;
+import static java.util.Optional.ofNullable;
+import static java.util.function.Function.identity;
+import static java.util.stream.Collectors.toMap;
+import static org.apache.cxf.rs.security.oauth2.common.AuthenticationMethod.PASSWORD;
 
 @ApplicationScoped
 public class OAuth2Configurer {
@@ -134,6 +133,13 @@ public class OAuth2Configurer {
                         protected JwtClaims createJwtAccessToken(final ServerAccessToken at) {
                             return customizeClaims.apply(super.createJwtAccessToken(at));
                         }
+
+                        @Override
+                        protected ServerAccessToken createNewAccessToken(final Client client, final UserSubject userSub) {
+                            final ServerAccessToken token = super.createNewAccessToken(client, userSub);
+                            forwardClaims(client, userSub, token);
+                            return token;
+                        }
                     };
                     jpaProvider.setEntityManagerFactory(JPAAdapter.createEntityManagerFactory(configuration));
                     provider = jpaProvider;
@@ -145,6 +151,13 @@ public class OAuth2Configurer {
                     @Override
                     protected JwtClaims createJwtAccessToken(final ServerAccessToken at) {
                         return customizeClaims.apply(super.createJwtAccessToken(at));
+                    }
+
+                    @Override
+                    protected ServerAccessToken createNewAccessToken(final Client client, final UserSubject userSub) {
+                        final ServerAccessToken token = super.createNewAccessToken(client, userSub);
+                        forwardClaims(client, userSub, token);
+                        return token;
                     }
                 };
                 jpaProvider.setEntityManagerFactory(JPAAdapter.createEntityManagerFactory(configuration));
@@ -160,6 +173,13 @@ public class OAuth2Configurer {
                             protected JwtClaims createJwtAccessToken(final ServerAccessToken at) {
                                 return customizeClaims.apply(super.createJwtAccessToken(at));
                             }
+
+                            @Override
+                            protected ServerAccessToken createNewAccessToken(final Client client, final UserSubject userSub) {
+                                final ServerAccessToken token = super.createNewAccessToken(client, userSub);
+                                forwardClaims(client, userSub, token);
+                                return token;
+                            }
                         };
                     } catch (final Exception e) {
                         throw new IllegalStateException(e);
@@ -174,6 +194,13 @@ public class OAuth2Configurer {
                         protected JwtClaims createJwtAccessToken(final ServerAccessToken at) {
                             return customizeClaims.apply(super.createJwtAccessToken(at));
                         }
+
+                        @Override
+                        protected ServerAccessToken createNewAccessToken(final Client client, final UserSubject userSub) {
+                            final ServerAccessToken token = super.createNewAccessToken(client, userSub);
+                            forwardClaims(client, userSub, token);
+                            return token;
+                        }
                     };
                 } catch (final Exception e) {
                     throw new IllegalStateException(e);
@@ -187,6 +214,13 @@ public class OAuth2Configurer {
                         protected JwtClaims createJwtAccessToken(final ServerAccessToken at) {
                             return customizeClaims.apply(super.createJwtAccessToken(at));
                         }
+
+                        @Override
+                        protected ServerAccessToken createNewAccessToken(final Client client, final UserSubject userSub) {
+                            final ServerAccessToken token = super.createNewAccessToken(client, userSub);
+                            forwardClaims(client, userSub, token);
+                            return token;
+                        }
                     };
                     break;
                 }
@@ -197,27 +231,45 @@ public class OAuth2Configurer {
                     protected JwtClaims createJwtAccessToken(final ServerAccessToken at) {
                         return customizeClaims.apply(super.createJwtAccessToken(at));
                     }
+
+                    @Override
+                    protected ServerAccessToken createNewAccessToken(final Client client, final UserSubject userSub) {
+                        final ServerAccessToken token = super.createNewAccessToken(client, userSub);
+                        forwardClaims(client, userSub, token);
+                        return token;
+                    }
                 };
                 break;
             default:
                 throw new IllegalArgumentException("Unsupported oauth2 provider: " + configuration.getProvider());
         }
 
-        final RefreshTokenGrantHandler refreshTokenGrantHandler = new RefreshTokenGrantHandler();
+        final RefreshTokenGrantHandler refreshTokenGrantHandler = new RefreshTokenGrantHandler() {
+            @Override
+            public ServerAccessToken createAccessToken(final Client client,
+                                                       final MultivaluedMap<String, String> params) throws OAuthServiceException {
+                final ServerAccessToken accessToken = super.createAccessToken(client, params);
+                forwardClaims(client, accessToken.getSubject(), accessToken);
+                return accessToken;
+            }
+        };
         refreshTokenGrantHandler.setDataProvider(provider);
         refreshTokenGrantHandler.setUseAllClientScopes(configuration.isUseAllClientScopes());
         refreshTokenGrantHandler.setPartialMatchScopeValidation(configuration.isPartialMatchScopeValidation());
 
-        final ResourceOwnerLoginHandler loginHandler = configuration.isJaas() ? new JAASResourceOwnerLoginHandler() : (client, name, password) -> {
+        final ResourceOwnerLoginHandler loginHandler = configuration.isJaas() ? new JAASResourceOwnerLoginHandler() {
+            @Override
+            public UserSubject createSubject(final Client client, final String name, final String password) {
+                final UserSubject subject = super.createSubject(client, name, password);
+                forwardRolesAsClaims(subject);
+                return subject;
+            }
+        } : (client, name, password) -> {
             try {
                 request.login(name, password);
                 try {
                     final Principal pcp = request.getUserPrincipal();
-                    final List<String> roles = GenericPrincipal.class.isInstance(pcp) ?
-                            new ArrayList<>(asList(GenericPrincipal.class.cast(pcp).getRoles())) : Collections.<String>emptyList();
-                    final UserSubject userSubject = new UserSubject(name, roles);
-                    userSubject.setAuthenticationMethod(PASSWORD);
-                    return userSubject;
+                    return doCreateUserSubject(pcp);
                 } finally {
                     request.logout();
                 }
@@ -228,12 +280,58 @@ public class OAuth2Configurer {
 
         final List<AccessTokenGrantHandler> handlers = new ArrayList<>();
         handlers.add(refreshTokenGrantHandler);
-        handlers.add(new ClientCredentialsGrantHandler());
-        handlers.add(new ResourceOwnerGrantHandler() {{
-            setLoginHandler(loginHandler);
-        }});
-        handlers.add(new AuthorizationCodeGrantHandler());
-        handlers.add(new JwtBearerGrantHandler());
+        handlers.add(new ClientCredentialsGrantHandler() {
+            @Override
+            protected ServerAccessToken doCreateAccessToken(final Client client,
+                                                            final UserSubject subject,
+                                                            final String requestedGrant,
+                                                            final List<String> requestedScopes,
+                                                            final List<String> audiences) {
+                final ServerAccessToken serverAccessToken = super.doCreateAccessToken(client, subject, requestedGrant, requestedScopes, audiences);
+                forwardClaims(client, subject, serverAccessToken);
+                return serverAccessToken;
+            }
+        });
+        handlers.add(new ResourceOwnerGrantHandler() {
+            {
+                setLoginHandler(loginHandler);
+            }
+
+            @Override
+            protected ServerAccessToken doCreateAccessToken(final Client client,
+                                                            final UserSubject subject,
+                                                            final String requestedGrant,
+                                                            final List<String> requestedScopes,
+                                                            final List<String> audiences) {
+                final ServerAccessToken serverAccessToken = super.doCreateAccessToken(client, subject, requestedGrant, requestedScopes, audiences);
+                forwardClaims(client, subject, serverAccessToken);
+                return serverAccessToken;
+            }
+        });
+        handlers.add(new AuthorizationCodeGrantHandler() {
+            @Override
+            protected ServerAccessToken doCreateAccessToken(final Client client,
+                                                            final UserSubject subject,
+                                                            final String requestedGrant,
+                                                            final List<String> requestedScopes,
+                                                            final List<String> audiences) {
+                final ServerAccessToken serverAccessToken = super.doCreateAccessToken(client, subject, requestedGrant, requestedScopes, audiences);
+                forwardClaims(client, subject, serverAccessToken);
+                return serverAccessToken;
+            }
+        });
+        handlers.add(new JwtBearerGrantHandler() {
+            @Override
+            protected ServerAccessToken doCreateAccessToken(final Client client,
+                                                            final UserSubject subject,
+                                                            final String requestedGrant,
+                                                            final List<String> requestedScopes,
+                                                            final List<String> audiences) {
+                final ServerAccessToken serverAccessToken = super.doCreateAccessToken(client, subject, requestedGrant, requestedScopes, audiences);
+                forwardClaims(client, subject, serverAccessToken);
+                return serverAccessToken;
+            }
+        });
 
         provider.setUseJwtFormatForAccessTokens(configuration.isUseJwtFormatForAccessTokens());
         provider.setAccessTokenLifetime(configuration.getAccessTokenLifetime());
@@ -348,6 +446,69 @@ public class OAuth2Configurer {
             s.setScopesRequiringNoConsent(noConsentScopes);
             s.setSessionAuthenticityTokenProvider(sessionAuthenticityTokenProvider);
         };
+    }
+
+    public UserSubject doCreateUserSubject(final Principal pcp) {
+        final List<String> roles = GenericPrincipal.class.isInstance(pcp) ?
+                new ArrayList<>(asList(GenericPrincipal.class.cast(pcp).getRoles())) : Collections.<String>emptyList();
+        final String name = pcp.getName();
+        final UserSubject userSubject = new UserSubject(name, name, roles);
+        final Message m = JAXRSUtils.getCurrentMessage();
+        if (m != null && m.get(AuthenticationMethod.class) != null) {
+            userSubject.setAuthenticationMethod(m.get(AuthenticationMethod.class));
+        } else {
+            userSubject.setAuthenticationMethod(PASSWORD);
+        }
+        forwardRolesAsClaims(userSubject);
+        return userSubject;
+    }
+
+    private void forwardRolesAsClaims(final UserSubject subject) {
+        if (configuration.isForwardRoleAsJwtClaims() && subject.getRoles() != null) {
+            subject.setProperties(new HashMap<>());
+            subject.getProperties().put("claim.roles", String.join(", ", subject.getRoles()));
+        }
+    }
+
+    private void forwardClaims(final Client client, final UserSubject subject,
+                               final ServerAccessToken serverAccessToken) {
+        forwardClientClaims(client, serverAccessToken);
+        forwardUserClaims(subject, serverAccessToken);
+    }
+
+    private void forwardUserClaims(final UserSubject subject,
+                                   final ServerAccessToken serverAccessToken) {
+        if (subject.getProperties() == null || subject.getProperties().isEmpty()) {
+            return;
+        }
+        final Map<String, String> claims = subject.getProperties().entrySet().stream()
+                .filter(it -> it.getKey().startsWith("claim."))
+                .collect(toMap(it -> it.getKey().substring("claim.".length()), Map.Entry::getValue));
+        if (claims.isEmpty()) {
+            return;
+        }
+        if (serverAccessToken.getExtraProperties() == null) {
+            serverAccessToken.setExtraProperties(claims);
+        } else {
+            serverAccessToken.getExtraProperties().putAll(claims);
+        }
+    }
+
+    private void forwardClientClaims(final Client client, final ServerAccessToken serverAccessToken) {
+        if (client.getProperties() == null || client.getProperties().isEmpty()) {
+            return;
+        }
+        final Map<String, String> claims = client.getProperties().entrySet().stream()
+                .filter(it -> it.getKey().startsWith("claim."))
+                .collect(toMap(it -> it.getKey().substring("claim.".length()), Map.Entry::getValue));
+        if (claims.isEmpty()) {
+            return;
+        }
+        if (serverAccessToken.getExtraProperties() == null) {
+            serverAccessToken.setExtraProperties(claims);
+        } else {
+            serverAccessToken.getExtraProperties().putAll(claims);
+        }
     }
 
     private void forwardSecurityProperties() {

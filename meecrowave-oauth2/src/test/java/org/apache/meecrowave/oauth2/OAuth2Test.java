@@ -18,41 +18,6 @@
  */
 package org.apache.meecrowave.oauth2;
 
-import static java.util.Collections.singletonList;
-import static javax.ws.rs.client.Entity.entity;
-import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED_TYPE;
-import static javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
-import java.io.File;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.net.URISyntaxException;
-import java.nio.charset.StandardCharsets;
-import java.security.PublicKey;
-import java.util.Base64;
-import java.util.function.BiFunction;
-import java.util.stream.Stream;
-
-import javax.cache.Cache;
-import javax.cache.CacheManager;
-import javax.cache.Caching;
-import javax.cache.configuration.MutableConfiguration;
-import javax.cache.spi.CachingProvider;
-import javax.json.JsonObject;
-import javax.json.JsonString;
-import javax.json.bind.Jsonb;
-import javax.json.bind.JsonbBuilder;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.Form;
-import javax.ws.rs.core.Response;
-
 import org.apache.cxf.common.classloader.ClassLoaderUtils;
 import org.apache.cxf.message.Message;
 import org.apache.cxf.rs.security.oauth2.common.ClientAccessToken;
@@ -72,6 +37,40 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 
+import javax.cache.Cache;
+import javax.cache.CacheManager;
+import javax.cache.Caching;
+import javax.cache.configuration.MutableConfiguration;
+import javax.cache.spi.CachingProvider;
+import javax.json.JsonObject;
+import javax.json.JsonString;
+import javax.json.bind.Jsonb;
+import javax.json.bind.JsonbBuilder;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.Form;
+import javax.ws.rs.core.Response;
+import java.io.File;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
+import java.security.PublicKey;
+import java.util.Base64;
+import java.util.function.BiFunction;
+import java.util.stream.Stream;
+
+import static java.util.Collections.singletonList;
+import static javax.ws.rs.client.Entity.entity;
+import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED_TYPE;
+import static javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 public class OAuth2Test {
     private static final File KEYSTORE = new File("target/OAuth2Test/keystore.jceks");
     private static PublicKey PUBLIC_KEY;
@@ -85,6 +84,8 @@ public class OAuth2Test {
                     .property("oauth2-jwt-issuer", "myissuer")
                     // auth code support is optional so activate it
                     .property("oauth2-authorization-code-support", "true")
+                    // to ensure this toggle does not trigger any exception
+                    .property("oauth2-forward-role-as-jwt-claims", "true")
                     // auth code jose setup to store the tokens
                     .property("oauth2.cxf.rs.security.keystore.type", "jks")
                     .property("oauth2.cxf.rs.security.keystore.file", KEYSTORE.getAbsolutePath())
@@ -253,6 +254,10 @@ public class OAuth2Test {
             assertEquals("RS256", header.getString("alg"));
             assertEquals("test", payload.getString("username"));
             assertEquals(client, payload.getString("client_id"));
+
+            final JsonObject extraProperties = payload.getJsonObject("extra_properties");
+            assertNotNull(extraProperties);
+            assertEquals("admin", extraProperties.getString("roles"));
         } catch (final Exception e) {
             fail(e.getMessage());
         }

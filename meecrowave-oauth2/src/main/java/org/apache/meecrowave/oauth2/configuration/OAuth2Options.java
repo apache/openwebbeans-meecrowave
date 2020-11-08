@@ -49,6 +49,9 @@ public class OAuth2Options implements Cli.Options {
     @CliOption(name = "oauth2-use-jaas", description = "Should jaas be used - alternative (default) is to delegate to meecrowave/tomcat realms")
     private boolean jaas;
 
+    @CliOption(name = "oauth2-forward-role-as-jwt-claims", description = "Should jaas be used - alternative (default) is to delegate to meecrowave/tomcat realms")
+    private boolean forwardRoleAsJwtClaims;
+
     @CliOption(name = "oauth2-access-token-lifetime", description = "How long an access token is valid, default to 3600s")
     private int accessTokenLifetime = 3600;
 
@@ -171,6 +174,14 @@ public class OAuth2Options implements Cli.Options {
 
     @CliOption(name = "oauth2-redirection-scopes-requiring-no-consent", description = "For authorization code flow, the scopes using no consent")
     private String scopesRequiringNoConsent;
+
+    public boolean isForwardRoleAsJwtClaims() {
+        return forwardRoleAsJwtClaims;
+    }
+
+    public void setForwardRoleAsJwtClaims(final boolean forwardRoleAsJwtClaims) {
+        this.forwardRoleAsJwtClaims = forwardRoleAsJwtClaims;
+    }
 
     public String getEncryptedAlgo() {
         return encryptedAlgo;
