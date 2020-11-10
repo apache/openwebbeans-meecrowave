@@ -34,6 +34,9 @@ public class OAuth2Options implements Cli.Options {
     @CliOption(name = "oauth2-use-all-client-scopes", description = "Are all client scopes used for refresh tokens")
     private boolean useAllClientScopes;
 
+    @CliOption(name = "oauth2-require-user-to-start-authorization_code-flow", description = "Should the authorization_code flow require an authenicated user.")
+    private boolean requireUserToStartAuthorizationCodeFlow;
+
     @CliOption(name = "oauth2-use-s256-code-challenge", description = "Are the code_challenge used by PKCE flow digested or not.")
     private boolean useS256CodeChallenge = true;
 
@@ -177,6 +180,14 @@ public class OAuth2Options implements Cli.Options {
 
     @CliOption(name = "oauth2-redirection-scopes-requiring-no-consent", description = "For authorization code flow, the scopes using no consent")
     private String scopesRequiringNoConsent;
+
+    public boolean isRequireUserToStartAuthorizationCodeFlow() {
+        return requireUserToStartAuthorizationCodeFlow;
+    }
+
+    public void setRequireUserToStartAuthorizationCodeFlow(final boolean requireUserToStartAuthorizationCodeFlow) {
+        this.requireUserToStartAuthorizationCodeFlow = requireUserToStartAuthorizationCodeFlow;
+    }
 
     public boolean isUseS256CodeChallenge() {
         return useS256CodeChallenge;

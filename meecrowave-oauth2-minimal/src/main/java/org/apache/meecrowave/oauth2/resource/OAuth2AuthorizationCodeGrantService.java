@@ -19,9 +19,13 @@
 package org.apache.meecrowave.oauth2.resource;
 
 import org.apache.cxf.jaxrs.ext.MessageContext;
+import org.apache.cxf.rs.security.oauth2.common.Client;
 import org.apache.cxf.rs.security.oauth2.common.UserSubject;
+import org.apache.cxf.rs.security.oauth2.provider.AuthorizationCodeResponseFilter;
+import org.apache.cxf.rs.security.oauth2.provider.AuthorizationRequestFilter;
 import org.apache.cxf.rs.security.oauth2.services.AuthorizationCodeGrantService;
 import org.apache.cxf.rs.security.oauth2.services.RedirectionBasedGrantService;
+import org.apache.cxf.rs.security.oauth2.utils.OAuthConstants;
 import org.apache.cxf.security.SecurityContext;
 import org.apache.meecrowave.oauth2.configuration.OAuth2Configurer;
 
@@ -88,9 +92,33 @@ public class OAuth2AuthorizationCodeGrantService {
     @Vetoed
     public static class LazyImpl extends AuthorizationCodeGrantService {
         private OAuth2Configurer configurer;
+        private AuthorizationRequestFilter filter;
 
         public void setConfigurer(final OAuth2Configurer configurer) {
             this.configurer = configurer;
+        }
+
+        public void setAuthorizationFilter(final AuthorizationRequestFilter authorizationFilter) {
+            this.filter = authorizationFilter;
+            super.setAuthorizationFilter(authorizationFilter);
+        }
+
+
+        @Override // https://issues.apache.org/jira/browse/CXF-8370
+        protected Response startAuthorization(MultivaluedMap<String, String> params) {
+            final SecurityContext sc;
+            if (configurer.getConfiguration().isRequireUserToStartAuthorizationCodeFlow()) {
+                sc = getAndValidateSecurityContext(params);
+            } else {
+                sc = null;
+            }
+            final Client client = getClient(params.getFirst(OAuthConstants.CLIENT_ID), params);
+            final UserSubject userSubject = createUserSubject(sc, params);
+            if (filter != null) {
+                params = filter.process(params, userSubject, client);
+            }
+            final String redirectUri = validateRedirectUri(client, params.getFirst(OAuthConstants.REDIRECT_URI));
+            return startAuthorization(params, userSubject, client, redirectUri);
         }
 
         @Override
@@ -100,6 +128,9 @@ public class OAuth2AuthorizationCodeGrantService {
             final UserSubject subject = mc.getContent(UserSubject.class);
             if (subject != null) {
                 return subject;
+            }
+            if (securityContext == null) {
+                return null;
             }
             final Principal principal = securityContext.getUserPrincipal();
             return configurer.doCreateUserSubject(principal);
