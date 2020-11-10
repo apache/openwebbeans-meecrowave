@@ -20,17 +20,11 @@ package org.apache.meecrowave.oauth2.configuration;
 
 import org.apache.catalina.realm.GenericPrincipal;
 import org.apache.cxf.Bus;
-import org.apache.cxf.common.util.StringUtils;
 import org.apache.cxf.interceptor.security.AuthenticationException;
 import org.apache.cxf.jaxrs.ext.MessageContext;
 import org.apache.cxf.jaxrs.utils.JAXRSUtils;
 import org.apache.cxf.message.Message;
 import org.apache.cxf.phase.PhaseInterceptorChain;
-import org.apache.cxf.rs.security.jose.jwe.JweEncryptionProvider;
-import org.apache.cxf.rs.security.jose.jwe.JweHeaders;
-import org.apache.cxf.rs.security.jose.jwe.JweUtils;
-import org.apache.cxf.rs.security.jose.jws.JwsSignatureProvider;
-import org.apache.cxf.rs.security.jose.jws.JwsUtils;
 import org.apache.cxf.rs.security.jose.jwt.JwtClaims;
 import org.apache.cxf.rs.security.oauth2.common.AuthenticationMethod;
 import org.apache.cxf.rs.security.oauth2.common.Client;
@@ -41,7 +35,9 @@ import org.apache.cxf.rs.security.oauth2.grants.AbstractGrantHandler;
 import org.apache.cxf.rs.security.oauth2.grants.clientcred.ClientCredentialsGrantHandler;
 import org.apache.cxf.rs.security.oauth2.grants.code.AuthorizationCodeGrantHandler;
 import org.apache.cxf.rs.security.oauth2.grants.code.DefaultEncryptingCodeDataProvider;
+import org.apache.cxf.rs.security.oauth2.grants.code.DigestCodeVerifier;
 import org.apache.cxf.rs.security.oauth2.grants.code.JPACodeDataProvider;
+import org.apache.cxf.rs.security.oauth2.grants.code.PlainCodeVerifier;
 import org.apache.cxf.rs.security.oauth2.grants.jwt.JwtBearerGrantHandler;
 import org.apache.cxf.rs.security.oauth2.grants.owner.JAASResourceOwnerLoginHandler;
 import org.apache.cxf.rs.security.oauth2.grants.owner.ResourceOwnerGrantHandler;
@@ -59,7 +55,6 @@ import org.apache.cxf.rs.security.oauth2.services.AbstractTokenService;
 import org.apache.cxf.rs.security.oauth2.services.AccessTokenService;
 import org.apache.cxf.rs.security.oauth2.services.AuthorizationCodeGrantService;
 import org.apache.cxf.rs.security.oauth2.utils.OAuthConstants;
-import org.apache.cxf.rs.security.oauth2.utils.OAuthUtils;
 import org.apache.meecrowave.Meecrowave;
 import org.apache.meecrowave.oauth2.data.RefreshTokenEnabledProvider;
 import org.apache.meecrowave.oauth2.provider.JCacheCodeDataProvider;
@@ -310,6 +305,14 @@ public class OAuth2Configurer {
         });
         handlers.add(new AuthorizationCodeGrantHandler() {
             @Override
+            public ServerAccessToken createAccessToken(final Client client, final MultivaluedMap<String, String> params) throws OAuthServiceException {
+                if (configuration.isUseS256CodeChallenge()) {
+                    setCodeVerifierTransformer(new DigestCodeVerifier());
+                }
+                return super.createAccessToken(client, params);
+            }
+
+            @Override
             protected ServerAccessToken doCreateAccessToken(final Client client,
                                                             final UserSubject subject,
                                                             final String requestedGrant,
@@ -391,44 +394,11 @@ public class OAuth2Configurer {
                 .collect(toMap(s -> s.substring("oauth2.cxf.".length()), s -> builder.getProperties().getProperty(s)));
 
         final JoseSessionTokenProvider sessionAuthenticityTokenProvider = new JoseSessionTokenProvider() {
-            private int maxDefaultSessionInterval;
-            private boolean jweRequired;
-            private JweEncryptionProvider jweEncryptor;
-
-            @Override // workaround a NPE of 3.2.0 - https://issues.apache.org/jira/browse/CXF-7504
+            @Override
             public String createSessionToken(final MessageContext mc, final MultivaluedMap<String, String> params,
                                              final UserSubject subject, final OAuthRedirectionState secData) {
-                String stateString = convertStateToString(secData);
-                final JwsSignatureProvider jws = getInitializedSigProvider();
-                final JweEncryptionProvider jwe = jweEncryptor == null ?
-                        JweUtils.loadEncryptionProvider(new JweHeaders(), jweRequired) : jweEncryptor;
-                if (jws == null && jwe == null) {
-                    throw new OAuthServiceException("Session token can not be created");
-                }
-                if (jws != null) {
-                    stateString = JwsUtils.sign(jws, stateString, null);
-                }
-                if (jwe != null) {
-                    stateString = jwe.encrypt(StringUtils.toBytesUTF8(stateString), null);
-                }
-                return OAuthUtils.setSessionToken(mc, stateString, maxDefaultSessionInterval);
-            }
-
-            public void setJweEncryptor(final JweEncryptionProvider jweEncryptor) {
-                super.setJweEncryptor(jweEncryptor);
-                this.jweEncryptor = jweEncryptor;
-            }
-
-            @Override
-            public void setJweRequired(final boolean jweRequired) {
-                super.setJweRequired(jweRequired);
-                this.jweRequired = jweRequired;
-            }
-
-            @Override
-            public void setMaxDefaultSessionInterval(final int maxDefaultSessionInterval) {
-                super.setMaxDefaultSessionInterval(maxDefaultSessionInterval);
-                this.maxDefaultSessionInterval = maxDefaultSessionInterval;
+                secData.setClientCodeChallenge(params.getFirst(OAuthConstants.AUTHORIZATION_CODE_CHALLENGE)); // CXF-8368
+                return super.createSessionToken(mc, params, subject, secData);
             }
         };
         sessionAuthenticityTokenProvider.setMaxDefaultSessionInterval(configuration.getMaxDefaultSessionInterval());
