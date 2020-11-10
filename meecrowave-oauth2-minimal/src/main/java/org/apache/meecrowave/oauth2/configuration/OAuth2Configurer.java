@@ -57,7 +57,7 @@ import org.apache.cxf.rs.security.oauth2.provider.OAuthDataProvider;
 import org.apache.cxf.rs.security.oauth2.provider.OAuthServiceException;
 import org.apache.cxf.rs.security.oauth2.services.AbstractTokenService;
 import org.apache.cxf.rs.security.oauth2.services.AccessTokenService;
-import org.apache.cxf.rs.security.oauth2.services.RedirectionBasedGrantService;
+import org.apache.cxf.rs.security.oauth2.services.AuthorizationCodeGrantService;
 import org.apache.cxf.rs.security.oauth2.utils.OAuthConstants;
 import org.apache.cxf.rs.security.oauth2.utils.OAuthUtils;
 import org.apache.meecrowave.Meecrowave;
@@ -109,7 +109,7 @@ public class OAuth2Configurer {
     private OAuth2Options configuration;
 
     private Consumer<AccessTokenService> tokenServiceConsumer;
-    private Consumer<RedirectionBasedGrantService> redirectionBasedGrantServiceConsumer;
+    private Consumer<AuthorizationCodeGrantService> redirectionBasedGrantServiceConsumer;
     private Consumer<AbstractTokenService> abstractTokenServiceConsumer;
     private Map<String, String> securityProperties;
 
@@ -445,6 +445,7 @@ public class OAuth2Configurer {
             s.setMatchRedirectUriWithApplicationUri(configuration.isMatchRedirectUriWithApplicationUri());
             s.setScopesRequiringNoConsent(noConsentScopes);
             s.setSessionAuthenticityTokenProvider(sessionAuthenticityTokenProvider);
+            s.setCanSupportPublicClients(configuration.isCanSupportPublicClients());
         };
     }
 
@@ -526,7 +527,7 @@ public class OAuth2Configurer {
         forwardSecurityProperties();
     }
 
-    public void accept(final RedirectionBasedGrantService service) {
+    public void accept(final AuthorizationCodeGrantService service) {
         redirectionBasedGrantServiceConsumer.accept(service);
         forwardSecurityProperties();
     }
