@@ -62,7 +62,7 @@ public class OAuth2TokenService extends AccessTokenService implements OAuth2Appl
 
     @RequestScoped
     @Typed(LazyImpl.class)
-    static class LazyImpl extends AccessTokenService implements OAuth2Application.Defaults {
+    public static class LazyImpl extends AccessTokenService implements OAuth2Application.Defaults {
         @Inject
         private OAuth2Configurer configurer;
 

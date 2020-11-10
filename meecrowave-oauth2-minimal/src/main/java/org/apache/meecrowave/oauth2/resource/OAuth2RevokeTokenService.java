@@ -63,7 +63,7 @@ public class OAuth2RevokeTokenService extends TokenRevocationService {
 
     @RequestScoped
     @Typed(LayImpl.class)
-    static class LayImpl extends TokenRevocationService implements OAuth2Application.Defaults {
+    public static class LayImpl extends TokenRevocationService implements OAuth2Application.Defaults {
         @Inject
         private OAuth2Configurer configurer;
 

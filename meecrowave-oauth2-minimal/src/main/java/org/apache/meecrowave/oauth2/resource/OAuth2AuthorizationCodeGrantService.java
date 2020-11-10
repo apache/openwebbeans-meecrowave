@@ -25,66 +25,68 @@ import org.apache.cxf.rs.security.oauth2.services.RedirectionBasedGrantService;
 import org.apache.cxf.security.SecurityContext;
 import org.apache.meecrowave.oauth2.configuration.OAuth2Configurer;
 
-import javax.enterprise.context.RequestScoped;
-import javax.enterprise.inject.Typed;
+import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.inject.Vetoed;
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import java.security.Principal;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static javax.ws.rs.core.MediaType.APPLICATION_XHTML_XML;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
 
-@RequestScoped
+@ApplicationScoped
 @Path("authorize")
-public class OAuth2AuthorizationCodeGrantService extends AuthorizationCodeGrantService {
-
-    @Inject
-    private LazyImpl delegate;
-
+public class OAuth2AuthorizationCodeGrantService {
     @Inject
     private OAuth2Configurer configurer;
 
-    @Override
     @GET
-    @Produces({APPLICATION_XHTML_XML, TEXT_HTML, APPLICATION_XML, APPLICATION_JSON})
-    public Response authorize() {
-        return getDelegate().authorize();
+    @Produces({"application/xhtml+xml", TEXT_HTML, APPLICATION_XML, APPLICATION_JSON })
+    public Response authorize(@Context final MessageContext messageContext) {
+        return getDelegate(messageContext).authorize();
     }
 
-    @Override
+    @POST
+    @Consumes(APPLICATION_FORM_URLENCODED)
+    @Produces({"application/xhtml+xml", TEXT_HTML, APPLICATION_XML, APPLICATION_JSON})
+    public Response authorizePost(final MultivaluedMap<String, String> params,
+                                  @Context final MessageContext messageContext) {
+        return getDelegate(messageContext).authorizePost(params);
+    }
+
     @GET
     @Path("decision")
-    public Response authorizeDecision() {
-        return getDelegate().authorizeDecision();
+    public Response authorizeDecision(@Context final MessageContext messageContext) {
+        return getDelegate(messageContext).authorizeDecision();
     }
 
-    @Override
     @POST
     @Path("decision")
     @Consumes(APPLICATION_FORM_URLENCODED)
-    public Response authorizeDecisionForm(MultivaluedMap<String, String> params) {
-        return getDelegate().authorizeDecisionForm(params);
+    public Response authorizeDecisionForm(final MultivaluedMap<String, String> params,
+                                          @Context final MessageContext messageContext) {
+        return getDelegate(messageContext).authorizeDecisionForm(params);
     }
 
-    private RedirectionBasedGrantService getDelegate() {
-        delegate.setMessageContext(getMessageContext());
+    private RedirectionBasedGrantService getDelegate(final MessageContext messageContext) {
+        final LazyImpl delegate = new LazyImpl();
+        delegate.setMessageContext(messageContext);
         delegate.setConfigurer(configurer);
         configurer.accept(delegate);
         return delegate;
     }
 
-    @RequestScoped
-    @Typed(LazyImpl.class)
-    static class LazyImpl extends AuthorizationCodeGrantService {
+    @Vetoed
+    public static class LazyImpl extends AuthorizationCodeGrantService {
         private OAuth2Configurer configurer;
 
         public void setConfigurer(final OAuth2Configurer configurer) {
