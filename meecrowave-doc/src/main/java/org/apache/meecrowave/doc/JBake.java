@@ -59,6 +59,7 @@ import org.jbake.app.configuration.ConfigUtil;
 import org.jbake.app.configuration.DefaultJBakeConfiguration;
 
 import com.orientechnologies.orient.core.Orient;
+import org.jbake.app.configuration.JBakeConfigurationFactory;
 
 public class JBake {
     private JBake() {
@@ -115,9 +116,7 @@ public class JBake {
             System.out.println("Building Meecrowave website in " + destination);
             final Orient orient = Orient.instance();
             try {
-                orient.startup();
-
-                final Oven oven = new Oven(source, destination, new CompositeConfiguration() {{
+                final Oven oven = new Oven(new JBakeConfigurationFactory().createDefaultJbakeConfiguration(source, destination, new CompositeConfiguration() {{
                     final CompositeConfiguration config = new CompositeConfiguration();
                     config.addConfiguration(new MapConfiguration(new HashMap<String, Object>() {{
                         put("asciidoctor.attributes", new ArrayList<String>() {{
@@ -129,8 +128,7 @@ public class JBake {
                     config.addConfiguration(DefaultJBakeConfiguration.class.cast(
                             new ConfigUtil().loadConfig(source)).getCompositeConfiguration());
                     addConfiguration(config);
-                }}, true);
-                oven.setupPaths();
+                }}, true));
 
                 System.out.println("  > baking");
                 oven.bake();
@@ -175,7 +173,7 @@ public class JBake {
                         try {
                             sleep(TimeUnit.SECONDS.toMillis(1));
                         } catch (final InterruptedException e) {
-                            Thread.interrupted();
+                            Thread.currentThread().interrupt();
                             break;
                         }
                     }
@@ -212,7 +210,7 @@ public class JBake {
                             }
                             key.reset();
                         } catch (final InterruptedException e) {
-                            Thread.interrupted();
+                            Thread.currentThread().interrupt();
                             run.compareAndSet(true, false);
                         } catch (final ClosedWatchServiceException cwse) {
                             if (!run.get()) {
@@ -233,7 +231,7 @@ public class JBake {
                     try {
                         thread.join();
                     } catch (final InterruptedException e) {
-                        Thread.interrupted();
+                        Thread.currentThread().interrupt();
                     }
                 });
                 try {

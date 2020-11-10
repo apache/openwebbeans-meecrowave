@@ -32,6 +32,7 @@ import org.apache.tomcat.JarScanType;
 public class KnownJarsFilter implements JarScanFilter {
     private final Collection<String> forceIncludes = new HashSet<String>() {{
         add("cxf-integration-cdi");
+        add("geronimo-jcache-simple");
     }};
 
     private final Collection<String> excludes = new HashSet<String>() {{

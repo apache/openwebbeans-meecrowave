@@ -20,6 +20,17 @@ Coordinates:
 </dependency>
 ----
 
+Or to not get JPA/JCache implementations:
+
+[source,xml]
+----
+<dependency>
+  <groupId>org.apache.meecrowave</groupId>
+  <artifactId>meecrowave-oauth2-minimal</artifactId>
+  <version>${meecrowave.version}</version>
+</dependency>
+----
+
 A small OAuth2 server based on CXF implementation.
 
 See http://cxf.apache.org/docs/jax-rs-oauth2.html for more details.
