@@ -18,7 +18,6 @@
  */
 package org.apache.meecrowave.oauth2.configuration;
 
-import org.apache.commons.dbcp2.BasicDataSource;
 import org.apache.cxf.rs.security.oauth2.common.Client;
 import org.apache.cxf.rs.security.oauth2.common.OAuthPermission;
 import org.apache.cxf.rs.security.oauth2.common.UserSubject;
@@ -62,7 +61,8 @@ public class JPAAdapter {
             put("javax.persistence.jdbc.password", configuration.getJpdaDatabasePassword());
             */
             // pooling support
-            put("openjpa.ConnectionDriverName", BasicDataSource.class.getName());
+            put("openjpa.ConnectionDriverName", System.getProperty(
+                    "meecrowave.oauth2.datasourcetype", "org.apache.commons.dbcp2.BasicDataSource"));
             put("openjpa.ConnectionProperties",
                     "DriverClassName=" + configuration.getJpaDriver() + ',' +
                             "Url=" + configuration.getJpaDatabaseUrl() + ',' +
@@ -75,7 +75,7 @@ public class JPAAdapter {
                             "TestOnReturn=" + configuration.isJpaTestOnReturn() + ',' +
                             "TestWhileIdle=" + (configuration.getJpaValidationQuery() != null && !configuration.getJpaValidationQuery().isEmpty()) + ',' +
                             ofNullable(configuration.getJpaValidationQuery()).map(v -> "ValidationQuery=" + v + ',').orElse("") +
-                            ofNullable(configuration.getJpaValidationInterval()).map(v -> "MinEvictableIdleTimeMillis=" + v).orElse(""));
+                            ofNullable(configuration.getJpaValidationInterval()).filter(it -> it > 0).map(v -> "MinEvictableIdleTimeMillis=" + v).orElse(""));
 
             ofNullable(configuration.getJpaProperties())
                     .map(p -> new Properties() {{

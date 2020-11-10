@@ -65,6 +65,8 @@
     <dbcp2.version>2.7.0</dbcp2.version>
     <commons-cli.version>1.4</commons-cli.version>
     <xbean.version>4.18</xbean.version>
+    <geronimo-jcache-simple.version>1.0.5</geronimo-jcache-simple.version>
+    <geronimo-jcache_1.0_spec.version>1.0-alpha-1</geronimo-jcache_1.0_spec.version>
 
     <java11.jaxb.version>2.3.0</java11.jaxb.version>
   </properties>
@@ -80,6 +82,7 @@
     <module>meecrowave-doc</module>
     <module>meecrowave-jta</module>
     <module>integration-tests</module>
+    <module>meecrowave-oauth2-minimal</module>
     <module>meecrowave-oauth2</module>
     <module>meecrowave-letsencrypt</module>
     <module>meecrowave-proxy</module>
@@ -140,13 +143,12 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.7.0</version>
+        <version>3.8.1</version>
         <configuration>
           <source>1.8</source>
           <target>1.8</target>
         </configuration>
       </plugin>
-
 
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
