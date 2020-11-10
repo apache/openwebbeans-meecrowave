@@ -56,7 +56,7 @@
     <cxf.version>3.4.1</cxf.version>
     <openwebbeans.version>2.0.20-SNAPSHOT</openwebbeans.version>
     <johnzon.version>1.2.8</johnzon.version>
-    <log4j2.version>2.13.3</log4j2.version>
+    <log4j2.version>2.14.0</log4j2.version>
     <deltaspike.version>1.8.2</deltaspike.version>
     <jaxb.version>2.2.11</jaxb.version>
     <openjpa.version>3.1.2</openjpa.version>
