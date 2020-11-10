@@ -25,4 +25,8 @@
         http://xmlns.jcp.org/xml/ns/javaee/beans_2_0.xsd">
 
   <trim/>
+  <scan>
+    <exclude name="org.apache.meecrowave.oauth2.configuration.OAuth2Configurer$1" />
+    <exclude name="org.apache.meecrowave.oauth2.configuration.JPAAdapter" />
+  </scan>
 </beans>
