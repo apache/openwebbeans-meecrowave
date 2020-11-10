@@ -463,21 +463,21 @@ public class OAuth2Configurer {
         return userSubject;
     }
 
-    private void forwardRolesAsClaims(final UserSubject subject) {
+    protected void forwardRolesAsClaims(final UserSubject subject) {
         if (configuration.isForwardRoleAsJwtClaims() && subject.getRoles() != null) {
             subject.setProperties(new HashMap<>());
             subject.getProperties().put("claim.roles", String.join(", ", subject.getRoles()));
         }
     }
 
-    private void forwardClaims(final Client client, final UserSubject subject,
-                               final ServerAccessToken serverAccessToken) {
+    protected void forwardClaims(final Client client, final UserSubject subject,
+                                 final ServerAccessToken serverAccessToken) {
         forwardClientClaims(client, serverAccessToken);
         forwardUserClaims(subject, serverAccessToken);
     }
 
-    private void forwardUserClaims(final UserSubject subject,
-                                   final ServerAccessToken serverAccessToken) {
+    protected void forwardUserClaims(final UserSubject subject,
+                                     final ServerAccessToken serverAccessToken) {
         if (subject.getProperties() == null || subject.getProperties().isEmpty()) {
             return;
         }
