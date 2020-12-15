@@ -444,6 +444,69 @@
               </relocations>
             </configuration>
           </execution>
+          <execution>
+            <id>light-bundle</id>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <shadedClassifierName>runner-light</shadedClassifierName>
+              <shadedArtifactAttached>true</shadedArtifactAttached>
+              <dependencyReducedPomLocation>${project.build.directory}/reduced-pom-bundle.xml
+              </dependencyReducedPomLocation>
+              <transformers>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                  <mainClass>org.apache.meecrowave.runner.Cli</mainClass>
+                </transformer>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+                  <resource>META-INF/cxf/bus-extensions.txt</resource>
+                </transformer>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+                  <resource>log4j2.component.properties</resource>
+                </transformer>
+                <transformer implementation="com.github.edwgiz.maven_shade_plugin.log4j2_cache_transformer.PluginsCacheFileTransformer" />
+                <transformer implementation="org.apache.maven.plugins.shade.resource.properties.OpenWebBeansPropertiesTransformer" />
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
+              </transformers>
+              <filters>
+                <filter>
+                  <artifact>org.apache.logging.log4j:log4j-api</artifact>
+                  <excludes>
+                    <exclude>META-INF/versions/**</exclude>
+                  </excludes>
+                </filter>
+                <filter>
+                  <artifact>*:*</artifact>
+                  <excludes>
+                    <exclude>OSGI-INF/**</exclude>
+                    <exclude>META-INF/cxf/cxf*.xml</exclude>
+                    <exclude>schemas/**</exclude> <!-- cxf -->
+                    <exclude>javax/servlet/resources/**</exclude> <!-- tomcat-servlet-api -->
+                    <exclude>javax/servlet/jsp/resources/**</exclude>
+                    <exclude>META-INF/maven</exclude> <!-- maven built artifacts -->
+                    <exclude>META-INF/*.SF</exclude>
+                    <exclude>META-INF/*.DSA</exclude>
+                    <exclude>META-INF/*.RSA</exclude>
+                    <exclude>META-INF/LICENSE.txt</exclude>
+                    <exclude>META-INF/LICENSE</exclude>
+                    <exclude>META-INF/NOTICE.txt</exclude>
+                    <exclude>META-INF/NOTICE</exclude>
+                  </excludes>
+                </filter>
+              </filters>
+              <relocations>
+                <relocation>
+                  <pattern>org.apache.meecrowave.tomcat.light.LightDigester</pattern>
+                  <shadedPattern>org.apache.tomcat.util.descriptor.DigesterFactory</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>org.apache.commons</pattern>
+                  <shadedPattern>org.apache.meecrowave.shaded.commons</shadedPattern>
+                </relocation>
+              </relocations>
+            </configuration>
+          </execution>
         </executions>
         <dependencies>
           <dependency>
