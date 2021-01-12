@@ -83,6 +83,7 @@ which is close to `MonoMeecrowave.Runner` in term of usage.
 [source,java]
 ----
 @MeecrowaveConfig /*(some config)*/
+@TestInstance(PER_CLASS)
 public class MeecrowaveConfigTest {
     @ConfigurationInject
     private Meecrowave.Builder config;
@@ -108,6 +109,11 @@ public class MeecrowaveConfigTest {
 TIP: JUnit 5 integration provides an `@AfterFirstInjection` method and `@AfterLastTest`
 which can be used to setup/reset some environment using injections once for a set of test methods.
 The methods must not have any parameter.
+
+IMPORTANT: when not using `@TestInstance(PER_CLASS)`, container is started per test method. Generally speaking you should  try to align the scope of your container to the scope of validity of your beans.
+For a library it is generally the class (so `@MeecrowaveConfig @TestInstance(PER_CLASS)`) and for an application the whole test set (so `@MonoMeecrowaveConfig`).
+Note that using an `Extension` you can adjust mocks or spy beans dynamically without a container restart.
+Having the longest life time for the container will make your test suite faster to execute.
 
 == Arquillian Container
 

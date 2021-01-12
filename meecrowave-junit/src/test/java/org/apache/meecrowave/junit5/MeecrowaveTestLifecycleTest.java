@@ -21,6 +21,7 @@ package org.apache.meecrowave.junit5;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS;
 
 import javax.inject.Inject;
 
@@ -29,7 +30,9 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 
+@TestInstance(PER_CLASS)
 @MeecrowaveConfig(scanningPackageIncludes = "org.apache.meecrowave.junit5.bean")
 class MeecrowaveTestLifecycleTest {
     private static Appender global;

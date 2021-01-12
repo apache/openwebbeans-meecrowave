@@ -18,17 +18,6 @@
  */
 package org.apache.meecrowave.junit5;
 
-import static java.util.Optional.ofNullable;
-import static org.junit.platform.commons.util.AnnotationUtils.findAnnotation;
-
-import java.io.File;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.util.Optional;
-
-import javax.enterprise.context.spi.CreationalContext;
-
 import org.apache.meecrowave.Meecrowave;
 import org.apache.meecrowave.configuration.Configuration;
 import org.apache.meecrowave.testing.Injector;
@@ -38,32 +27,68 @@ import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 
+import javax.enterprise.context.spi.CreationalContext;
+import java.io.File;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.util.Optional;
+
+import static java.util.Optional.ofNullable;
+import static org.junit.platform.commons.util.AnnotationUtils.findAnnotation;
+
 public class MeecrowaveExtension extends BaseLifecycle
         implements BeforeAllCallback, AfterAllCallback, BeforeEachCallback, AfterEachCallback {
-    
-	private static final ExtensionContext.Namespace NAMESPACE = ExtensionContext.Namespace.create(MeecrowaveExtension.class.getName());
-	
+
+    private static final ExtensionContext.Namespace NAMESPACE = ExtensionContext.Namespace.create(MeecrowaveExtension.class.getName());
+
     private final ScopesExtension scopes = new ScopesExtension() {
         @Override
         protected Optional<Class<? extends Annotation>[]> getScopes(final ExtensionContext context) {
             return context.getElement()
-                          .map(e -> findAnnotation(context.getElement(), MeecrowaveConfig.class)
-                                  .orElseGet(() -> context.getParent()
-                                                          .flatMap(ExtensionContext::getElement)
-                                                          .flatMap(it -> findAnnotation(it, MeecrowaveConfig.class))
-                                                          .orElse(null)))
-                          .map(MeecrowaveConfig::scopes)
-                          .filter(s -> s.length > 0);
+                    .map(e -> findConfig(context))
+                    .map(MeecrowaveConfig::scopes)
+                    .filter(s -> s.length > 0);
         }
     };
 
     @Override
     public void beforeAll(final ExtensionContext context) {
+        if (isPerClass(context)) {
+            doStart(context);
+        }
+    }
+
+    @Override
+    public void afterAll(final ExtensionContext context) {
+        final ExtensionContext.Store store = context.getStore(NAMESPACE);
+        ofNullable(store.get(LifecyleState.class, LifecyleState.class))
+                .ifPresent(s -> s.afterLastTest(context));
+        if (isPerClass(context)) {
+            store.get(Meecrowave.class, Meecrowave.class).close();
+        }
+    }
+
+    @Override
+    public void beforeEach(final ExtensionContext context) {
+        if (!isPerClass(context)) {
+            doStart(context);
+        }
+    }
+
+    @Override
+    public void afterEach(final ExtensionContext context) {
+        if (!isPerClass(context)) {
+            doRelease(context);
+            context.getStore(NAMESPACE).get(Meecrowave.class, Meecrowave.class).close();
+        }
+    }
+
+    private void doStart(final ExtensionContext context) {
         final Meecrowave.Builder builder = new Meecrowave.Builder();
-        final Optional<MeecrowaveConfig> meecrowaveConfig = findAnnotation(context.getElement(), MeecrowaveConfig.class);
+        final MeecrowaveConfig config = findConfig(context);
         final String ctx;
-        if (meecrowaveConfig.isPresent()) {
-            final MeecrowaveConfig config = meecrowaveConfig.get();
+        if (config != null) {
             ctx = config.context();
 
             for (final Method method : MeecrowaveConfig.class.getMethods()) {
@@ -104,39 +129,19 @@ public class MeecrowaveExtension extends BaseLifecycle
         store.put(Meecrowave.Builder.class, builder);
         meecrowave.bake(ctx);
 
-        if (isPerClass(context)) {
-            doInject(context);
-            store.put(LifecyleState.class, onInjection(context, null));
-        }
+        doInject(context);
+        store.put(LifecyleState.class, onInjection(context, null));
     }
 
-    @Override
-    public void afterAll(final ExtensionContext context) {
-        final ExtensionContext.Store store = context.getStore(NAMESPACE);
-        ofNullable(store.get(LifecyleState.class, LifecyleState.class))
-                .ifPresent(s -> s.afterLastTest(context));
-        if (isPerClass(context)) {
-            store.get(Meecrowave.class, Meecrowave.class).close();
-        }
+    private MeecrowaveConfig findConfig(final ExtensionContext context) {
+        return findAnnotation(context.getElement(), MeecrowaveConfig.class)
+                .orElseGet(() -> context.getParent()
+                        .flatMap(ExtensionContext::getElement)
+                        .flatMap(it -> findAnnotation(it, MeecrowaveConfig.class))
+                        .orElse(null));
     }
 
-    @Override
-    public void beforeEach(final ExtensionContext context) {
-        if (!isPerClass(context)) {
-            doInject(context);
-            final ExtensionContext.Store store = context.getParent().orElse(context).getStore(NAMESPACE);
-            store.put(LifecyleState.class, onInjection(context, store.get(LifecyleState.class, LifecyleState.class)));
-        }
-    }
-
-    @Override
-    public void afterEach(final ExtensionContext context) {
-        if (!isPerClass(context)) {
-            doRelease(context);
-        }
-    }
-
-	private void doRelease(final ExtensionContext context) {
+    private void doRelease(final ExtensionContext context) {
         ofNullable(context.getStore(NAMESPACE).get(CreationalContext.class, CreationalContext.class))
                 .ifPresent(CreationalContext::release);
         scopes.beforeEach(context);
