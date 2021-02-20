@@ -18,13 +18,13 @@
  */
 package org.apache.meecrowave.openwebbeans;
 
-import org.apache.meecrowave.Meecrowave;
 import org.apache.meecrowave.configuration.Configuration;
 import org.apache.meecrowave.logging.tomcat.LogFacade;
 import org.apache.tomcat.JarScanFilter;
 import org.apache.webbeans.config.WebBeansContext;
 import org.apache.webbeans.corespi.scanner.xbean.CdiArchive;
 import org.apache.webbeans.corespi.scanner.xbean.OwbAnnotationFinder;
+import org.apache.webbeans.spi.BDABeansXmlScanner;
 import org.apache.webbeans.spi.BdaScannerService;
 import org.apache.webbeans.spi.BeanArchiveService;
 import org.apache.webbeans.util.WebBeansUtil;
@@ -82,6 +82,30 @@ public class OWBTomcatWebScannerService extends WebScannerService {
         if (delegate != null) {
             delegate.init(context);
         }
+    }
+
+    @Override
+    public Set<URL> getBeanXmls() {
+        if (delegate == null) {
+            return super.getBeanXmls();
+        }
+        return delegate.getBeanXmls();
+    }
+
+    @Override
+    public boolean isBDABeansXmlScanningEnabled() {
+        if (delegate == null) {
+            return super.isBDABeansXmlScanningEnabled();
+        }
+        return delegate.isBDABeansXmlScanningEnabled();
+    }
+
+    @Override
+    public BDABeansXmlScanner getBDABeansXmlScanner() {
+        if (delegate == null) {
+            return super.getBDABeansXmlScanner();
+        }
+        return delegate.getBDABeansXmlScanner();
     }
 
     @Override
