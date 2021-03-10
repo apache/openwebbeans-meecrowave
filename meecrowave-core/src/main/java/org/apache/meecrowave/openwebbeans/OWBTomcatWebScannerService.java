@@ -254,9 +254,7 @@ public class OWBTomcatWebScannerService extends WebScannerService {
         CdiArchive.FoundClasses foundClasses = archive.classesByUrl().get(key);
         if (foundClasses == null) {
             final BeanArchiveService beanArchiveService = webBeansContext().getBeanArchiveService();
-            foundClasses = CdiArchive.FoundClasses.class.cast(
-                    CdiArchive.FoundClasses.class.getConstructor(CdiArchive.class, URL.class, Collection.class, BeanArchiveService.BeanArchiveInformation.class)
-                            .newInstance(null, url, new HashSet<>(), beanArchiveService.getBeanArchiveInformation(url)));
+            foundClasses = new CdiArchive.FoundClasses(url, new HashSet<>(), beanArchiveService.getBeanArchiveInformation(url));
             archive.classesByUrl().put(key, foundClasses);
         }
 
