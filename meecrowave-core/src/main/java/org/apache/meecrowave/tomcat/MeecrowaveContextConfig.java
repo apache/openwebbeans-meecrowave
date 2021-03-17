@@ -58,6 +58,7 @@ import org.apache.tomcat.util.descriptor.web.WebXml;
 import org.apache.webbeans.config.WebBeansContext;
 import org.apache.webbeans.corespi.scanner.xbean.CdiArchive;
 import org.apache.webbeans.corespi.scanner.xbean.OwbAnnotationFinder;
+import org.apache.webbeans.spi.ScannerService;
 import org.xml.sax.InputSource;
 
 public class MeecrowaveContextConfig extends ContextConfig {
@@ -103,26 +104,29 @@ public class MeecrowaveContextConfig extends ContextConfig {
         final ClassLoader old = thread.getContextClassLoader();
         thread.setContextClassLoader(loader);
         try {
-            final OWBTomcatWebScannerService scannerService = OWBTomcatWebScannerService.class.cast(WebBeansContext.getInstance().getScannerService());
-            scannerService.setFilter(ofNullable(context.getJarScanner()).map(JarScanner::getJarScanFilter).orElse(null), context.getServletContext());
-            scannerService.setDocBase(context.getDocBase());
-            scannerService.setShared(configuration.getSharedLibraries());
-            if (configuration.getWatcherBouncing() > 0) { // note that caching should be disabled with this config in most of the times
-                watcher = new ReloadOnChangeController(context, configuration.getWatcherBouncing());
-                scannerService.setFileVisitor(f -> watcher.register(f));
+            final ScannerService service = WebBeansContext.getInstance().getScannerService();
+            if (OWBTomcatWebScannerService.class.isInstance(service)) {
+                final OWBTomcatWebScannerService scannerService = OWBTomcatWebScannerService.class.cast(service);
+                scannerService.setFilter(ofNullable(context.getJarScanner()).map(JarScanner::getJarScanFilter).orElse(null), context.getServletContext());
+                scannerService.setDocBase(context.getDocBase());
+                scannerService.setShared(configuration.getSharedLibraries());
+                if (configuration.getWatcherBouncing() > 0) { // note that caching should be disabled with this config in most of the times
+                    watcher = new ReloadOnChangeController(context, configuration.getWatcherBouncing());
+                    scannerService.setFileVisitor(f -> watcher.register(f));
+                }
+                scannerService.scan();
+                finder = scannerService.getFinder();
+                finder.link();
+                final CdiArchive archive = CdiArchive.class.cast(finder.getArchive());
+                Stream.of(WebServlet.class, WebFilter.class, WebListener.class)
+                        .forEach(marker -> finder.findAnnotatedClasses(marker).stream()
+                                .filter(c -> !Modifier.isAbstract(c.getModifiers()) && Modifier.isPublic(c.getModifiers()))
+                                .forEach(webComponent -> webClasses.computeIfAbsent(
+                                        archive.classesByUrl().entrySet().stream()
+                                                .filter(e -> e.getValue().getClassNames().contains(webComponent.getName()))
+                                                .findFirst().get().getKey(), k -> new HashSet<>())
+                                        .add(webComponent)));
             }
-            scannerService.scan();
-            finder = scannerService.getFinder();
-            finder.link();
-            final CdiArchive archive = CdiArchive.class.cast(finder.getArchive());
-            Stream.of(WebServlet.class, WebFilter.class, WebListener.class)
-                    .forEach(marker -> finder.findAnnotatedClasses(marker).stream()
-                            .filter(c -> !Modifier.isAbstract(c.getModifiers()) && Modifier.isPublic(c.getModifiers()))
-                            .forEach(webComponent -> webClasses.computeIfAbsent(
-                                    archive.classesByUrl().entrySet().stream()
-                                            .filter(e -> e.getValue().getClassNames().contains(webComponent.getName()))
-                                            .findFirst().get().getKey(), k -> new HashSet<>())
-                                    .add(webComponent)));
         } finally {
             thread.setContextClassLoader(old);
         }

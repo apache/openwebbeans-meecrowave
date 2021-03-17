@@ -28,6 +28,7 @@ import org.apache.tomcat.util.scan.JarFactory;
 import org.apache.webbeans.config.WebBeansContext;
 import org.apache.webbeans.corespi.scanner.xbean.CdiArchive;
 import org.apache.webbeans.corespi.scanner.xbean.OwbAnnotationFinder;
+import org.apache.webbeans.spi.ScannerService;
 import org.apache.webbeans.web.scanner.WebScannerService;
 import org.apache.xbean.finder.util.Files;
 
@@ -45,7 +46,11 @@ public class OWBJarScanner implements JarScanner {
         switch (jarScanType) {
             case PLUGGABILITY:
                 final WebBeansContext owb = WebBeansContext.getInstance();
-                final OwbAnnotationFinder finder = WebScannerService.class.cast(owb.getScannerService()).getFinder();
+                final ScannerService scannerService = owb.getScannerService();
+                if (!WebScannerService.class.isInstance(scannerService)) {
+                    return;
+                }
+                final OwbAnnotationFinder finder = WebScannerService.class.cast(scannerService).getFinder();
                 if (finder == null) {
                     return;
                 }
