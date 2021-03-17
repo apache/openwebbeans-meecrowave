@@ -57,7 +57,7 @@ public class PrincipalTest {
                         .addCollection("secured", "/*")))
                 .bake()) {
             assertEquals(
-                    "org.apache.meecrowave.PrincipalTest$MyPrincipal_foo  org.apache.webbeans.custom.security.Principal_foo",
+                    "org.apache.meecrowave.PrincipalTest$MyPrincipal_foo  org.apache.webbeans.custom.Principal_foo",
                     slurp(new URL("http://localhost:" + container.getConfiguration().getHttpPort() + "/api/test/principal")));
         }
     }
