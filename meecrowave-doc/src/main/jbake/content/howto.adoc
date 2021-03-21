@@ -691,6 +691,15 @@ In terms of dependencies you can start with this for example:
 </dependencies>
 ----
 
+Last step is to disable log4j2 and tomcat scanning by default - indeed previous setup works if passed on the command line but since it is always the same settings it is saner to put them in a `meecrowave.properties` in the classpath:
+
+[source,properties]
+----
+tomcat-scanning = false
+logging-global-setup = false
+log4j2-jul-bridge = false
+----
+
 TIP: using a profile or a binary dedicated module you can keep the JVM mode using Log4j2 and the native mode using Yupiik Logging (just tweak dependencies and optionally use arthur exclude configuration).
 
 TIP: an Arthur knight can be developed to replace all that configuration, it will auto-setup meecrowave/cxf/tomcat needed reflection, scan present tomcat and cxf bundles, auto register CXF SPI (bus-extensions.txt - optionally filtering them and the not loadable ones) classes for reflection, spec classes (`org.apache.cxf.jaxrs.utils.InjectionUtils.STANDARD_CONTEXT_CLASSES`), and likely inherit from openwebbeans extension CDI integration.
