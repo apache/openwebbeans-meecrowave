@@ -18,7 +18,6 @@
  */
 package org.apache.meecrowave.doc.generator;
 
-import org.apache.commons.lang3.text.WordUtils;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
@@ -200,7 +199,7 @@ public class Downloads {
         }
 
         return new Download(
-                WordUtils.capitalize(artifactId.replace('-', ' ')),
+                Character.toUpperCase(artifactId.charAt(0)) + artifactId.substring(1).replace('-', ' '),
                 classifier,
                 version,
                 format,

@@ -18,11 +18,38 @@
  */
 package org.apache.meecrowave.maven;
 
-import static java.util.Arrays.asList;
-import static java.util.Locale.ENGLISH;
-import static java.util.stream.Collectors.joining;
-import static java.util.stream.Collectors.toList;
-import static org.apache.maven.plugins.annotations.ResolutionScope.RUNTIME_PLUS_SYSTEM;
+import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
+import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
+import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
+import org.apache.maven.artifact.Artifact;
+import org.apache.maven.model.Dependency;
+import org.apache.maven.plugin.AbstractMojo;
+import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.plugin.logging.Log;
+import org.apache.maven.plugins.annotations.Component;
+import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.Parameter;
+import org.apache.maven.project.DefaultDependencyResolutionRequest;
+import org.apache.maven.project.DependencyResolutionException;
+import org.apache.maven.project.DependencyResolutionRequest;
+import org.apache.maven.project.MavenProject;
+import org.apache.maven.project.MavenProjectHelper;
+import org.apache.maven.project.ProjectDependenciesResolver;
+import org.apache.maven.shared.dependency.graph.DependencyGraphBuilder;
+import org.apache.meecrowave.lang.Substitutor;
+import org.eclipse.aether.RepositorySystem;
+import org.eclipse.aether.RepositorySystemSession;
+import org.eclipse.aether.artifact.DefaultArtifact;
+import org.eclipse.aether.graph.DependencyNode;
+import org.eclipse.aether.graph.DependencyVisitor;
+import org.eclipse.aether.impl.ArtifactResolver;
+import org.eclipse.aether.repository.LocalRepositoryManager;
+import org.eclipse.aether.repository.RemoteRepository;
+import org.eclipse.aether.resolution.ArtifactRequest;
+import org.eclipse.aether.resolution.ArtifactResolutionException;
+import org.eclipse.aether.resolution.ArtifactResult;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -45,38 +72,11 @@ import java.util.Properties;
 import java.util.stream.Stream;
 import java.util.zip.GZIPOutputStream;
 
-import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
-import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
-import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
-import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
-import org.apache.commons.lang3.text.StrSubstitutor;
-import org.apache.maven.artifact.Artifact;
-import org.apache.maven.model.Dependency;
-import org.apache.maven.plugin.AbstractMojo;
-import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.MojoFailureException;
-import org.apache.maven.plugin.logging.Log;
-import org.apache.maven.plugins.annotations.Component;
-import org.apache.maven.plugins.annotations.Mojo;
-import org.apache.maven.plugins.annotations.Parameter;
-import org.apache.maven.project.DefaultDependencyResolutionRequest;
-import org.apache.maven.project.DependencyResolutionException;
-import org.apache.maven.project.DependencyResolutionRequest;
-import org.apache.maven.project.MavenProject;
-import org.apache.maven.project.MavenProjectHelper;
-import org.apache.maven.project.ProjectDependenciesResolver;
-import org.apache.maven.shared.dependency.graph.DependencyGraphBuilder;
-import org.eclipse.aether.RepositorySystem;
-import org.eclipse.aether.RepositorySystemSession;
-import org.eclipse.aether.artifact.DefaultArtifact;
-import org.eclipse.aether.graph.DependencyNode;
-import org.eclipse.aether.graph.DependencyVisitor;
-import org.eclipse.aether.impl.ArtifactResolver;
-import org.eclipse.aether.repository.LocalRepositoryManager;
-import org.eclipse.aether.repository.RemoteRepository;
-import org.eclipse.aether.resolution.ArtifactRequest;
-import org.eclipse.aether.resolution.ArtifactResolutionException;
-import org.eclipse.aether.resolution.ArtifactResult;
+import static java.util.Arrays.asList;
+import static java.util.Locale.ENGLISH;
+import static java.util.stream.Collectors.joining;
+import static java.util.stream.Collectors.toList;
+import static org.apache.maven.plugins.annotations.ResolutionScope.RUNTIME_PLUS_SYSTEM;
 
 @Mojo(name = "bundle", requiresDependencyResolution = RUNTIME_PLUS_SYSTEM)
 public class MeecrowaveBundleMojo extends AbstractMojo {
@@ -253,12 +253,11 @@ public class MeecrowaveBundleMojo extends AbstractMojo {
                     Thread.currentThread().getContextClassLoader().getResourceAsStream("bin/meecrowave." + ext)))) {
                 final File target = new File(distroFolder, "bin/meecrowave." + ext);
                 if (!target.exists()) {
-                    write(target, StrSubstitutor.replace(reader.lines().collect(joining("\n")),
-                            new HashMap<String, String>() {{
-                                put("main", main);
-                                put("logManager", hasLog4j(distroFolder) ?
-                                        "org.apache.logging.log4j.jul.LogManager" : "org.apache.juli.ClassLoaderLogManager");
-                            }}));
+                    write(target, new Substitutor(new HashMap<String, String>() {{
+                        put("main", main);
+                        put("logManager", hasLog4j(distroFolder) ?
+                                "org.apache.logging.log4j.jul.LogManager" : "org.apache.juli.ClassLoaderLogManager");
+                    }}).replace(reader.lines().collect(joining("\n"))));
                 }
             } catch (final IOException e) {
                 throw new MojoExecutionException(e.getMessage(), e);

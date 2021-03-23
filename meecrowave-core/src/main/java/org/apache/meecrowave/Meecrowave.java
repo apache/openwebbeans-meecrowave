@@ -617,8 +617,8 @@ public class Meecrowave implements AutoCloseable {
         if (tomcat.getRawConnector() == null && !configuration.isSkipHttp()) {
             final Connector connector = createConnector();
             connector.setPort(configuration.getHttpPort());
-            if (connector.getAttribute("connectionTimeout") == null) {
-                connector.setAttribute("connectionTimeout", "3000");
+            if (connector.getProperty("connectionTimeout") == null) {
+                connector.setProperty("connectionTimeout", "3000");
             }
 
             tomcat.getService().addConnector(connector);
@@ -636,7 +636,7 @@ public class Meecrowave implements AutoCloseable {
                 configuration.getProperties().setProperty("connector.sslhostconfig.sslProtocol", configuration.getSslProtocol());
             }
             if (configuration.getProperties().getProperty("connector.sslhostconfig.hostName") != null) {
-                httpsConnector.setAttribute("defaultSSLHostConfigName", configuration.getProperties().getProperty("connector.sslhostconfig.hostName"));
+                httpsConnector.setProperty("defaultSSLHostConfigName", configuration.getProperties().getProperty("connector.sslhostconfig.hostName"));
             }
             if (configuration.getKeystoreFile() != null) {
                 configuration.getProperties().setProperty("connector.sslhostconfig.certificateKeystoreFile", configuration.getKeystoreFile());
@@ -646,7 +646,7 @@ public class Meecrowave implements AutoCloseable {
             }
             configuration.getProperties().setProperty("connector.sslhostconfig.certificateKeystoreType", configuration.getKeystoreType());
             if (configuration.getClientAuth() != null) {
-                httpsConnector.setAttribute("clientAuth", configuration.getClientAuth());
+                httpsConnector.setProperty("clientAuth", configuration.getClientAuth());
             }
 
             if (configuration.getKeyAlias() != null) {
@@ -683,7 +683,7 @@ public class Meecrowave implements AutoCloseable {
             buildSslHostConfig.forEach(httpsConnector::addSslHostConfig);
 
             if (configuration.getDefaultSSLHostConfigName() != null) {
-                httpsConnector.setAttribute("defaultSSLHostConfigName", configuration.getDefaultSSLHostConfigName());
+                httpsConnector.setProperty("defaultSSLHostConfigName", configuration.getDefaultSSLHostConfigName());
             }
             tomcat.getService().addConnector(httpsConnector);
             if (configuration.isSkipHttp()) {
@@ -783,8 +783,8 @@ public class Meecrowave implements AutoCloseable {
                 String::equalsIgnoreCase : String::equals;
         return certificate != null && !(new File(certificate).exists())
                 && !equals.test(
-                        Paths.get(System.getProperty("user.home")).resolve(".keystore").toAbsolutePath().normalize().toString(),
-                        Paths.get(certificate).toAbsolutePath().normalize().toString());
+                Paths.get(System.getProperty("user.home")).resolve(".keystore").toAbsolutePath().normalize().toString(),
+                Paths.get(certificate).toAbsolutePath().normalize().toString());
     }
 
     private void copyCertificateToConfDir(String certificate) {
@@ -816,6 +816,7 @@ public class Meecrowave implements AutoCloseable {
     /**
      * Store away the current system property for restoring it later
      * during shutdown.
+     *
      * @param backupPropertyMap a Map to store away the previous value before setting the newValue
      * @param propertyKey
      * @param newValue
@@ -880,12 +881,12 @@ public class Meecrowave implements AutoCloseable {
     /**
      * Syntax uses:
      * <code>
-     *     valves.myValve1._className = org.apache.meecrowave.tomcat.LoggingAccessLogPattern
-     *     valves.myValve1._order = 0
-     *
-     *     valves.myValve1._className = SSOVa
-     *     valves.myValve1._order = 1
-     *     valves.myValve1.showReportInfo = false
+     * valves.myValve1._className = org.apache.meecrowave.tomcat.LoggingAccessLogPattern
+     * valves.myValve1._order = 0
+     * <p>
+     * valves.myValve1._className = SSOVa
+     * valves.myValve1._order = 1
+     * valves.myValve1.showReportInfo = false
      * </code>
      *
      * @return the list of valve from the properties.
@@ -893,22 +894,22 @@ public class Meecrowave implements AutoCloseable {
     private List<Valve> buildValves() {
         final List<Valve> valves = new ArrayList<>();
         configuration.getProperties().stringPropertyNames().stream()
-                                .filter(key -> key.startsWith("valves.") && key.endsWith("._className"))
-                                .sorted(comparing(key -> Integer.parseInt(configuration.getProperties()
-                                        .getProperty(key.replaceFirst("\\._className$", "._order"), "0"))))
-                                .map(key -> key.split("\\."))
-                                .filter(parts -> parts.length == 3)
-                                .forEach(key -> {
-            final String prefix = key[0] + '.' + key[1] + '.';
-            final ObjectRecipe recipe = newRecipe(configuration.getProperties().getProperty(prefix + key[2]));
-            configuration.getProperties().stringPropertyNames().stream()
-                    .filter(it -> it.startsWith(prefix) && !it.endsWith("._order") && !it.endsWith("._className"))
-                    .forEach(propKey -> {
-                        final String value = configuration.getProperties().getProperty(propKey);
-                        recipe.setProperty(propKey.substring(prefix.length()), value);
-                    });
-            valves.add(Valve.class.cast(recipe.create(Thread.currentThread().getContextClassLoader())));
-        });
+                .filter(key -> key.startsWith("valves.") && key.endsWith("._className"))
+                .sorted(comparing(key -> Integer.parseInt(configuration.getProperties()
+                        .getProperty(key.replaceFirst("\\._className$", "._order"), "0"))))
+                .map(key -> key.split("\\."))
+                .filter(parts -> parts.length == 3)
+                .forEach(key -> {
+                    final String prefix = key[0] + '.' + key[1] + '.';
+                    final ObjectRecipe recipe = newRecipe(configuration.getProperties().getProperty(prefix + key[2]));
+                    configuration.getProperties().stringPropertyNames().stream()
+                            .filter(it -> it.startsWith(prefix) && !it.endsWith("._order") && !it.endsWith("._className"))
+                            .forEach(propKey -> {
+                                final String value = configuration.getProperties().getProperty(propKey);
+                                recipe.setProperty(propKey.substring(prefix.length()), value);
+                            });
+                    valves.add(Valve.class.cast(recipe.create(Thread.currentThread().getContextClassLoader())));
+                });
         return valves;
     }
 
@@ -927,19 +928,19 @@ public class Meecrowave implements AutoCloseable {
         }
         // Allows to add N Multiple SSLHostConfig elements not including the default one.
         final Collection<Integer> itemNumbers = configuration.getProperties().stringPropertyNames()
-                                .stream()
-                                .filter(key -> (key.startsWith("connector.sslhostconfig.") && key.split("\\.").length == 4))
-                                .map(key -> Integer.parseInt(key.split("\\.")[2]))
-                                .collect(toSet());
+                .stream()
+                .filter(key -> (key.startsWith("connector.sslhostconfig.") && key.split("\\.").length == 4))
+                .map(key -> Integer.parseInt(key.split("\\.")[2]))
+                .collect(toSet());
         itemNumbers.stream().sorted().forEach(itemNumber -> {
             final ObjectRecipe recipe = newRecipe(SSLHostConfig.class.getName());
             final String prefix = "connector.sslhostconfig." + itemNumber + '.';
             configuration.getProperties().stringPropertyNames().stream()
-                                    .filter(k -> k.startsWith(prefix))
-                                    .forEach(key -> {
-                                        final String keyName = key.split("\\.")[3];
-                                        recipe.setProperty(keyName, configuration.getProperties().getProperty(key));
-                                    });
+                    .filter(k -> k.startsWith(prefix))
+                    .forEach(key -> {
+                        final String keyName = key.split("\\.")[3];
+                        recipe.setProperty(keyName, configuration.getProperties().getProperty(key));
+                    });
             if (!recipe.getProperties().isEmpty()) {
                 final SSLHostConfig sslHostConfig = SSLHostConfig.class.cast(recipe.create());
                 sslHostConfigs.add(sslHostConfig);
@@ -1048,7 +1049,7 @@ public class Meecrowave implements AutoCloseable {
             }
             connector = recipe.getProperties().isEmpty() ? new Connector() : Connector.class.cast(recipe.create());
             for (final Map.Entry<String, String> attr : attributes.entrySet()) {
-                connector.setAttribute(attr.getKey(), attr.getValue());
+                connector.setProperty(attr.getKey(), attr.getValue());
             }
         } else {
             connector = new Connector();
@@ -1059,11 +1060,6 @@ public class Meecrowave implements AutoCloseable {
     private static Server createServer(final String serverXml) {
         final Catalina catalina = new Catalina() {
             // skip few init we don't need *here*
-            @Override
-            protected void initDirs() {
-                // no-op
-            }
-
             @Override
             protected void initStreams() {
                 // no-op
@@ -1135,10 +1131,10 @@ public class Meecrowave implements AutoCloseable {
         lookupPaths.add("target");
         lookupPaths.add("build");
         final File file = lookupPaths.stream()
-                          .map(File::new)
-                          .filter(File::isDirectory)
-                          .findFirst()
-                          .map(file1 -> new File(file1, "meecrowave-" + System.nanoTime())).orElse(ownedTempDir);
+                .map(File::new)
+                .filter(File::isDirectory)
+                .findFirst()
+                .map(file1 -> new File(file1, "meecrowave-" + System.nanoTime())).orElse(ownedTempDir);
         IO.mkdirs(file);
         return file.getAbsolutePath();
     }

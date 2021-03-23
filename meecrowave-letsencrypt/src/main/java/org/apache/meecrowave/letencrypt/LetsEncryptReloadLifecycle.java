@@ -18,7 +18,25 @@
  */
 package org.apache.meecrowave.letencrypt;
 
-import static java.util.Optional.ofNullable;
+import org.apache.coyote.http11.AbstractHttp11Protocol;
+import org.apache.meecrowave.logging.tomcat.LogFacade;
+import org.apache.meecrowave.runner.Cli;
+import org.apache.meecrowave.runner.cli.CliOption;
+import org.bouncycastle.openssl.PEMKeyPair;
+import org.bouncycastle.openssl.PEMParser;
+import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
+import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
+import org.shredzone.acme4j.Account;
+import org.shredzone.acme4j.AccountBuilder;
+import org.shredzone.acme4j.Authorization;
+import org.shredzone.acme4j.Certificate;
+import org.shredzone.acme4j.Order;
+import org.shredzone.acme4j.Session;
+import org.shredzone.acme4j.Status;
+import org.shredzone.acme4j.challenge.Challenge;
+import org.shredzone.acme4j.challenge.Http01Challenge;
+import org.shredzone.acme4j.exception.AcmeException;
+import org.shredzone.acme4j.util.CSRBuilder;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -40,25 +58,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
 import java.util.stream.Stream;
 
-import org.apache.coyote.http11.AbstractHttp11Protocol;
-import org.apache.meecrowave.logging.tomcat.LogFacade;
-import org.apache.meecrowave.runner.Cli;
-import org.apache.meecrowave.runner.cli.CliOption;
-import org.bouncycastle.openssl.PEMKeyPair;
-import org.bouncycastle.openssl.PEMParser;
-import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
-import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
-import org.shredzone.acme4j.Account;
-import org.shredzone.acme4j.AccountBuilder;
-import org.shredzone.acme4j.Authorization;
-import org.shredzone.acme4j.Certificate;
-import org.shredzone.acme4j.Order;
-import org.shredzone.acme4j.Session;
-import org.shredzone.acme4j.Status;
-import org.shredzone.acme4j.challenge.Challenge;
-import org.shredzone.acme4j.challenge.Http01Challenge;
-import org.shredzone.acme4j.exception.AcmeException;
-import org.shredzone.acme4j.util.CSRBuilder;
+import static java.util.Optional.ofNullable;
 
 // we depend on bouncycastle but user myst add it to be able to use that
 // todo: check we can get rid of it and use jaxrs client instead of acme lib
@@ -205,7 +205,7 @@ public class LetsEncryptReloadLifecycle implements AutoCloseable, Runnable {
         }
 
         if (challenge.getStatus() != Status.VALID) {
-            throw new AcmeException("Challenge for domain " + authorization.getDomain() + ", is invalid, exiting iteration");
+            throw new AcmeException("Challenge for domain " + authorization.getIdentifier() + ", is invalid, exiting iteration");
         }
         return true;
     }

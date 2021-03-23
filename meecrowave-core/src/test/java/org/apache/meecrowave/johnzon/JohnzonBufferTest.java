@@ -16,12 +16,12 @@
  */
 package org.apache.meecrowave.johnzon;
 
+import org.apache.meecrowave.Meecrowave;
+import org.junit.Test;
+
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.core.MediaType;
-
-import org.apache.meecrowave.Meecrowave;
-import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 
@@ -31,7 +31,7 @@ public class JohnzonBufferTest {
         DebugJohnzonBufferStrategy.resetCounter();
         try (final Meecrowave meecrowave = new Meecrowave(new Meecrowave.Builder()
                 .randomHttpPort()
-                .withJsonpBufferStrategy(DebugJohnzonBufferStrategy.class.getName())
+                .jsonpBufferStrategy(DebugJohnzonBufferStrategy.class.getName())
                 .includePackages("org.superbiz.app.TestJsonEndpoint")).bake()) {
             final Client client = ClientBuilder.newClient();
             try {
