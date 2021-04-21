@@ -32,6 +32,24 @@ If you intend to reuse our `Cli` main you should also add:
 </dependency>
 ----
 
+Finally, if you want to develop against `jakarta` namespace instead of `javax` one, you can use the all in one `jakarta` bundle:
+
+[source,xml]
+----
+<dependency>
+  <groupId>org.apache.meecrowave</groupId>
+  <artifactId>meecrowave-core</artifactId>
+  <version>1.2.11</version> <!-- a least 1.2.11 is required -->
+  <classifier>jakarta</classifier>
+  <exclusions>
+    <exclusion>
+      <groupId>*</groupId>
+      <artifactId>*</artifactId>
+    </exclusion>
+  </exclusions>
+</dependency>
+----
+
 === Runtime
 
 Meecrowave relies on JAX-RS and CDI so to start you just need to write a JAX-RS endpoint:
