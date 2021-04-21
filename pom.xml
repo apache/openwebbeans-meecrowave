@@ -245,9 +245,5 @@
       </snapshots>
     </repository>
 -->
-    <repository>
-      <id>cxf</id>
-      <url>https://repository.apache.org/content/repositories/orgapachecxf-1160</url>
-    </repository>
   </repositories>
 </project>
