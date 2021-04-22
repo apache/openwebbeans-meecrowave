@@ -1307,21 +1307,17 @@ pre {
 }
 .icon-important:before {
     content: "\f06a";
-    font-family: "Font Awesome 5 Free";
     color: #e96065;
 }
 .icon-note:before {
     content: "\f05a";
-    font-family: "Font Awesome 5 Free";
     color: #0675c1;
 }
 .icon-tip:before {
     content: "\f059";
-    font-family: "Font Awesome 5 Free";
     color: #6ec01e;
 }
 .icon-warning:before {
     content: "\f071";
-    font-family: "Font Awesome 5 Free";
     color: #ffc300;
 }
