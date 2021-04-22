@@ -69,6 +69,12 @@ free and easy SSL support on your HTTPS connectors.
 
 link:{context_rootpath}/meecrowave-letsencrypt/index.html[Let's Encrypt module]
 
+== Meecrowave Websocket
+
+This is an experimental module wrapping `tomcat-websocket` to make it CDI friendly for server endpoints.
+
+link:{context_rootpath}/meecrowave-websocket/index.html[Websocket module]
+
 == Going further
 
 Meecrowave scope is not the full scope of microservices (whatever it means) or at least enterprise needs
