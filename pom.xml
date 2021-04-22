@@ -86,6 +86,7 @@
     <module>meecrowave-oauth2</module>
     <module>meecrowave-letsencrypt</module>
     <module>meecrowave-proxy</module>
+    <module>meecrowave-websocket</module>
   </modules>
 
   <dependencyManagement>

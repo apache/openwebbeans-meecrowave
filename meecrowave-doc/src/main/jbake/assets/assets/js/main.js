@@ -46,4 +46,30 @@ $(document).ready(function() {
     });    
 
     hljs.initHighlightingOnLoad();
+
+    // set admonitionblock custom theme
+    // drop titles from <i> to not pollute the ui with pointless text
+    function setAdmonitionStyle(item, color) {
+      var i = $(item);
+      i.css('border-left', '1.5px solid ' + color);
+      i.css('padding-left', '2rem');
+      i.css('background-color', color + '10');
+      i.css('color', color);
+    }
+    $('div.admonitionblock td.icon > i.fa').each(function (idx, item) {
+      item.title = '';
+  
+      var jItem = $(item);
+      jItem.addClass('fa-lg');
+      var content = jItem.parent().parent().find('td.content');
+      if (jItem.hasClass('icon-important')) {
+          setAdmonitionStyle(content, '#e96065');
+      } else if (jItem.hasClass('icon-note')) {
+          setAdmonitionStyle(content, '#0675c1');
+      } else if (jItem.hasClass('icon-warning')) {
+          setAdmonitionStyle(content, '#ffc300');
+      } else {
+          setAdmonitionStyle(content, '#6ec01e');
+      }
+    });
 });

@@ -54,6 +54,7 @@ import org.apache.meecrowave.doc.generator.LetsEncryptConfiguration;
 import org.apache.meecrowave.doc.generator.MavenConfiguration;
 import org.apache.meecrowave.doc.generator.OAuth2Configuration;
 import org.apache.meecrowave.doc.generator.ProxyConfiguration;
+import org.apache.meecrowave.proxy.servlet.meecrowave.ProxyServletSetup;
 import org.jbake.app.Oven;
 import org.jbake.app.configuration.ConfigUtil;
 import org.jbake.app.configuration.DefaultJBakeConfiguration;
@@ -123,6 +124,7 @@ public class JBake {
                             add("source-highlighter=highlightjs");
                             add("highlightjs-theme=idea");
                             add("context_rootpath=/meecrowave");
+                            add("icons=font");
                         }});
                     }}));
                     config.addConfiguration(DefaultJBakeConfiguration.class.cast(
@@ -243,8 +245,10 @@ public class JBake {
 
             try (final Meecrowave container = new Meecrowave(new Meecrowave.Builder() {{
                 setWebResourceCached(false);
+                property("proxy-skip", "true");
             }}) {{
                 start();
+                getTomcat().getServer().setParentClassLoader(Thread.currentThread().getContextClassLoader());
                 deployWebapp("/meecrowave", destination);
             }}) {
                 System.out.println("Started on http://localhost:" + container.getConfiguration().getHttpPort() + "/meecrowave");

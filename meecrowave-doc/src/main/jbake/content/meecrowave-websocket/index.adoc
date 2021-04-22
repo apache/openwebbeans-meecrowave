@@ -1,0 +1,27 @@
+= Meecrowave WebSocket
+:jbake-date: 2021-04-22
+:jbake-type: page
+:jbake-status: published
+:jbake-meecrowavepdf:
+:jbake-meecrowavetitleicon: icon icon_chat
+:jbake-meecrowavecolor: body-red
+:icons: font
+
+WARNING: this module is available with Apache Meecrowave >= 1.2.11.
+
+Coordinates:
+
+[source,xml]
+----
+<dependency>
+  <groupId>org.apache.meecrowave</groupId>
+  <artifactId>meecrowave-websocket</artifactId>
+  <version>${meecrowave.version}</version>
+</dependency>
+----
+
+IMPORTANT: this module requires `org.apache.tomcat:tomcat-websocket-api` but replaces `org.apache.tomcat:tomcat-websocket` until Tomcat enables a better way to extend its default.
+
+Once this module added, you can implement a server websocket endpoint as a CDI bean, it will use `CDI.current().select(endpointType).get()` to resolve it.
+
+NOTE: you can still pass a custom `Configurator` to your endpoint to customize the lookup or runtime of the endpoint.
