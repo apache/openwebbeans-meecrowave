@@ -55,16 +55,16 @@
     <tomcat.version>9.0.44</tomcat.version>
     <openwebbeans.version>2.0.22</openwebbeans.version>
     <cxf.version>3.4.3</cxf.version>
-    <johnzon.version>1.2.8</johnzon.version>
-    <log4j2.version>2.14.0</log4j2.version>
+    <johnzon.version>1.2.11</johnzon.version>
+    <log4j2.version>2.14.1</log4j2.version>
     <deltaspike.version>1.8.2</deltaspike.version>
     <jaxb.version>2.2.11</jaxb.version>
     <openjpa.version>3.1.2</openjpa.version>
     <jpa-spec.version>1.0-alpha-1</jpa-spec.version>
     <h2.version>1.4.200</h2.version>
-    <dbcp2.version>2.7.0</dbcp2.version>
+    <dbcp2.version>2.8.0</dbcp2.version>
     <commons-cli.version>1.4</commons-cli.version>
-    <xbean.version>4.18</xbean.version>
+    <xbean.version>4.19</xbean.version>
     <geronimo-jcache-simple.version>1.0.5</geronimo-jcache-simple.version>
     <geronimo-jcache_1.0_spec.version>1.0-alpha-1</geronimo-jcache_1.0_spec.version>
 
