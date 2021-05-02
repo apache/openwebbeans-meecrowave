@@ -86,17 +86,10 @@ public class Downloads {
               .map(Downloads::fillDownloadable)
               .filter(Objects::nonNull)
               .sorted((o1, o2) -> {
-                    final int versionComp = o2.version.compareTo(o1.version);
+                    final int versionComp = compareVersions(o1, o2);
                     if (versionComp != 0) {
-                        if (o2.version.startsWith(o1.version) && o2.version.contains("-M")) { // milestone
-                            return -1;
-                        }
-                        if (o1.version.startsWith(o2.version) && o1.version.contains("-M")) { // milestone
-                            return 1;
-                        }
                         return versionComp;
                     }
-
 
                     final int nameComp = o1.name.compareTo(o2.name);
                     if (nameComp != 0) {
@@ -121,6 +114,30 @@ public class Downloads {
                                 "| " + d.url + "[icon:download[] " + d.format + "] " +
                                 (d.sha512 != null?  d.sha512 + "[icon:download[] sha512] " : d.sha1 + "[icon:download[] sha1] ") +
                                 d.asc + "[icon:download[] asc]"));
+    }
+
+    private static int compareVersions(final Download o2, final Download o1) {
+        try {
+            final String[] parts2 = o2.version.split("\\.");
+            final String[] parts1 = o1.version.split("\\.");
+            for (int i = 0; i < parts2.length; i++) {
+                if (parts1.length < i + 1) {
+                    return -1;
+                }
+                final int v1 = Integer.parseInt(parts1[i]);
+                final int v2 = Integer.parseInt(parts2[i]);
+                final int diff = v1 - v2;
+                if (diff != 0) {
+                    return diff;
+                }
+            }
+            if (parts2.length < parts1.length) {
+                return 1;
+            }
+            return 0;
+        } catch (final RuntimeException re) {
+            return o2.version.compareTo(o1.version);
+        }
     }
 
     private static Download fillDownloadable(final Download download) {
