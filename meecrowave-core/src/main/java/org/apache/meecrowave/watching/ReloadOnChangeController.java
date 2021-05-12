@@ -18,8 +18,8 @@
  */
 package org.apache.meecrowave.watching;
 
-import org.apache.catalina.Context;
-import org.apache.meecrowave.logging.tomcat.LogFacade;
+import static java.util.Arrays.asList;
+import static java.util.Optional.ofNullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -36,12 +36,15 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
-import static java.util.Arrays.asList;
+import org.apache.catalina.Context;
+import org.apache.meecrowave.logging.tomcat.LogFacade;
 
 public class ReloadOnChangeController implements AutoCloseable, Runnable {
     private final Context context;
     private final long bouncing;
+    private final Consumer<Context> redeployCallback;
     private final Collection<Path> paths = new ArrayList<>();
     private WatchService watchService;
     private Thread bouncer;
@@ -49,9 +52,10 @@ public class ReloadOnChangeController implements AutoCloseable, Runnable {
     private volatile boolean running = true;
     private volatile long redeployMarker = System.nanoTime();
 
-    public ReloadOnChangeController(final Context context, final int watcherBouncing) {
+    public ReloadOnChangeController(final Context context, final int watcherBouncing, final Consumer<Context> redeployCallback) {
         this.context = context;
         this.bouncing = (long) watcherBouncing;
+        this.redeployCallback = ofNullable(redeployCallback).orElse(Context::reload);
     }
 
     public void register(final File folder) {
@@ -79,7 +83,7 @@ public class ReloadOnChangeController implements AutoCloseable, Runnable {
     }
 
     protected synchronized void redeploy() {
-        context.reload();
+        redeployCallback.accept(context);
     }
 
     @Override

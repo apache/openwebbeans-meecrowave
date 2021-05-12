@@ -34,6 +34,19 @@
     <meecrowave.build.name>${project.groupId}.maven</meecrowave.build.name>
   </properties>
 
+  <profiles>
+    <profile>
+      <id>dev</id> <!-- IDE does not see that it is a shade so workaround it with an IDE profile -->
+      <dependencies>
+        <dependency>
+          <groupId>org.apache.meecrowave</groupId>
+          <artifactId>meecrowave-specs-api</artifactId>
+          <version>${project.version}</version>
+        </dependency>
+      </dependencies>
+    </profile>
+  </profiles>
+
   <dependencies>
     <dependency>
       <groupId>org.apache.maven</groupId>

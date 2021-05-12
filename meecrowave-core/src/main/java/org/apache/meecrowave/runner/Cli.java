@@ -91,6 +91,7 @@ public class Cli implements Runnable, AutoCloseable {
                                     .filter(File::isDirectory)
                                     .findFirst()
                                     .orElse(null)),
+                        null,
                         null));
             } else {
                 meecrowave.deployWebapp(fixedCtx, new File(war));

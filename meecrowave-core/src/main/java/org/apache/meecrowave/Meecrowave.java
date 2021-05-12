@@ -190,7 +190,7 @@ public class Meecrowave implements AutoCloseable {
         return deployWebapp(new DeploymentMeta(meta.context, meta.docBase, ofNullable(meta.consumer).map(c -> (Consumer<Context>) ctx -> {
             builtInCustomizer.accept(ctx);
             c.accept(ctx);
-        }).orElse(builtInCustomizer)));
+        }).orElse(builtInCustomizer), meta.redeployCallback));
     }
 
     // shortcut
@@ -201,12 +201,12 @@ public class Meecrowave implements AutoCloseable {
     // shortcut
     public Meecrowave bake(final Consumer<Context> customizer) {
         start();
-        return deployClasspath(new DeploymentMeta("", null, customizer));
+        return deployClasspath(new DeploymentMeta("", null, customizer, null));
     }
 
     // shortcut (used by plugins)
     public Meecrowave deployClasspath(final String context) {
-        return deployClasspath(new DeploymentMeta(context, null, null));
+        return deployClasspath(new DeploymentMeta(context, null, null, null));
     }
 
     // shortcut
@@ -216,7 +216,7 @@ public class Meecrowave implements AutoCloseable {
 
     // shortcut (used by plugins)
     public Meecrowave deployWebapp(final String context, final File warOrDir) {
-        return deployWebapp(new DeploymentMeta(context, warOrDir, null));
+        return deployWebapp(new DeploymentMeta(context, warOrDir, null, null));
     }
 
     public Meecrowave deployWebapp(final DeploymentMeta meta) {
@@ -320,7 +320,7 @@ public class Meecrowave implements AutoCloseable {
             }
         };
 
-        ctx.addLifecycleListener(new MeecrowaveContextConfig(configuration, meta.docBase != null, meecrowaveInitializer));
+        ctx.addLifecycleListener(new MeecrowaveContextConfig(configuration, meta.docBase != null, meecrowaveInitializer, meta.redeployCallback));
         ctx.addLifecycleListener(event -> {
             switch (event.getType()) {
                 case Lifecycle.BEFORE_START_EVENT:
@@ -1973,14 +1973,16 @@ public class Meecrowave implements AutoCloseable {
 
     // there to be able to stack config later on without breaking all methods
     public static class DeploymentMeta {
-        private final String context;
+		private final String context;
         private final File docBase;
         private final Consumer<Context> consumer;
+        private final Consumer<Context> redeployCallback;
 
-        public DeploymentMeta(final String context, final File docBase, final Consumer<Context> consumer) {
+        public DeploymentMeta(final String context, final File docBase, final Consumer<Context> consumer, final Consumer<Context> redeployCallback) {
             this.context = context;
             this.docBase = docBase;
             this.consumer = consumer;
+            this.redeployCallback = redeployCallback;
         }
     }
 

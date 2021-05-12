@@ -309,7 +309,7 @@ public class MeecrowaveRunMojo extends AbstractMojo {
     private boolean jaxwsSupportIfAvailable;
 
     @Parameter(property = "meecrowave.reload-goals")
-    private List<String> reloadGoals; // todo: add watching on project.build.directory?
+    private List<String> reloadGoals;
 
     @Parameter(property = "meecrowave.default-ssl-hostconfig-name")
     private String defaultSSLHostConfigName;
@@ -367,7 +367,8 @@ public class MeecrowaveRunMojo extends AbstractMojo {
                         webapp != null && webapp.isDirectory() ? webapp : null,
                         jsContextCustomizer == null ?
                                 null : ctx -> scriptCustomization(
-                                singletonList(jsContextCustomizer), "js", singletonMap("context", ctx)));
+                                singletonList(jsContextCustomizer), "js", singletonMap("context", ctx)),
+                                context -> reload(meecrowave, fixedContext, appLoaderSupplier, loader));
                 deploy(meecrowave, deploymentMeta);
                 final Scanner scanner = new Scanner(System.in);
                 String cmd;

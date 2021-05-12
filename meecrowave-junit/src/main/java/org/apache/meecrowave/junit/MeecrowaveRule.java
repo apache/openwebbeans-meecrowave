@@ -58,7 +58,7 @@ public class MeecrowaveRule extends MeecrowaveRuleBase<MeecrowaveRule> {
     protected AutoCloseable onStart() {
         final Meecrowave meecrowave = new Meecrowave(configuration);
         meecrowave.start();
-        meecrowave.deployClasspath(new Meecrowave.DeploymentMeta(context, docBase, customizer));
+        meecrowave.deployClasspath(new Meecrowave.DeploymentMeta(context, docBase, customizer, null));
         return meecrowave;
     }
 }

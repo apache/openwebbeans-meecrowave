@@ -215,6 +215,19 @@ public class MeecrowaveTest {
         assertEquals(
                 "sci:" + Bounced.class.getName() + Endpoint.class.getName() + InterfaceApi.class.getName() + RsApp.class.getName() + TestJsonEndpoint.class.getName(),
                 slurp(new URL("http://localhost:" + meecrowave.getConfiguration().getHttpPort() + "/sci")));
+        assertNotAvailable(new URL("http://localhost:" + meecrowave.getConfiguration().getHttpPort() + "/api/other"));
+        assertNotAvailable(new URL("http://localhost:" + meecrowave.getConfiguration().getHttpPort() + "/other"));
+    }
+
+    private void assertNotAvailable(final URL url) {
+    	try {
+    		URLConnection connection = url.openConnection();
+    		connection.setReadTimeout(500);
+			connection.getInputStream();
+			fail(url.toString() + " is available");
+		} catch (Exception e) {
+			assertTrue(e.getMessage(), e instanceof IOException);
+		}
     }
 
     private String slurp(final URL url) {
