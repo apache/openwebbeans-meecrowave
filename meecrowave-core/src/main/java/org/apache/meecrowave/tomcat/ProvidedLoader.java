@@ -18,13 +18,13 @@
  */
 package org.apache.meecrowave.tomcat;
 
-import java.beans.PropertyChangeListener;
-
 import org.apache.catalina.Context;
 import org.apache.catalina.LifecycleException;
 import org.apache.catalina.LifecycleState;
 import org.apache.catalina.Loader;
 import org.apache.catalina.util.LifecycleBase;
+
+import java.beans.PropertyChangeListener;
 
 // used to not recreate another classloader,
 // it has a small workaround cause tomcat set properties (clear*) on the classloader
@@ -34,7 +34,6 @@ public class ProvidedLoader extends LifecycleBase implements Loader {
 
     private final ClassLoader delegate;
     private Context context;
-    private int mockReturns = -1;
 
     public ProvidedLoader(final ClassLoader loader, final boolean wrap) {
         // use another classloader cause tomcat set properties on the classloader
@@ -49,10 +48,6 @@ public class ProvidedLoader extends LifecycleBase implements Loader {
 
     @Override
     public ClassLoader getClassLoader() {
-        if (mockReturns > 0) {
-            mockReturns--;
-            return MOCK;
-        }
         return delegate;
     }
 
@@ -103,7 +98,6 @@ public class ProvidedLoader extends LifecycleBase implements Loader {
 
     @Override
     protected void startInternal() throws LifecycleException {
-        mockReturns = 4; // check StandardContext.startInternal, while there is no warnings in the log and tests pass we are good
         setState(LifecycleState.STARTING);
     }
 

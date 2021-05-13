@@ -127,12 +127,10 @@ public class MeecrowaveContextConfig extends ContextConfig {
                                                 .findFirst().get().getKey(), k -> new HashSet<>())
                                         .add(webComponent)));
             }
-        } finally {
-            thread.setContextClassLoader(old);
-        }
-        try {
+
             super.webConfig();
         } finally {
+            thread.setContextClassLoader(old);
             webClasses.clear();
             finder = null;
         }

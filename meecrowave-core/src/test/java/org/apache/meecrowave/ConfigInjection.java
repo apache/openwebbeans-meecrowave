@@ -37,6 +37,7 @@ public class ConfigInjection {
         try (final Meecrowave meecrowave = new Meecrowave(
                 new Meecrowave.Builder()
                         .randomHttpPort()
+                        .skipHttp(true)
                         .includePackages(ConfigInjection.class.getName())).bake()) {
             OWBInjector.inject(WebBeansContext.currentInstance().getBeanManagerImpl(), this, null);
             assertNotNull(configuration);
