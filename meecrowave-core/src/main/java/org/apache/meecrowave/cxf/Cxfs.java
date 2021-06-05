@@ -18,15 +18,6 @@
  */
 package org.apache.meecrowave.cxf;
 
-import java.lang.reflect.Field;
-import java.util.List;
-
-import javax.enterprise.event.Observes;
-import javax.enterprise.inject.spi.AnnotatedType;
-import javax.enterprise.inject.spi.Extension;
-import javax.enterprise.inject.spi.ProcessBean;
-import javax.ws.rs.Path;
-
 public class Cxfs {
     public static final boolean IS_PRESENT;
 
@@ -52,54 +43,6 @@ public class Cxfs {
     public static void resetDefaultBusIfEquals(final ConfigurableBus clientBus) {
         if (clientBus != null && org.apache.cxf.BusFactory.getDefaultBus(false) == clientBus) {
             org.apache.cxf.BusFactory.setDefaultBus(null);
-        }
-    }
-
-    public static Extension mapCdiExtensionIfNeeded(final Extension extension) {
-        if ("org.apache.cxf.cdi.JAXRSCdiResourceExtension".equals(extension.getClass().getName())) {
-            final Field serviceBeans;
-            try {
-                serviceBeans = org.apache.cxf.cdi.JAXRSCdiResourceExtension.class
-                        .getDeclaredField("serviceBeans");
-            } catch (final NoSuchFieldException e) {
-                new org.apache.meecrowave.logging.tomcat.LogFacade(Cxfs.class.getName()).warn(e.getMessage(), e);
-                return extension;
-            }
-            if (!serviceBeans.isAccessible()) {
-                serviceBeans.setAccessible(true);
-            }
-            return new ContractFriendlyJAXRSCdiResourceExtension(serviceBeans);
-        }
-        return extension;
-    }
-
-    // to drop when we will have a cxf version with https://issues.apache.org/jira/browse/CXF-7921
-    private static class ContractFriendlyJAXRSCdiResourceExtension extends org.apache.cxf.cdi.JAXRSCdiResourceExtension {
-        private final Field serviceBeans;
-
-        private ContractFriendlyJAXRSCdiResourceExtension(final Field serviceBeans) {
-            this.serviceBeans = serviceBeans;
-        }
-
-        @Override
-        public <T> void collect(@Observes final ProcessBean<T> event) {
-            if (!event.getAnnotated().isAnnotationPresent(Path.class) && AnnotatedType.class.isInstance(event.getAnnotated())) {
-                final AnnotatedType<?> type = AnnotatedType.class.cast(event.getAnnotated());
-                // note: should we use Annotated for interfaces as well?
-                if (type.getTypeClosure().stream()
-                        .filter(it -> Class.class.isInstance(it) && Class.class.cast(it).isInterface())
-                        .map(Class.class::cast)
-                        .anyMatch(c -> c.isAnnotationPresent(Path.class))) {
-                    try {
-                        List.class.cast(serviceBeans.get(this)).add(event.getBean());
-                        return;
-                    } catch (final IllegalAccessException e) {
-                        new org.apache.meecrowave.logging.tomcat.LogFacade(Cxfs.class.getName())
-                                .error(e.getMessage(), e);
-                    }
-                }
-            }
-            super.collect(event);
         }
     }
 }
