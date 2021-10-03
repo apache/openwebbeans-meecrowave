@@ -51,10 +51,10 @@
     <meecrowave.build.name>${project.groupId}.${project.artifactId}</meecrowave.build.name>
 
     <junit.version>4.13.1</junit.version>
-    <tomcat.version>9.0.50</tomcat.version>
+    <tomcat.version>9.0.54</tomcat.version>
     <openwebbeans.version>2.0.23</openwebbeans.version>
     <cxf.version>3.4.4</cxf.version>
-    <johnzon.version>1.2.12</johnzon.version>
+    <johnzon.version>1.2.14</johnzon.version>
     <log4j2.version>2.14.1</log4j2.version>
     <deltaspike.version>1.8.2</deltaspike.version>
     <jaxb.version>2.2.11</jaxb.version>
