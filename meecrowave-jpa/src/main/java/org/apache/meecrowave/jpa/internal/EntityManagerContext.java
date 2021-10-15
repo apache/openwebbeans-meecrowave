@@ -49,8 +49,11 @@ public class EntityManagerContext implements AlterableContext {
 
     public void exit(final boolean created) {
         if (created) {
-            context.get().exit();
-            context.remove();
+            try {
+                context.get().exit();
+            } finally {
+                context.remove();
+            }
         }
     }
 
