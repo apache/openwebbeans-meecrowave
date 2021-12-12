@@ -38,6 +38,8 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
@@ -124,19 +126,20 @@ public class MeecrowaveRunMojoTest {
     public void classpathDeployment() throws Exception {
         execution.getConfiguration().getChild("httpPort").setValue(Integer.toString(port));
         final Runnable quitCommand = quitCommand();
-        final Thread mojoExecutor = mojoExecutor();
+        List<Exception> mojoFailure = new CopyOnWriteArrayList<>();
+        final Thread mojoExecutor = mojoExecutor(mojoFailure);
         try {
             mojoExecutor.start();
             retry(() -> {
-            	assertEquals("simple", IOUtils.toString(new URL("http://localhost:" + port + "/api/test")));
-            	assertTrue(IOUtils.toString(new URL("http://localhost:" + port + "/api/test/model")).contains("first_name"));
-            	assertTrue(IOUtils.toString(new URL("http://localhost:" + port + "/api/test/model")).contains("last_name"));
-            	assertTrue(IOUtils.toString(new URL("http://localhost:" + port + "/api/test/model")).contains("firstname"));
-            	assertTrue(IOUtils.toString(new URL("http://localhost:" + port + "/api/test/model")).contains("null"));
-            	assertTrue(IOUtils.toString(new URL("http://localhost:" + port + "/sub/index.html")).contains("<h1>yes</h1>"));
-            	assertNotAvailable(new URL("http://localhost:" + port + "/api/additional"));
-            	quitCommand.run();
-            });
+                assertEquals("simple", IOUtils.toString(new URL("http://localhost:" + port + "/api/test")));
+                assertTrue(IOUtils.toString(new URL("http://localhost:" + port + "/api/test/model")).contains("first_name"));
+                assertTrue(IOUtils.toString(new URL("http://localhost:" + port + "/api/test/model")).contains("last_name"));
+                assertTrue(IOUtils.toString(new URL("http://localhost:" + port + "/api/test/model")).contains("firstname"));
+                assertTrue(IOUtils.toString(new URL("http://localhost:" + port + "/api/test/model")).contains("null"));
+                assertTrue(IOUtils.toString(new URL("http://localhost:" + port + "/sub/index.html")).contains("<h1>yes</h1>"));
+                assertNotAvailable(new URL("http://localhost:" + port + "/api/additional"));
+                quitCommand.run();
+            }, mojoFailure);
         } finally {
             mojoExecutor.join(TimeUnit.MINUTES.toMillis(1));
             if (mojoExecutor.isAlive()) {
@@ -157,7 +160,8 @@ public class MeecrowaveRunMojoTest {
         execution.getConfiguration().getChild("useClasspathDeployment").setValue("false");
         execution.getConfiguration().getChild("webapp").setValue(webappDirectory.getAbsolutePath());
         final Runnable quitCommand = quitCommand();
-        final Thread mojoExecutor = mojoExecutor();
+        List<Exception> mojoFailure = new CopyOnWriteArrayList<>();
+        final Thread mojoExecutor = mojoExecutor(mojoFailure);
         try {
             mojoExecutor.start();
             retry(() -> {
@@ -169,7 +173,7 @@ public class MeecrowaveRunMojoTest {
                 assertTrue(IOUtils.toString(new URL("http://localhost:" + port + "/api/additional")).contains("available"));
                 assertNotAvailable(new URL("http://localhost:" + port + "/sub/index.html"));
                 quitCommand.run();
-            });
+            }, mojoFailure);
         } finally {
             mojoExecutor.join(TimeUnit.MINUTES.toMillis(1));
             if (mojoExecutor.isAlive()) {
@@ -185,19 +189,20 @@ public class MeecrowaveRunMojoTest {
         execution.getConfiguration().getChild("httpPort").setValue(Integer.toString(port));
         execution.getConfiguration().getChild("watcherBouncing").setValue("1");
         Runnable quitCommand = quitCommand();
-        final Thread mojoExecutor = mojoExecutor();
+        List<Exception> mojoFailure = new CopyOnWriteArrayList<>();
+        final Thread mojoExecutor = mojoExecutor(mojoFailure);
         try {
             mojoExecutor.start();
             retry(() -> {
                 assertEquals("simple", IOUtils.toString(new URL("http://localhost:" + port + "/api/test")));
                 assertNotAvailable(new URL("http://localhost:" + port + "/api/additional"));
-            });
+            }, mojoFailure);
             File folder = additionalEndpointFile.getParentFile();
             folder.mkdirs();
             assertTrue(folder.exists());
             IOUtils.write(additionalEndpointClass, new FileOutputStream(additionalEndpointFile));
-            retry(() -> assertEquals("available", IOUtils.toString(new URL("http://localhost:" + port + "/api/additional"))));
-			retry(() -> assertEquals("simple", IOUtils.toString(new URL("http://localhost:" + port + "/api/test"))));
+            retry(() -> assertEquals("available", IOUtils.toString(new URL("http://localhost:" + port + "/api/additional"))), mojoFailure);
+            retry(() -> assertEquals("simple", IOUtils.toString(new URL("http://localhost:" + port + "/api/test"))), mojoFailure);
             quitCommand.run();
         } finally {
             additionalEndpointFile.delete();
@@ -240,23 +245,27 @@ public class MeecrowaveRunMojoTest {
                     fail(e.getMessage());
                 }
                 if (delegate.available() > 0) {
-                	return delegate.read();
+                    return delegate.read();
                 } else {
-                	System.setIn(in);
-                	return -1;
+                    System.setIn(in);
+                    return -1;
                 }
             }
         });
-    	return latch::countDown;
+        return latch::countDown;
     }
 
-    private Thread mojoExecutor() {
+    private Thread mojoExecutor(List<Exception> mojoFailure) {
         return new Thread() {
             @Override
             public void run() {
                 try {
                     mojo.executeMojo(session, project, execution);
                 } catch (final Exception e) {
+                    if (mojoFailure != null) {
+                        mojoFailure.add(e);
+                    }
+
                     fail(e.getMessage());
                 }
             }
@@ -274,9 +283,9 @@ public class MeecrowaveRunMojoTest {
         }
     }
 
-    private void retry(RetryTemplate retryTemplate) throws InterruptedException {
+    private void retry(RetryTemplate retryTemplate, List<Exception> mojoFailure) throws InterruptedException {
         Throwable error = null;
-        for (int i = 0; i < RETRY_COUNT; i++) {
+        for (int i = 0; i < RETRY_COUNT && mojoFailure.isEmpty(); i++) {
             try {
                 retryTemplate.retry();
                 return;
@@ -285,10 +294,14 @@ public class MeecrowaveRunMojoTest {
                 Thread.sleep(RETRY_WAIT_PERIOD);
             }
         }
+        if (!mojoFailure.isEmpty()) {
+            mojoFailure.get(0).printStackTrace();
+            fail("Error while starting Meecrowave");
+        }
         fail(ofNullable(error).map(Throwable::getMessage).orElse("retry failes"));
     }
 
     interface RetryTemplate {
-    	void retry() throws Exception;
+        void retry() throws Exception;
     }
 }
