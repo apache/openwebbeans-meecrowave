@@ -50,16 +50,16 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <meecrowave.build.name>${project.groupId}.${project.artifactId}</meecrowave.build.name>
 
-    <junit.version>4.13.1</junit.version>
-    <tomcat.version>9.0.54</tomcat.version>
-    <openwebbeans.version>2.0.23</openwebbeans.version>
+    <junit.version>4.13.2</junit.version>
+    <tomcat.version>9.0.56</tomcat.version>
+    <openwebbeans.version>2.0.25-SNAPSHOT</openwebbeans.version>
     <cxf.version>3.4.5</cxf.version>
     <johnzon.version>1.2.14</johnzon.version>
     <log4j2.version>2.15.0</log4j2.version>
-    <deltaspike.version>1.8.2</deltaspike.version>
+    <deltaspike.version>1.9.5</deltaspike.version>
     <jaxb.version>2.2.11</jaxb.version>
     <openjpa.version>3.2.0</openjpa.version>
-    <jpa-spec.version>1.0-alpha-1</jpa-spec.version>
+    <jpa-spec.version>1.1</jpa-spec.version>
     <h2.version>1.4.200</h2.version>
     <dbcp2.version>2.8.0</dbcp2.version>
     <commons-cli.version>1.4</commons-cli.version>

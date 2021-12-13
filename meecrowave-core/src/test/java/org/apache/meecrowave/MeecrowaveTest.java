@@ -172,7 +172,7 @@ public class MeecrowaveTest {
             assertEquals("simple", slurp(new URL("http://localhost:" + meecrowave.getConfiguration().getHttpPort() + "/api/other")));
             assertEquals("simplefiltertrue", slurp(new URL("http://localhost:" + meecrowave.getConfiguration().getHttpPort() + "/filter")));
             assertEquals("filtertrue", slurp(new URL("http://localhost:" + meecrowave.getConfiguration().getHttpPort() + "/other")));
-        } catch (final IOException e) {
+        } catch (final Exception e) {
             fail(e.getMessage());
         }
     }
@@ -220,14 +220,14 @@ public class MeecrowaveTest {
     }
 
     private void assertNotAvailable(final URL url) {
-    	try {
-    		URLConnection connection = url.openConnection();
-    		connection.setReadTimeout(500);
-			connection.getInputStream();
-			fail(url.toString() + " is available");
-		} catch (Exception e) {
-			assertTrue(e.getMessage(), e instanceof IOException);
-		}
+        try {
+            URLConnection connection = url.openConnection();
+            connection.setReadTimeout(500);
+            connection.getInputStream();
+            fail(url.toString() + " is available");
+        } catch (Exception e) {
+            assertTrue(e.getMessage(), e instanceof IOException);
+        }
     }
 
     private String slurp(final URL url) {
