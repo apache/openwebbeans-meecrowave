@@ -478,11 +478,14 @@
                 <filter>
                   <artifact>*:*</artifact>
                   <excludes>
+                    <exclude>module-info.class</exclude>
                     <exclude>OSGI-INF/**</exclude>
                     <exclude>META-INF/cxf/cxf*.xml</exclude>
+                    <exclude>META-INF/cxf/cxf*.fixml</exclude>
                     <exclude>schemas/**</exclude> <!-- cxf -->
                     <exclude>javax/servlet/resources/**</exclude> <!-- tomcat-servlet-api -->
                     <exclude>javax/servlet/jsp/resources/**</exclude>
+                    <exclude>**/osgi/**</exclude> <!-- cxf and log4j -->
                     <exclude>META-INF/maven</exclude> <!-- maven built artifacts -->
                     <exclude>META-INF/*.SF</exclude>
                     <exclude>META-INF/*.DSA</exclude>
