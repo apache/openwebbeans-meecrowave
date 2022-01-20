@@ -51,11 +51,11 @@
     <meecrowave.build.name>${project.groupId}.${project.artifactId}</meecrowave.build.name>
 
     <junit.version>4.13.2</junit.version>
-    <tomcat.version>9.0.56</tomcat.version>
+    <tomcat.version>9.0.58</tomcat.version>
     <openwebbeans.version>2.0.25</openwebbeans.version>
     <cxf.version>3.5.0</cxf.version>
-    <johnzon.version>1.2.14</johnzon.version>
-    <log4j2.version>2.17.0</log4j2.version>
+    <johnzon.version>1.2.15</johnzon.version>
+    <log4j2.version>2.17.1</log4j2.version>
     <deltaspike.version>1.9.5</deltaspike.version>
     <jaxb.version>2.2.11</jaxb.version>
     <openjpa.version>3.2.0</openjpa.version>
@@ -238,17 +238,5 @@
       </dependencyManagement>
     </profile>
   </profiles>
-
-  <repositories>
-    <repository>
-      <id>stag</id>
-      <url>https://repository.apache.org/content/repositories/orgapachecxf-1170/</url>
-    </repository>
-  </repositories>
-  <pluginRepositories>
-    <pluginRepository>
-      <id>stag</id>
-      <url>https://repository.apache.org/content/repositories/orgapachecxf-1170/</url>
-    </pluginRepository>
-  </pluginRepositories>
 </project>
+
