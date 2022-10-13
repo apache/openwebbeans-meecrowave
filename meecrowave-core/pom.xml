@@ -617,6 +617,9 @@
                 <relocation>
                   <pattern>javax.annotation</pattern>
                   <shadedPattern>jakarta.annotation</shadedPattern>
+                  <excludes>
+                    <exclude>javax.annotation.processing.**</exclude>
+                  </excludes>
                 </relocation>
                 <relocation>
                   <pattern>javax.el</pattern>
