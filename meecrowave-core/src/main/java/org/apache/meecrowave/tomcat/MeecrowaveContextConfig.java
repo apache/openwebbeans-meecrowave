@@ -22,13 +22,11 @@ import static java.util.Collections.emptySet;
 import static java.util.Collections.singleton;
 import static java.util.Optional.ofNullable;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Modifier;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -60,16 +58,13 @@ import org.apache.webbeans.config.WebBeansContext;
 import org.apache.webbeans.corespi.scanner.xbean.CdiArchive;
 import org.apache.webbeans.corespi.scanner.xbean.OwbAnnotationFinder;
 import org.apache.webbeans.spi.ScannerService;
-import org.xml.sax.InputSource;
 
 public class MeecrowaveContextConfig extends ContextConfig {
-    private static final byte[] DEFAULT_WEB_XML = "<web-app version=\"3.1\" />".getBytes(StandardCharsets.UTF_8);
-
     private final Configuration configuration;
     private final Map<String, Collection<Class<?>>> webClasses = new HashMap<>();
     private final boolean fixDocBase;
     private final ServletContainerInitializer intializer;
-	private final Consumer<Context> redeployCallback;
+    private final Consumer<Context> redeployCallback;
     private OwbAnnotationFinder finder;
     private ReloadOnChangeController watcher;
 
@@ -180,11 +175,6 @@ public class MeecrowaveContextConfig extends ContextConfig {
                 watcher.close();
             }
         }
-    }
-
-    @Override  // just to avoid an info log pretty useless for us
-    protected InputSource getGlobalWebXmlSource() {
-        return ofNullable(super.getGlobalWebXmlSource()).orElse(new InputSource(new ByteArrayInputStream(DEFAULT_WEB_XML)));
     }
 
     @Override
