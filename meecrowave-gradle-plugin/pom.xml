@@ -29,7 +29,7 @@
   <name>Meecrowave :: Gradle</name>
 
   <properties>
-    <gradle.version>3.1</gradle.version>
+    <gradle.version>6.0</gradle.version>
     <meecrowave.build.name>${project.groupId}.gradle</meecrowave.build.name>
   </properties>
 
