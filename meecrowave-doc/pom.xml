@@ -30,7 +30,7 @@
   <description>
     A module building the static website in ${project.build.directory}/${project.build.finalName}
     To build use that command:
-    $ mvn clean compile scm-publish:publish-scm [-Djbake.updatedownloads=true]
+    $ mvn clean package scm-publish:publish-scm [-Djbake.updatedownloads=true]
   </description>
 
   <properties>
@@ -191,12 +191,15 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-scm-publish-plugin</artifactId>
-        <version>1.0-beta-2</version>
+        <version>3.1.0</version>
         <configuration>
           <content>${project.build.directory}/${project.build.finalName}</content>
-          <pubScmUrl>scm:svn:https://svn.apache.org/repos/infra/websites/production/openwebbeans/content/meecrowave</pubScmUrl>
+          <pubScmUrl>scm:git:https://gitbox.apache.org/repos/asf/openwebbeans-site.git</pubScmUrl>
+          <scmBranch>main</scmBranch>
           <tryUpdate>true</tryUpdate>
           <checkoutDirectory>${project.parent.basedir}/.site-content</checkoutDirectory>
+          <skipCheckin>true</skipCheckin>
+          <subDirectory>/content/meecrowave</subDirectory>
         </configuration>
         <executions>
           <execution>
