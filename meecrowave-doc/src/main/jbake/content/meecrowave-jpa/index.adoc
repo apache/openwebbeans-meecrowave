@@ -34,7 +34,7 @@ public class JpaConfig {
 TIP: if your application uses a single persistence unit this is optional and
 a default one will be created if a single DataSource bean is available as Bean<?>.
 
-The datasource can be produces as you wish using your own configuration mecanism:
+The datasource can be produces as you wish using your own configuration mechanism:
 
 [source,java]
 ----
@@ -51,7 +51,7 @@ public class JpaConfig {
 }
 ----
 
-NOTE: it is recommanded to ensure the `DataSource` is normal-scoped to not get surprises in term of behavior.
+NOTE: it is recommended to ensure the `DataSource` is normal-scoped to not get surprises in term of behavior.
 
 Finally you can inject your entity manager using `@Unit`. Ensure to
 decorate with `@Jpa` a class/method before using the entity manager to activate
