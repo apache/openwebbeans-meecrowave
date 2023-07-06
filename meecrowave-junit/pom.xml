@@ -63,7 +63,7 @@
   </dependencies>
 
   <properties>
-    <junit5.minor.version>3.0</junit5.minor.version>
+    <junit5.minor.version>9.3</junit5.minor.version>
     <junit5.version>5.${junit5.minor.version}</junit5.version>
     <meecrowave.build.name>${project.groupId}.junit</meecrowave.build.name>
   </properties>
