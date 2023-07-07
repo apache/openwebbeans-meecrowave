@@ -58,7 +58,7 @@
     <log4j2.version>2.20.0</log4j2.version>
     <deltaspike.version>1.9.5</deltaspike.version>
     <jaxb.version>2.2.11</jaxb.version>
-    <openjpa.version>3.2.0</openjpa.version>
+    <openjpa.version>3.2.2</openjpa.version>
     <jpa-spec.version>1.1</jpa-spec.version>
     <h2.version>2.2.220</h2.version>
     <dbcp2.version>2.9.0</dbcp2.version>
