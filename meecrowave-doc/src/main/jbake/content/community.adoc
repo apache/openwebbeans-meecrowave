@@ -45,7 +45,7 @@ Those examples are hosted in a separate repository and can be found at https://g
 The github repo works fine for pull requests.
 Please use our official https://issues.apache.org/jira/projects/MEECROWAVE[Meecrowave Bug Tracker] for reporting bugs or enhancement requests.
 
-The cannonical repository hosted directly at the Apache Software Foundation intended to be used by committers is
+The canonical repository hosted directly at the Apache Software Foundation intended to be used by committers is
 
 [source]
 ----

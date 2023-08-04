@@ -54,7 +54,7 @@ The layout if the following one:
 ├── lib
 │   └── *.jar
 ├── logs
-│   └── meecrowave.logls l
+│   └── meecrowave.log
 └── temp
 ----
 
@@ -64,7 +64,7 @@ conf folder supports out of the box these files (but you can add your own if nee
 - server.xml
 - meecrowave.properties
 
-You can acess the root folder of the distribution reading the system property `meecrowave.base`.
+You can access the root folder of the distribution reading the system property `meecrowave.base`.
 
 `meecrowave.properties` supports all configuration options of the cli (just remove the `--`): http://openwebbeans.apache.org/meecrowave/meecrowave-core/cli.html.
 
