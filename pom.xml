@@ -53,7 +53,7 @@
     <junit.version>4.13.2</junit.version>
     <tomcat.version>9.0.76</tomcat.version>
     <openwebbeans.version>2.0.27</openwebbeans.version>
-    <cxf.version>3.5.5</cxf.version>
+    <cxf.version>3.5.6</cxf.version>
     <johnzon.version>1.2.21</johnzon.version>
     <log4j2.version>2.20.0</log4j2.version>
     <deltaspike.version>1.9.6</deltaspike.version>
