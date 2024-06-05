@@ -82,8 +82,8 @@ public class FilterGradleClassLoader extends ClassLoader {
                         name.startsWith("com.jcraft") ||
                         name.startsWith("com.tonixsystems") ||
                         name.startsWith("javax.el") ||
-                        name.startsWith("javax.inject") ||
-                        name.startsWith("javax.servlet") ||
+                        name.startsWith("jakarta.inject") ||
+                        name.startsWith("jakarta.servlet") ||
                         name.startsWith("jcifs.") ||
                         name.startsWith("junit.") ||
                         name.startsWith("groovy") ||

@@ -21,7 +21,7 @@ package org.apache.meecrowave;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 import org.apache.meecrowave.configuration.Configuration;
 import org.apache.webbeans.config.WebBeansContext;

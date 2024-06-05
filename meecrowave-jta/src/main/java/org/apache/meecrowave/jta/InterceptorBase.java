@@ -16,19 +16,19 @@
  */
 package org.apache.meecrowave.jta;
 
-import javax.enterprise.inject.spi.AnnotatedMethod;
-import javax.enterprise.inject.spi.AnnotatedType;
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Inject;
-import javax.interceptor.InvocationContext;
-import javax.transaction.RollbackException;
-import javax.transaction.Status;
-import javax.transaction.SystemException;
-import javax.transaction.Transaction;
-import javax.transaction.TransactionManager;
-import javax.transaction.TransactionRolledbackException;
-import javax.transaction.Transactional;
-import javax.transaction.TransactionalException;
+import jakarta.enterprise.inject.spi.AnnotatedMethod;
+import jakarta.enterprise.inject.spi.AnnotatedType;
+import jakarta.enterprise.inject.spi.CDI;
+import jakarta.inject.Inject;
+import jakarta.interceptor.InvocationContext;
+import jakarta.transaction.RollbackException;
+import jakarta.transaction.Status;
+import jakarta.transaction.SystemException;
+import jakarta.transaction.Transaction;
+import jakarta.transaction.TransactionManager;
+import jakarta.transaction.TransactionRolledbackException;
+import jakarta.transaction.Transactional;
+import jakarta.transaction.TransactionalException;
 import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.util.concurrent.ConcurrentHashMap;

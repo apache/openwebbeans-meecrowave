@@ -31,7 +31,7 @@ import org.apache.meecrowave.configuration.Configuration;
 import org.apache.meecrowave.runner.cli.CliOption;
 import org.apache.xbean.recipe.ObjectRecipe;
 
-import javax.enterprise.inject.Vetoed;
+import jakarta.enterprise.inject.Vetoed;
 import java.io.File;
 import java.lang.reflect.Field;
 import java.util.HashMap;

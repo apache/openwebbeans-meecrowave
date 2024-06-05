@@ -21,15 +21,15 @@ package org.apache.meecrowave;
 import org.apache.johnzon.mapper.reflection.JohnzonParameterizedType;
 import org.junit.Test;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.json.bind.annotation.JsonbProperty;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.core.GenericType;
-import javax.ws.rs.core.MediaType;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.json.bind.annotation.JsonbProperty;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.core.GenericType;
+import jakarta.ws.rs.core.MediaType;
 import java.util.LinkedHashMap;
 import java.util.Map;
 

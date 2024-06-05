@@ -29,23 +29,23 @@ import org.apache.cxf.rs.security.oauth2.utils.OAuthConstants;
 import org.apache.cxf.security.SecurityContext;
 import org.apache.meecrowave.oauth2.configuration.OAuth2Configurer;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.inject.Vetoed;
-import javax.inject.Inject;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.core.Response;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.MultivaluedMap;
+import jakarta.ws.rs.core.Response;
 import java.security.Principal;
 
-import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
-import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static javax.ws.rs.core.MediaType.APPLICATION_XML;
-import static javax.ws.rs.core.MediaType.TEXT_HTML;
+import static jakarta.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
+import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
+import static jakarta.ws.rs.core.MediaType.APPLICATION_XML;
+import static jakarta.ws.rs.core.MediaType.TEXT_HTML;
 
 @ApplicationScoped
 @Path("authorize")

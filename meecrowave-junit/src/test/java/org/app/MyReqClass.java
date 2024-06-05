@@ -16,7 +16,7 @@
  */
 package org.app;
 
-import javax.enterprise.context.RequestScoped;
+import jakarta.enterprise.context.RequestScoped;
 
 /**
  * @author <a href="mailto:struberg@yahoo.de">Mark Struberg</a>

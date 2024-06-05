@@ -20,8 +20,8 @@ package org.apache.meecrowave.jpa.internal;
 
 import org.apache.meecrowave.jpa.api.Jpa;
 
-import javax.annotation.Priority;
-import javax.interceptor.Interceptor;
+import jakarta.annotation.Priority;
+import jakarta.interceptor.Interceptor;
 
 @Jpa
 @Interceptor

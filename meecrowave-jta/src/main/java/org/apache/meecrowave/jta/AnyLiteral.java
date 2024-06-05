@@ -18,8 +18,8 @@
  */
 package org.apache.meecrowave.jta;
 
-import javax.enterprise.inject.Any;
-import javax.enterprise.util.AnnotationLiteral;
+import jakarta.enterprise.inject.Any;
+import jakarta.enterprise.util.AnnotationLiteral;
 import java.lang.annotation.Annotation;
 
 public class AnyLiteral extends AnnotationLiteral<Any> implements Any {

@@ -21,11 +21,11 @@ package org.apache.meecrowave.tomcat;
 import org.apache.tomcat.InstanceManager;
 import org.apache.webbeans.servlet.WebBeansConfigurationListener;
 
-import javax.enterprise.context.spi.CreationalContext;
-import javax.enterprise.inject.spi.AnnotatedType;
-import javax.enterprise.inject.spi.BeanManager;
-import javax.enterprise.inject.spi.CDI;
-import javax.enterprise.inject.spi.InjectionTarget;
+import jakarta.enterprise.context.spi.CreationalContext;
+import jakarta.enterprise.inject.spi.AnnotatedType;
+import jakarta.enterprise.inject.spi.BeanManager;
+import jakarta.enterprise.inject.spi.CDI;
+import jakarta.enterprise.inject.spi.InjectionTarget;
 import javax.naming.NamingException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
@@ -64,7 +64,7 @@ public class CDIInstanceManager implements InstanceManager {
 
         final BeanManager bm = CDI.current().getBeanManager();
         final AnnotatedType<?> annotatedType = bm.createAnnotatedType(o.getClass());
-        final InjectionTarget injectionTarget = bm.createInjectionTarget(annotatedType);
+        final InjectionTarget injectionTarget = bm.getInjectionTargetFactory(annotatedType).createInjectionTarget(null);
         final CreationalContext<Object> creationalContext = bm.createCreationalContext(null);
         injectionTarget.inject(o, creationalContext);
         try {

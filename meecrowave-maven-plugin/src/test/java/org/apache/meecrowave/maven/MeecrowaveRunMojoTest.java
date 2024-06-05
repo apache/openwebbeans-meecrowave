@@ -44,7 +44,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
-import javax.enterprise.inject.Model;
+import jakarta.enterprise.inject.Model;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.cxf.helpers.FileUtils;

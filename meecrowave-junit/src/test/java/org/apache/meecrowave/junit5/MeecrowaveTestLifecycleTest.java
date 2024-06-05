@@ -23,7 +23,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 import org.apache.meecrowave.junit5.bean.Appender;
 import org.junit.jupiter.api.AfterAll;

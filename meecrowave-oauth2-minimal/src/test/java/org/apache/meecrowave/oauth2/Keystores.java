@@ -18,22 +18,19 @@
  */
 package org.apache.meecrowave.oauth2;
 
-import org.apache.cxf.rt.security.crypto.CryptoUtils;
-import sun.security.tools.keytool.CertAndKeyGen;
-import sun.security.x509.BasicConstraintsExtension;
-import sun.security.x509.CertificateExtensions;
-import sun.security.x509.X500Name;
-import sun.security.x509.X509CertImpl;
-import sun.security.x509.X509CertInfo;
+import org.bouncycastle.asn1.x500.X500Name;
+import org.bouncycastle.cert.X509CertificateHolder;
+import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
+import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder;
+import org.bouncycastle.operator.ContentSigner;
+import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 
+import java.math.BigInteger;
+import java.security.*;
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.OutputStream;
-import java.security.KeyStore;
-import java.security.Principal;
-import java.security.PrivateKey;
-import java.security.PublicKey;
 import java.security.cert.X509Certificate;
+import java.time.Instant;
+import java.util.Date;
 
 public final class Keystores {
     private Keystores() {
@@ -41,10 +38,31 @@ public final class Keystores {
     }
 
     public static PublicKey create(final File keystore) throws Exception {
-        CryptoUtils.installBouncyCastleProvider();
-
         final KeyStore ks = KeyStore.getInstance("JKS");
         ks.load(null, "password".toCharArray());
+
+        KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
+        keyGen.initialize(2048);
+        KeyPair keyPair = keyGen.generateKeyPair();
+        final PrivateKey rootPrivateKey = keyPair.getPrivate();
+
+        X500Name issuerName = new X500Name("OU=apache,CN=mwtest");
+
+        JcaX509v3CertificateBuilder builder = new JcaX509v3CertificateBuilder(
+                issuerName,
+                BigInteger.valueOf(System.currentTimeMillis()),
+                Date.from(Instant.now()), Date.from(Instant.now().plusMillis(1096 * 24 * 60 * 60)),
+                issuerName, keyPair.getPublic());
+        ContentSigner signer = new JcaContentSignerBuilder("SHA256WithRSA").build(rootPrivateKey);
+        X509CertificateHolder certHolder = builder.build(signer);
+        X509Certificate certificate = new JcaX509CertificateConverter().getCertificate(certHolder);
+
+        return keyPair.getPublic();
+
+        //X TODO
+        /*X TODO fixme
+        CryptoUtils.installBouncyCastleProvider();
+
 
         final CertAndKeyGen keyGen = new CertAndKeyGen("RSA", "SHA256WithRSA", null);
         keyGen.generate(2048);
@@ -81,10 +99,13 @@ public final class Keystores {
         }
 
         return keyGen2.getPublicKey();
+*/
     }
 
     private static X509Certificate createSignedCertificate(final X509Certificate cetrificate, final X509Certificate issuerCertificate,
                                                            final PrivateKey issuerPrivateKey) {
+        return null;
+/*X TODO fixme
         try {
             Principal issuer = issuerCertificate.getSubjectDN();
             String issuerSigAlg = issuerCertificate.getSigAlgName();
@@ -108,5 +129,6 @@ public final class Keystores {
         } catch (final Exception ex) {
             throw new IllegalStateException(ex);
         }
+*/
     }
 }

@@ -18,8 +18,8 @@
  */
 package org.apache.meecrowave.jpa.api;
 
-import javax.inject.Qualifier;
-import javax.persistence.SynchronizationType;
+import jakarta.inject.Qualifier;
+import jakarta.persistence.SynchronizationType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 

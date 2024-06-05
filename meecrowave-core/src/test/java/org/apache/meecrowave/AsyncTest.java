@@ -18,18 +18,18 @@
  */
 package org.apache.meecrowave;
 
-import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
-import static javax.ws.rs.core.MediaType.TEXT_PLAIN_TYPE;
+import static jakarta.ws.rs.core.MediaType.TEXT_PLAIN;
+import static jakarta.ws.rs.core.MediaType.TEXT_PLAIN_TYPE;
 import static org.junit.Assert.assertEquals;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.container.AsyncResponse;
-import javax.ws.rs.container.Suspended;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.container.AsyncResponse;
+import jakarta.ws.rs.container.Suspended;
 
 import org.junit.Test;
 

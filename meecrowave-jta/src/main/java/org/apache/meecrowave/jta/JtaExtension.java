@@ -18,19 +18,19 @@ package org.apache.meecrowave.jta;
 
 import org.apache.geronimo.transaction.manager.GeronimoTransactionManager;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.context.spi.CreationalContext;
-import javax.enterprise.event.Observes;
-import javax.enterprise.inject.spi.AfterBeanDiscovery;
-import javax.enterprise.inject.spi.AfterDeploymentValidation;
-import javax.enterprise.inject.spi.Bean;
-import javax.enterprise.inject.spi.BeanManager;
-import javax.enterprise.inject.spi.BeforeBeanDiscovery;
-import javax.enterprise.inject.spi.Extension;
-import javax.enterprise.inject.spi.InjectionPoint;
-import javax.enterprise.inject.spi.ProcessBean;
-import javax.transaction.TransactionManager;
-import javax.transaction.TransactionSynchronizationRegistry;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.context.spi.CreationalContext;
+import jakarta.enterprise.event.Observes;
+import jakarta.enterprise.inject.spi.AfterBeanDiscovery;
+import jakarta.enterprise.inject.spi.AfterDeploymentValidation;
+import jakarta.enterprise.inject.spi.Bean;
+import jakarta.enterprise.inject.spi.BeanManager;
+import jakarta.enterprise.inject.spi.BeforeBeanDiscovery;
+import jakarta.enterprise.inject.spi.Extension;
+import jakarta.enterprise.inject.spi.InjectionPoint;
+import jakarta.enterprise.inject.spi.ProcessBean;
+import jakarta.transaction.TransactionManager;
+import jakarta.transaction.TransactionSynchronizationRegistry;
 import javax.transaction.xa.XAException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
@@ -52,7 +52,7 @@ public class JtaExtension implements Extension {
                 MandatoryInterceptor.class, NeverInterceptor.class,
                 NotSupportedInterceptor.class, RequiredInterceptor.class,
                 RequiredNewInterceptor.class, SupportsInterceptor.class)
-                .forEach(c -> beforeBeanDiscovery.addAnnotatedType(beanManager.createAnnotatedType(c)));
+                .forEach(c -> beforeBeanDiscovery.addAnnotatedType(beanManager.createAnnotatedType(c), "mw"));
     }
 
     void findJtaComponents(@Observes final ProcessBean<?> bean) {
@@ -125,11 +125,6 @@ public class JtaExtension implements Extension {
         }
 
         @Override
-        public boolean isNullable() {
-            return false;
-        }
-
-        @Override
         public TransactionManager create(final CreationalContext<TransactionManager> context) {
             return manager;
         }
@@ -189,10 +184,6 @@ public class JtaExtension implements Extension {
             return JtaConfig.class;
         }
 
-        @Override
-        public boolean isNullable() {
-            return false;
-        }
 
         @Override
         public JtaConfig create(final CreationalContext<JtaConfig> context) {

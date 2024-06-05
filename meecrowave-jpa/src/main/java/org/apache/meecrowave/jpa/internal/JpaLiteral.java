@@ -20,7 +20,7 @@ package org.apache.meecrowave.jpa.internal;
 
 import org.apache.meecrowave.jpa.api.Jpa;
 
-import javax.enterprise.util.AnnotationLiteral;
+import jakarta.enterprise.util.AnnotationLiteral;
 import java.lang.annotation.Annotation;
 
 class JpaLiteral extends AnnotationLiteral<Jpa> implements Jpa {

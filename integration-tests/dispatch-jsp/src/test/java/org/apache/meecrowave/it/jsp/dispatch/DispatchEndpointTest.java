@@ -18,11 +18,11 @@
  */
 package org.apache.meecrowave.it.jsp.dispatch;
 
-import static javax.ws.rs.core.MediaType.TEXT_HTML_TYPE;
+import static jakarta.ws.rs.core.MediaType.TEXT_HTML_TYPE;
 import static org.junit.Assert.assertEquals;
 
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.client.ClientBuilder;
 
 import org.apache.meecrowave.Meecrowave;
 import org.junit.Test;

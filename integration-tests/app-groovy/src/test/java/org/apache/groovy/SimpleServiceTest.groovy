@@ -23,7 +23,7 @@ import org.junit.Test
 
 import javax.ws.rs.client.ClientBuilder
 
-import static javax.ws.rs.core.MediaType.TEXT_PLAIN_TYPE
+import static jakarta.ws.rs.core.MediaType.TEXT_PLAIN_TYPE
 import static org.junit.Assert.assertEquals
 
 class SimpleServiceTest {

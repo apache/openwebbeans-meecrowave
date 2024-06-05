@@ -18,13 +18,13 @@
  */
 package org.apache.meecrowave.jpa.api;
 
-import javax.enterprise.inject.Vetoed;
-import javax.persistence.SharedCacheMode;
-import javax.persistence.ValidationMode;
-import javax.persistence.spi.ClassTransformer;
-import javax.persistence.spi.PersistenceProvider;
-import javax.persistence.spi.PersistenceUnitInfo;
-import javax.persistence.spi.PersistenceUnitTransactionType;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.persistence.SharedCacheMode;
+import jakarta.persistence.ValidationMode;
+import jakarta.persistence.spi.ClassTransformer;
+import jakarta.persistence.spi.PersistenceProvider;
+import jakarta.persistence.spi.PersistenceUnitInfo;
+import jakarta.persistence.spi.PersistenceUnitTransactionType;
 import javax.sql.DataSource;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -36,7 +36,7 @@ import java.util.ServiceLoader;
 import static java.util.Collections.emptyList;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
-import static javax.persistence.spi.PersistenceUnitTransactionType.RESOURCE_LOCAL;
+import static jakarta.persistence.spi.PersistenceUnitTransactionType.RESOURCE_LOCAL;
 
 @Vetoed
 public class PersistenceUnitInfoBuilder {

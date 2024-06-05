@@ -20,11 +20,11 @@ package org.apache.meecrowave.testing;
 
 import org.apache.meecrowave.Meecrowave;
 
-import javax.enterprise.context.spi.CreationalContext;
-import javax.enterprise.inject.spi.AnnotatedType;
-import javax.enterprise.inject.spi.BeanManager;
-import javax.enterprise.inject.spi.CDI;
-import javax.enterprise.inject.spi.InjectionTarget;
+import jakarta.enterprise.context.spi.CreationalContext;
+import jakarta.enterprise.inject.spi.AnnotatedType;
+import jakarta.enterprise.inject.spi.BeanManager;
+import jakarta.enterprise.inject.spi.CDI;
+import jakarta.enterprise.inject.spi.InjectionTarget;
 import java.util.stream.Stream;
 
 public final class Injector {
@@ -38,7 +38,7 @@ public final class Injector {
         }
         final BeanManager bm = CDI.current().getBeanManager();
         final AnnotatedType<?> annotatedType = bm.createAnnotatedType(testInstance.getClass());
-        final InjectionTarget injectionTarget = bm.createInjectionTarget(annotatedType);
+        final InjectionTarget injectionTarget = bm.getInjectionTargetFactory(annotatedType).createInjectionTarget(null);
         final CreationalContext<?> creationalContext = bm.createCreationalContext(null);
         injectionTarget.inject(testInstance, creationalContext);
         return creationalContext;

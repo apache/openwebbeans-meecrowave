@@ -21,7 +21,7 @@ package org.apache.meecrowave.junit5;
 import static org.junit.Assert.assertEquals;
 import static org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 import org.apache.meecrowave.junit5.bean.Appender;
 import org.junit.jupiter.api.AfterAll;

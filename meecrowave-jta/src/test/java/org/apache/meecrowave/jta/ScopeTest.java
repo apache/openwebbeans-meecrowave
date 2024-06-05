@@ -23,10 +23,10 @@ import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 
-import javax.annotation.PreDestroy;
-import javax.inject.Inject;
-import javax.transaction.TransactionManager;
-import javax.transaction.TransactionScoped;
+import jakarta.annotation.PreDestroy;
+import jakarta.inject.Inject;
+import jakarta.transaction.TransactionManager;
+import jakarta.transaction.TransactionScoped;
 import java.io.Serializable;
 import java.util.concurrent.atomic.AtomicBoolean;
 

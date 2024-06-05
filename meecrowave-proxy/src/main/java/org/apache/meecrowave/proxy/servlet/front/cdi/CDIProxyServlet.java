@@ -26,11 +26,11 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
 
-import javax.enterprise.event.Event;
-import javax.inject.Inject;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.ws.rs.core.Response;
+import jakarta.enterprise.event.Event;
+import jakarta.inject.Inject;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.ws.rs.core.Response;
 
 import org.apache.meecrowave.proxy.servlet.configuration.Routes;
 import org.apache.meecrowave.proxy.servlet.front.ProxyServlet;

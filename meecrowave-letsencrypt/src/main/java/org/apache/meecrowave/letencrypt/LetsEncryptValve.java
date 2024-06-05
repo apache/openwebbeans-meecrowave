@@ -4,7 +4,7 @@ import static java.util.Optional.ofNullable;
 
 import java.io.IOException;
 
-import javax.servlet.ServletException;
+import jakarta.servlet.ServletException;
 
 import org.apache.catalina.LifecycleException;
 import org.apache.catalina.connector.Request;

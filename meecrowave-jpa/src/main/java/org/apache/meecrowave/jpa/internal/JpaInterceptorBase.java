@@ -18,9 +18,9 @@
  */
 package org.apache.meecrowave.jpa.internal;
 
-import javax.inject.Inject;
-import javax.interceptor.AroundInvoke;
-import javax.interceptor.InvocationContext;
+import jakarta.inject.Inject;
+import jakarta.interceptor.AroundInvoke;
+import jakarta.interceptor.InvocationContext;
 import java.io.Serializable;
 
 public abstract class JpaInterceptorBase implements Serializable {

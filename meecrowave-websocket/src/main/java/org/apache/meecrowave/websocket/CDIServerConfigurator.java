@@ -18,11 +18,11 @@
  */
 package org.apache.meecrowave.websocket;
 
-import javax.enterprise.inject.spi.CDI;
-import javax.websocket.Extension;
-import javax.websocket.HandshakeResponse;
-import javax.websocket.server.HandshakeRequest;
-import javax.websocket.server.ServerEndpointConfig;
+import jakarta.enterprise.inject.spi.CDI;
+import jakarta.websocket.Extension;
+import jakarta.websocket.HandshakeResponse;
+import jakarta.websocket.server.HandshakeRequest;
+import jakarta.websocket.server.ServerEndpointConfig;
 import java.util.List;
 import java.util.Set;
 

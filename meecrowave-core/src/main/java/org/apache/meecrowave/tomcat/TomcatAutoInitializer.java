@@ -20,9 +20,9 @@ package org.apache.meecrowave.tomcat;
 
 import java.util.Set;
 
-import javax.servlet.ServletContainerInitializer;
-import javax.servlet.ServletContext;
-import javax.servlet.ServletRegistration;
+import jakarta.servlet.ServletContainerInitializer;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletRegistration;
 
 import org.apache.catalina.servlets.DefaultServlet;
 import org.apache.meecrowave.configuration.Configuration;

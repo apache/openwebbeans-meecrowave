@@ -27,13 +27,13 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import javax.annotation.Priority;
-import javax.interceptor.AroundConstruct;
-import javax.interceptor.AroundInvoke;
-import javax.interceptor.Interceptor;
-import javax.interceptor.InterceptorBinding;
-import javax.interceptor.InvocationContext;
-import javax.ws.rs.core.Application;
+import jakarta.annotation.Priority;
+import jakarta.interceptor.AroundConstruct;
+import jakarta.interceptor.AroundInvoke;
+import jakarta.interceptor.Interceptor;
+import jakarta.interceptor.InterceptorBinding;
+import jakarta.interceptor.InvocationContext;
+import jakarta.ws.rs.core.Application;
 
 import org.apache.cxf.jaxrs.model.ApplicationInfo;
 import org.apache.cxf.jaxrs.model.OperationResourceInfoStack;

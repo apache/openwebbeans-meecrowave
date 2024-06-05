@@ -27,8 +27,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 
 import org.apache.meecrowave.Meecrowave;
 import org.apache.meecrowave.io.IO;

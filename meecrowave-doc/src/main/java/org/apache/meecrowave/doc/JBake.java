@@ -42,8 +42,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Stream;
 
-import org.apache.commons.configuration.CompositeConfiguration;
-import org.apache.commons.configuration.MapConfiguration;
+import org.apache.commons.configuration2.CompositeConfiguration;
+import org.apache.commons.configuration2.MapConfiguration;
 import org.apache.meecrowave.Meecrowave;
 import org.apache.meecrowave.doc.generator.ArquillianConfiguration;
 import org.apache.meecrowave.doc.generator.CliConfiguration;
@@ -54,7 +54,6 @@ import org.apache.meecrowave.doc.generator.LetsEncryptConfiguration;
 import org.apache.meecrowave.doc.generator.MavenConfiguration;
 import org.apache.meecrowave.doc.generator.OAuth2Configuration;
 import org.apache.meecrowave.doc.generator.ProxyConfiguration;
-import org.apache.meecrowave.proxy.servlet.meecrowave.ProxyServletSetup;
 import org.jbake.app.Oven;
 import org.jbake.app.configuration.ConfigUtil;
 import org.jbake.app.configuration.DefaultJBakeConfiguration;

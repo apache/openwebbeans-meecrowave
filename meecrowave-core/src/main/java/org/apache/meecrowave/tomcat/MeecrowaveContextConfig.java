@@ -35,11 +35,11 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
-import javax.servlet.ServletContainerInitializer;
-import javax.servlet.annotation.HandlesTypes;
-import javax.servlet.annotation.WebFilter;
-import javax.servlet.annotation.WebListener;
-import javax.servlet.annotation.WebServlet;
+import jakarta.servlet.ServletContainerInitializer;
+import jakarta.servlet.annotation.HandlesTypes;
+import jakarta.servlet.annotation.WebFilter;
+import jakarta.servlet.annotation.WebListener;
+import jakarta.servlet.annotation.WebServlet;
 
 import org.apache.catalina.Context;
 import org.apache.catalina.Lifecycle;

@@ -20,9 +20,9 @@ package org.apache.meecrowave;
 
 import org.junit.Test;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.inject.spi.BeanManager;
-import javax.enterprise.inject.spi.CDI;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.inject.spi.BeanManager;
+import jakarta.enterprise.inject.spi.CDI;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.stream.IntStream;

@@ -16,19 +16,19 @@
  */
 package org.apache.meecrowave.jta;
 
-import javax.annotation.Priority;
-import javax.interceptor.AroundInvoke;
-import javax.interceptor.Interceptor;
-import javax.interceptor.InvocationContext;
-import javax.transaction.HeuristicMixedException;
-import javax.transaction.HeuristicRollbackException;
-import javax.transaction.InvalidTransactionException;
-import javax.transaction.NotSupportedException;
-import javax.transaction.RollbackException;
-import javax.transaction.SystemException;
-import javax.transaction.Transaction;
-import javax.transaction.Transactional;
-import javax.transaction.TransactionalException;
+import jakarta.annotation.Priority;
+import jakarta.interceptor.AroundInvoke;
+import jakarta.interceptor.Interceptor;
+import jakarta.interceptor.InvocationContext;
+import jakarta.transaction.HeuristicMixedException;
+import jakarta.transaction.HeuristicRollbackException;
+import jakarta.transaction.InvalidTransactionException;
+import jakarta.transaction.NotSupportedException;
+import jakarta.transaction.RollbackException;
+import jakarta.transaction.SystemException;
+import jakarta.transaction.Transaction;
+import jakarta.transaction.Transactional;
+import jakarta.transaction.TransactionalException;
 
 @Interceptor
 @Transactional(Transactional.TxType.REQUIRES_NEW)

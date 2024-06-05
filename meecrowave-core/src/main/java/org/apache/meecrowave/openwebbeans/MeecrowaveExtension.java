@@ -23,13 +23,13 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Stream;
 
-import javax.enterprise.event.Observes;
-import javax.enterprise.inject.spi.AnnotatedType;
-import javax.enterprise.inject.spi.BeanManager;
-import javax.enterprise.inject.spi.BeforeBeanDiscovery;
-import javax.enterprise.inject.spi.Extension;
-import javax.enterprise.inject.spi.ProcessAnnotatedType;
-import javax.ws.rs.Path;
+import jakarta.enterprise.event.Observes;
+import jakarta.enterprise.inject.spi.AnnotatedType;
+import jakarta.enterprise.inject.spi.BeanManager;
+import jakarta.enterprise.inject.spi.BeforeBeanDiscovery;
+import jakarta.enterprise.inject.spi.Extension;
+import jakarta.enterprise.inject.spi.ProcessAnnotatedType;
+import jakarta.ws.rs.Path;
 
 import org.apache.meecrowave.cxf.Cxfs;
 import org.apache.meecrowave.cxf.JAXRSFieldInjectionInterceptor;
@@ -44,7 +44,7 @@ public class MeecrowaveExtension implements Extension {
             bbd.addInterceptorBinding(JAXRSFieldInjectionInterceptor.Binding.class);
 
             Stream.of(MeecrowaveBus.class, JAXRSFieldInjectionInterceptor.class)
-                  .forEach(type -> bbd.addAnnotatedType(bm.createAnnotatedType(type)));
+                  .forEach(type -> bbd.addAnnotatedType(bm.createAnnotatedType(type), "meecrowave"));
         }
     }
 

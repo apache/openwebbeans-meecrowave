@@ -18,8 +18,8 @@
  */
 package org.apache.meecrowave.proxy.servlet.front.cdi.event;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 public class BaseEvent {
     private final HttpServletRequest request;

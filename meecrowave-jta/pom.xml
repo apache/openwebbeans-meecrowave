@@ -21,7 +21,7 @@
   <parent>
     <artifactId>meecrowave</artifactId>
     <groupId>org.apache.meecrowave</groupId>
-    <version>1.2.16-SNAPSHOT</version>
+    <version>2.0.0-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
@@ -33,15 +33,15 @@
   </properties>
 
   <dependencies>
+
     <dependency>
-      <groupId>org.apache.geronimo.specs</groupId>
-      <artifactId>geronimo-jta_1.2_spec</artifactId>
-      <version>1.0-alpha-1</version>
+      <groupId>jakarta.transaction</groupId>
+      <artifactId>jakarta.transaction-api</artifactId>
     </dependency>
     <dependency>
       <groupId>org.apache.geronimo.components</groupId>
       <artifactId>geronimo-transaction</artifactId>
-      <version>3.1.4</version>
+      <version>4.0.0</version>
     </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>

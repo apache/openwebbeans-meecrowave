@@ -67,13 +67,13 @@ import java.util.stream.StreamSupport;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
-import javax.enterprise.context.spi.CreationalContext;
-import javax.enterprise.inject.spi.AnnotatedType;
-import javax.enterprise.inject.spi.BeanManager;
-import javax.enterprise.inject.spi.CDI;
-import javax.enterprise.inject.spi.InjectionTarget;
-import javax.servlet.ServletContainerInitializer;
-import javax.servlet.SessionCookieConfig;
+import jakarta.enterprise.context.spi.CreationalContext;
+import jakarta.enterprise.inject.spi.AnnotatedType;
+import jakarta.enterprise.inject.spi.BeanManager;
+import jakarta.enterprise.inject.spi.CDI;
+import jakarta.enterprise.inject.spi.InjectionTarget;
+import jakarta.servlet.ServletContainerInitializer;
+import jakarta.servlet.SessionCookieConfig;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
@@ -659,26 +659,29 @@ public class Meecrowave implements AutoCloseable {
             if (!buildSslHostConfig.isEmpty()) {
                 createDirectory(base, "conf");
             }
-            buildSslHostConfig.forEach(sslHostConf -> {
-                if (isCertificateFromClasspath(sslHostConf.getCertificateKeystoreFile())) {
-                    copyCertificateToConfDir(sslHostConf.getCertificateKeystoreFile());
-                    sslHostConf.setCertificateKeystoreFile(base.getAbsolutePath() + "/conf/" + sslHostConf.getCertificateKeystoreFile());
-                }
-                if (isCertificateFromClasspath(sslHostConf.getCertificateKeyFile())) {
-                    copyCertificateToConfDir(sslHostConf.getCertificateKeyFile());
-                    sslHostConf.setCertificateKeyFile(base.getAbsolutePath() + "/conf/" + sslHostConf.getCertificateKeyFile());
-                    copyCertificateToConfDir(sslHostConf.getCertificateFile());
-                    sslHostConf.setCertificateFile(base.getAbsolutePath() + "/conf/" + sslHostConf.getCertificateFile());
-                }
+            for (SSLHostConfig sslHostConf : buildSslHostConfig) {
+                sslHostConf.getCertificates().forEach(cert -> {
+                    if (isCertificateFromClasspath(cert.getCertificateKeystoreFile())) {
+                        copyCertificateToConfDir(cert.getCertificateKeystoreFile());
+                        cert.setCertificateKeystoreFile(base.getAbsolutePath() + "/conf/" + cert.getCertificateKeystoreFile());
+                    }
+                    if (isCertificateFromClasspath(cert.getCertificateKeyFile())) {
+                        copyCertificateToConfDir(cert.getCertificateKeyFile());
+                        cert.setCertificateKeyFile(base.getAbsolutePath() + "/conf/" + cert.getCertificateKeyFile());
+                        copyCertificateToConfDir(cert.getCertificateFile());
+                        cert.setCertificateFile(base.getAbsolutePath() + "/conf/" + cert.getCertificateFile());
+                    }
+                    if (isCertificateFromClasspath(cert.getCertificateChainFile())) {
+                        copyCertificateToConfDir(cert.getCertificateChainFile());
+                        cert.setCertificateChainFile(base.getAbsolutePath() + "/conf/" + cert.getCertificateChainFile());
+                    }
+                });
+
                 if (isCertificateFromClasspath(sslHostConf.getTruststoreFile())) {
                     copyCertificateToConfDir(sslHostConf.getTruststoreFile());
                     sslHostConf.setTruststoreFile(base.getAbsolutePath() + "/conf/" + sslHostConf.getTruststoreFile());
                 }
-                if (isCertificateFromClasspath(sslHostConf.getCertificateChainFile())) {
-                    copyCertificateToConfDir(sslHostConf.getCertificateChainFile());
-                    sslHostConf.setCertificateChainFile(base.getAbsolutePath() + "/conf/" + sslHostConf.getCertificateChainFile());
-                }
-            });
+            }
 
             buildSslHostConfig.forEach(httpsConnector::addSslHostConfig);
 
@@ -962,7 +965,7 @@ public class Meecrowave implements AutoCloseable {
     public <T> AutoCloseable inject(final T instance) {
         final BeanManager bm = CDI.current().getBeanManager();
         final AnnotatedType<?> annotatedType = bm.createAnnotatedType(instance.getClass());
-        final InjectionTarget injectionTarget = bm.createInjectionTarget(annotatedType);
+        final InjectionTarget injectionTarget = bm.getInjectionTargetFactory(annotatedType).createInjectionTarget(null);
         final CreationalContext<Object> creationalContext = bm.createCreationalContext(null);
         injectionTarget.inject(instance, creationalContext);
         return creationalContext::release;

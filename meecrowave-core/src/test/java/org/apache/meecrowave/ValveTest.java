@@ -23,8 +23,8 @@ import static org.junit.Assert.assertNotNull;
 
 import java.io.IOException;
 
-import javax.inject.Inject;
-import javax.servlet.ServletException;
+import jakarta.inject.Inject;
+import jakarta.servlet.ServletException;
 
 import org.apache.catalina.Valve;
 import org.apache.catalina.connector.Request;

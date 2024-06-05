@@ -27,7 +27,7 @@ import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.junit.runners.model.Statement;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.rules.RuleChain.outerRule;

@@ -18,7 +18,7 @@
  */
 package org.apache.meecrowave.junit5.bean;
 
-import javax.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
 public class Appender {

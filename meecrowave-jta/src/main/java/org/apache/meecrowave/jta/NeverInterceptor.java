@@ -16,13 +16,13 @@
  */
 package org.apache.meecrowave.jta;
 
-import javax.annotation.Priority;
-import javax.interceptor.AroundInvoke;
-import javax.interceptor.Interceptor;
-import javax.interceptor.InvocationContext;
-import javax.transaction.SystemException;
-import javax.transaction.Transactional;
-import javax.transaction.TransactionalException;
+import jakarta.annotation.Priority;
+import jakarta.interceptor.AroundInvoke;
+import jakarta.interceptor.Interceptor;
+import jakarta.interceptor.InvocationContext;
+import jakarta.transaction.SystemException;
+import jakarta.transaction.Transactional;
+import jakarta.transaction.TransactionalException;
 
 @Interceptor
 @Transactional(Transactional.TxType.NEVER)

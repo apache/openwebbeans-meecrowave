@@ -21,14 +21,14 @@ package org.apache.meecrowave;
 import org.junit.Test;
 import org.superbiz.app.Bounced;
 
-import javax.ws.rs.ProcessingException;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.ProcessingException;
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.client.ClientBuilder;
 import java.io.File;
 import java.io.IOException;
 
-import static javax.ws.rs.core.MediaType.TEXT_PLAIN_TYPE;
+import static jakarta.ws.rs.core.MediaType.TEXT_PLAIN_TYPE;
 import static org.junit.Assert.fail;
 
 // you can need to mvn test-compile before running this test if it was executed once already

@@ -22,10 +22,10 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 
-import javax.enterprise.event.NotificationOptions;
-import javax.json.JsonObject;
-import javax.json.bind.annotation.JsonbTransient;
-import javax.ws.rs.client.Client;
+import jakarta.enterprise.event.NotificationOptions;
+import jakarta.json.JsonObject;
+import jakarta.json.bind.annotation.JsonbTransient;
+import jakarta.ws.rs.client.Client;
 
 public class Routes {
     public JsonObject extensions; // placeholder for custom metadata usable in observers

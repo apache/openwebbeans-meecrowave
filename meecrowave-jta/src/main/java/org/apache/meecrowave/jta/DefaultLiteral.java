@@ -18,8 +18,8 @@
  */
 package org.apache.meecrowave.jta;
 
-import javax.enterprise.inject.Default;
-import javax.enterprise.util.AnnotationLiteral;
+import jakarta.enterprise.inject.Default;
+import jakarta.enterprise.util.AnnotationLiteral;
 import java.lang.annotation.Annotation;
 
 public class DefaultLiteral extends AnnotationLiteral<Default> implements Default {

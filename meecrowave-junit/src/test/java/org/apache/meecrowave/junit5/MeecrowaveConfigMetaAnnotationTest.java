@@ -20,7 +20,7 @@ package org.apache.meecrowave.junit5;
 
 import static org.junit.Assert.assertTrue;
 
-import javax.enterprise.context.RequestScoped;
+import jakarta.enterprise.context.RequestScoped;
 
 import org.apache.webbeans.config.WebBeansContext;
 import org.junit.jupiter.api.Test;

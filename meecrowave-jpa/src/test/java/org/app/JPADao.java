@@ -23,14 +23,14 @@ import org.apache.meecrowave.jpa.api.Jpa;
 import org.apache.meecrowave.jpa.api.Unit;
 import org.h2.Driver;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.context.Dependent;
-import javax.enterprise.inject.Produces;
-import javax.inject.Inject;
-import javax.persistence.Entity;
-import javax.persistence.EntityManager;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.context.Dependent;
+import jakarta.enterprise.inject.Produces;
+import jakarta.inject.Inject;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.Id;
 import javax.sql.DataSource;
 
 @ApplicationScoped

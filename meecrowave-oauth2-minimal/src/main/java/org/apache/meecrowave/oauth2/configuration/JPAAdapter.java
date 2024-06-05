@@ -25,8 +25,8 @@ import org.apache.cxf.rs.security.oauth2.grants.code.ServerAuthorizationCodeGran
 import org.apache.cxf.rs.security.oauth2.tokens.bearer.BearerAccessToken;
 import org.apache.cxf.rs.security.oauth2.tokens.refresh.RefreshToken;
 
-import javax.persistence.EntityManagerFactory;
-import javax.persistence.Persistence;
+import jakarta.persistence.EntityManagerFactory;
+import jakarta.persistence.Persistence;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.HashMap;

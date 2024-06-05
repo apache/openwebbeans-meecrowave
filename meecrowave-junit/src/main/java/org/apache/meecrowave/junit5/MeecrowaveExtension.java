@@ -27,7 +27,7 @@ import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 
-import javax.enterprise.context.spi.CreationalContext;
+import jakarta.enterprise.context.spi.CreationalContext;
 import java.io.File;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;

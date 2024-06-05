@@ -24,11 +24,11 @@ import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 
-import javax.enterprise.context.spi.CreationalContext;
-import javax.enterprise.inject.spi.AnnotatedType;
-import javax.enterprise.inject.spi.BeanManager;
-import javax.enterprise.inject.spi.CDI;
-import javax.enterprise.inject.spi.InjectionTarget;
+import jakarta.enterprise.context.spi.CreationalContext;
+import jakarta.enterprise.inject.spi.AnnotatedType;
+import jakarta.enterprise.inject.spi.BeanManager;
+import jakarta.enterprise.inject.spi.CDI;
+import jakarta.enterprise.inject.spi.InjectionTarget;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -91,7 +91,7 @@ public abstract class MeecrowaveRuleBase<T extends MeecrowaveRuleBase> implement
     private static CreationalContext<Object> doInject(final Object instance) {
         final BeanManager bm = CDI.current().getBeanManager();
         final AnnotatedType<?> annotatedType = bm.createAnnotatedType(instance.getClass());
-        final InjectionTarget injectionTarget = bm.createInjectionTarget(annotatedType);
+        final InjectionTarget injectionTarget = bm.getInjectionTargetFactory(annotatedType).createInjectionTarget(null);
         final CreationalContext<Object> creationalContext = bm.createCreationalContext(null);
         injectionTarget.inject(instance, creationalContext);
         return creationalContext;

@@ -21,16 +21,16 @@ package org.apache.meecrowave.tests.ws;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import javax.json.Json;
-import javax.json.JsonObject;
-import javax.websocket.CloseReason;
-import javax.websocket.CloseReason.CloseCodes;
-import javax.websocket.EncodeException;
-import javax.websocket.OnClose;
-import javax.websocket.OnMessage;
-import javax.websocket.OnOpen;
-import javax.websocket.Session;
-import javax.websocket.server.ServerEndpoint;
+import jakarta.json.Json;
+import jakarta.json.JsonObject;
+import jakarta.websocket.CloseReason;
+import jakarta.websocket.CloseReason.CloseCodes;
+import jakarta.websocket.EncodeException;
+import jakarta.websocket.OnClose;
+import jakarta.websocket.OnMessage;
+import jakarta.websocket.OnOpen;
+import jakarta.websocket.Session;
+import jakarta.websocket.server.ServerEndpoint;
 
 import org.apache.johnzon.websocket.jsr.JsrObjectDecoder;
 import org.apache.johnzon.websocket.jsr.JsrObjectEncoder;

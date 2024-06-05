@@ -29,7 +29,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;

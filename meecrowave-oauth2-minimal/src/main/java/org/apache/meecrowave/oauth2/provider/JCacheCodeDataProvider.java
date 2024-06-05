@@ -21,7 +21,7 @@ package org.apache.meecrowave.oauth2.provider;
 import org.apache.cxf.Bus;
 import org.apache.meecrowave.oauth2.configuration.OAuth2Options;
 
-import javax.enterprise.inject.Vetoed;
+import jakarta.enterprise.inject.Vetoed;
 
 @Vetoed
 public class JCacheCodeDataProvider extends org.apache.cxf.rs.security.oauth2.grants.code.JCacheCodeDataProvider {

@@ -26,7 +26,7 @@ import org.apache.cxf.rs.security.oauth2.grants.code.ServerAuthorizationCodeGran
 import org.apache.cxf.rs.security.oauth2.provider.JCacheOAuthDataProvider;
 import org.apache.cxf.rs.security.oauth2.tokens.refresh.RefreshToken;
 
-import javax.annotation.PreDestroy;
+import jakarta.annotation.PreDestroy;
 import javax.cache.CacheException;
 import javax.cache.CacheManager;
 import javax.cache.Caching;
@@ -35,10 +35,10 @@ import javax.cache.configuration.MutableConfiguration;
 import javax.cache.integration.CacheLoader;
 import javax.cache.integration.CacheWriter;
 import javax.cache.spi.CachingProvider;
-import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.inject.spi.Bean;
-import javax.enterprise.inject.spi.BeanManager;
-import javax.inject.Inject;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.inject.spi.Bean;
+import jakarta.enterprise.inject.spi.BeanManager;
+import jakarta.inject.Inject;
 import java.io.File;
 import java.net.URI;
 import java.util.Set;

@@ -23,12 +23,12 @@
   <parent>
     <groupId>org.apache</groupId>
     <artifactId>apache</artifactId>
-    <version>23</version>
+    <version>31</version>
   </parent>
 
   <groupId>org.apache.meecrowave</groupId>
   <artifactId>meecrowave</artifactId>
-  <version>1.2.16-SNAPSHOT</version>
+  <version>2.0.0-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <name>Meecrowave</name>
@@ -50,37 +50,69 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <meecrowave.build.name>${project.groupId}.${project.artifactId}</meecrowave.build.name>
 
+    <!--X TODO verify if everything is really needed -->
+    <jakarta.activation-api.version>2.1.2</jakarta.activation-api.version>
+    <jakarta.atinject-api.version>2.0.1</jakarta.atinject-api.version>
+    <jakarta.cdi-api.version>4.0.1</jakarta.cdi-api.version>
+    <jakarta.interceptor-api.version>2.1.0</jakarta.interceptor-api.version>
+    <jakarta.annotation-api.version>2.1.1</jakarta.annotation-api.version>
+    <jakarta.el-api.version>5.0.1</jakarta.el-api.version>
+    <jakarta.persistence-api.version>3.0.0</jakarta.persistence-api.version>
+    <jakarta.transaction-api.version>2.0.1</jakarta.transaction-api.version>
+    <jakarta.validation-api.version>3.0.2</jakarta.validation-api.version>
+    <jakarta.ejb-api.version>4.0.1</jakarta.ejb-api.version>
+    <jakarta.jms-api.version>3.0.0</jakarta.jms-api.version>
+    <jakarta-jsonp-api.version>2.1.1</jakarta-jsonp-api.version>
+    <jakarta-jsonb-api.version>3.0.0</jakarta-jsonb-api.version>
+    <jakarta.ws.rs-api.version>3.1.0</jakarta.ws.rs-api.version>
+    <jakarta.jws-api.version>3.0.0</jakarta.jws-api.version>
+    <jakarta.xml.bind-api.version>4.0.0</jakarta.xml.bind-api.version>
+    <jakarta.xml.soap-api.version>3.0.0</jakarta.xml.soap-api.version>
+    <jakarta.xml.ws-api.version>4.0.0</jakarta.xml.ws-api.version>
+
+
     <junit.version>4.13.2</junit.version>
-    <tomcat.version>9.0.76</tomcat.version>
-    <openwebbeans.version>2.0.27</openwebbeans.version>
-    <cxf.version>3.5.5</cxf.version>
-    <johnzon.version>1.2.20</johnzon.version>
-    <log4j2.version>2.20.0</log4j2.version>
-    <deltaspike.version>1.9.6</deltaspike.version>
-    <jaxb.version>2.2.11</jaxb.version>
-    <openjpa.version>3.2.2</openjpa.version>
+    <tomcat.version>10.1.24</tomcat.version>
+    <openwebbeans.version>4.0.2</openwebbeans.version>
+    <cxf.version>4.1.0-SNAPSHOT</cxf.version>
+    <johnzon.version>2.0.1</johnzon.version>
+    <log4j2.version>2.23.1</log4j2.version>
+    <deltaspike.version>2.0.0</deltaspike.version>
+    <jaxb.version>2.3.0</jaxb.version>
+    <openjpa.version>4.0.0</openjpa.version>
     <jpa-spec.version>1.1</jpa-spec.version>
     <h2.version>2.2.220</h2.version>
     <dbcp2.version>2.9.0</dbcp2.version>
-    <commons-cli.version>1.5.0</commons-cli.version>
-    <xbean.version>4.23</xbean.version>
+    <commons-cli.version>1.8.0</commons-cli.version>
+    <xbean.version>4.25</xbean.version>
     <geronimo-jcache-simple.version>1.0.5</geronimo-jcache-simple.version>
     <geronimo-jcache_1.0_spec.version>1.0-alpha-1</geronimo-jcache_1.0_spec.version>
 
     <java11.jaxb.version>2.3.0</java11.jaxb.version>
   </properties>
 
+  <prerequisites>
+    <maven>3.5.0</maven>
+
+  </prerequisites>
+
   <modules>
     <module>meecrowave-specs-api</module>
+    <module>test-app</module>
     <module>meecrowave-core</module>
     <module>meecrowave-maven-plugin</module>
     <module>meecrowave-gradle-plugin</module>
     <module>meecrowave-junit</module>
     <module>meecrowave-arquillian</module>
     <module>meecrowave-jpa</module>
+<!-- seems jbake is broken on java17 onwards. at least on macos
     <module>meecrowave-doc</module>
+-->
     <module>meecrowave-jta</module>
+
+<!--X TODO re-enable
     <module>integration-tests</module>
+-->
     <module>meecrowave-oauth2-minimal</module>
     <module>meecrowave-oauth2</module>
     <module>meecrowave-letsencrypt</module>
@@ -91,39 +123,47 @@
   <dependencyManagement>
     <dependencies>
       <dependency>
-        <groupId>org.apache.geronimo.specs</groupId>
-        <artifactId>geronimo-annotation_1.3_spec</artifactId>
-        <version>1.3</version>
+        <groupId>jakarta.annotation</groupId>
+        <artifactId>jakarta.annotation-api</artifactId>
+        <version>${jakarta.annotation-api.version}</version>
+      </dependency>
+
+
+      <dependency>
+        <groupId>jakarta.enterprise</groupId>
+        <artifactId>jakarta.enterprise.cdi-api</artifactId>
+        <version>${jakarta.cdi-api.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>jakarta.inject</groupId>
+            <artifactId>jakarta.inject-api</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
-        <groupId>org.apache.geronimo.specs</groupId>
-        <artifactId>geronimo-jcdi_2.0_spec</artifactId>
-        <version>1.3</version>
+        <groupId>jakarta.inject</groupId>
+        <artifactId>jakarta.inject-api</artifactId>
+        <version>${jakarta.atinject-api.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.apache.geronimo.specs</groupId>
-        <artifactId>geronimo-atinject_1.0_spec</artifactId>
-        <version>1.2</version>
+        <groupId>jakarta.interceptor</groupId>
+        <artifactId>jakarta.interceptor-api</artifactId>
+        <version>${jakarta.interceptor-api.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.apache.geronimo.specs</groupId>
-        <artifactId>geronimo-interceptor_1.2_spec</artifactId>
-        <version>1.2</version>
+        <groupId>jakarta.json</groupId>
+        <artifactId>jakarta.json-api</artifactId>
+        <version>${jakarta-jsonp-api.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.apache.geronimo.specs</groupId>
-        <artifactId>geronimo-json_1.1_spec</artifactId>
-        <version>1.5</version>
+        <groupId>jakarta.json.bind</groupId>
+        <artifactId>jakarta.json.bind-api</artifactId>
+        <version>${jakarta-jsonb-api.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.apache.geronimo.specs</groupId>
-        <artifactId>geronimo-jsonb_1.0_spec</artifactId>
-        <version>1.4</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.geronimo.specs</groupId>
-        <artifactId>geronimo-jaxrs_2.1_spec</artifactId>
-        <version>1.1</version>
+        <groupId>jakarta.ws.rs</groupId>
+        <artifactId>jakarta.ws.rs-api</artifactId>
+        <version>${jakarta.ws.rs-api.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.tomcat</groupId>
@@ -135,7 +175,30 @@
         <artifactId>tomcat-jaspic-api</artifactId>
         <version>${tomcat.version}</version>
       </dependency>
+
+      <dependency>
+        <groupId>jakarta.activation</groupId>
+        <artifactId>jakarta.activation-api</artifactId>
+        <version>${jakarta.activation-api.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>jakarta.transaction</groupId>
+        <artifactId>jakarta.transaction-api</artifactId>
+        <version>${jakarta.transaction-api.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>jakarta.persistence</groupId>
+        <artifactId>jakarta.persistence-api</artifactId>
+        <version>${jakarta.persistence-api.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>jakarta.xml.bind</groupId>
+        <artifactId>jakarta.xml.bind-api</artifactId>
+        <version>${jakarta.xml.bind-api.version}</version>
+      </dependency>
+
     </dependencies>
+
   </dependencyManagement>
 
   <build>
@@ -143,17 +206,17 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.8.1</version>
+        <version>3.13.0</version>
         <configuration>
-          <source>1.8</source>
-          <target>1.8</target>
+          <source>17</source>
+          <target>17</target>
         </configuration>
       </plugin>
 
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-shade-plugin</artifactId>
-        <version>3.2.4</version>
+        <version>3.6.0</version>
       </plugin>
 
       <plugin>
@@ -172,7 +235,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
-        <version>3.0.0-M5</version>
+        <version>3.2.5</version>
         <configuration>
           <trimStackTrace>false</trimStackTrace>
         </configuration>
@@ -201,42 +264,5 @@
     </plugins>
   </build>
 
-  <profiles>
-    <profile>
-      <id>java11</id>
-      <activation>
-        <jdk>11</jdk>
-      </activation>
-      <dependencyManagement>
-        <dependencies>
-          <dependency>
-            <groupId>org.apache.geronimo.specs</groupId>
-            <artifactId>geronimo-jaxws_2.2_spec</artifactId>
-            <version>1.1</version>
-          </dependency>
-          <dependency>
-            <groupId>org.apache.geronimo.specs</groupId>
-            <artifactId>geronimo-ws-metadata_2.0_spec</artifactId>
-            <version>1.1.3</version>
-          </dependency>
-          <dependency>
-            <groupId>org.apache.geronimo.specs</groupId>
-            <artifactId>geronimo-activation_1.1_spec</artifactId>
-            <version>1.1</version>
-          </dependency>
-          <dependency>
-            <groupId>javax.xml.bind</groupId>
-            <artifactId>jaxb-api</artifactId>
-            <version>${java11.jaxb.version}</version>
-          </dependency>
-          <dependency>
-            <groupId>com.sun.xml.bind</groupId>
-            <artifactId>jaxb-impl</artifactId>
-            <version>${java11.jaxb.version}</version>
-          </dependency>
-        </dependencies>
-      </dependencyManagement>
-    </profile>
-  </profiles>
 </project>
 

@@ -20,7 +20,7 @@ package org.apache.meecrowave.junit5;
 
 import static java.util.Optional.ofNullable;
 
-import javax.enterprise.context.spi.CreationalContext;
+import jakarta.enterprise.context.spi.CreationalContext;
 
 import org.apache.meecrowave.testing.Injector;
 import org.apache.meecrowave.testing.MonoBase;

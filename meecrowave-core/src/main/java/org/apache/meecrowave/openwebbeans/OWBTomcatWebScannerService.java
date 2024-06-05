@@ -32,7 +32,7 @@ import org.apache.webbeans.web.scanner.WebScannerService;
 import org.apache.xbean.finder.AnnotationFinder;
 import org.apache.xbean.finder.filter.Filter;
 
-import javax.servlet.ServletContext;
+import jakarta.servlet.ServletContext;
 import java.io.File;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;

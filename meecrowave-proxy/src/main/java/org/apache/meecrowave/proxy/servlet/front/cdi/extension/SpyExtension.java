@@ -18,9 +18,9 @@
  */
 package org.apache.meecrowave.proxy.servlet.front.cdi.extension;
 
-import javax.enterprise.event.Observes;
-import javax.enterprise.inject.spi.Extension;
-import javax.enterprise.inject.spi.ProcessObserverMethod;
+import jakarta.enterprise.event.Observes;
+import jakarta.enterprise.inject.spi.Extension;
+import jakarta.enterprise.inject.spi.ProcessObserverMethod;
 
 import org.apache.meecrowave.proxy.servlet.front.cdi.event.AfterResponse;
 import org.apache.meecrowave.proxy.servlet.front.cdi.event.BeforeRequest;

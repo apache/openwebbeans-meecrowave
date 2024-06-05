@@ -50,22 +50,22 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.stream.Collector;
 import java.util.stream.Stream;
 
-import javax.enterprise.event.NotificationOptions;
-import javax.json.Json;
-import javax.json.JsonBuilderFactory;
-import javax.json.JsonObject;
-import javax.json.JsonObjectBuilder;
-import javax.json.JsonValue;
-import javax.json.bind.Jsonb;
-import javax.json.bind.JsonbBuilder;
-import javax.json.bind.JsonbConfig;
-import javax.json.spi.JsonProvider;
+import jakarta.enterprise.event.NotificationOptions;
+import jakarta.json.Json;
+import jakarta.json.JsonBuilderFactory;
+import jakarta.json.JsonObject;
+import jakarta.json.JsonObjectBuilder;
+import jakarta.json.JsonValue;
+import jakarta.json.bind.Jsonb;
+import jakarta.json.bind.JsonbBuilder;
+import jakarta.json.bind.JsonbConfig;
+import jakarta.json.spi.JsonProvider;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.client.ClientBuilder;
 
 import org.apache.meecrowave.proxy.servlet.configuration.Routes;
 

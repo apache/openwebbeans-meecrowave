@@ -21,11 +21,11 @@ import org.apache.meecrowave.junit.MeecrowaveRule;
 import org.junit.Rule;
 import org.junit.Test;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import javax.transaction.SystemException;
-import javax.transaction.TransactionManager;
-import javax.transaction.Transactional;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.transaction.SystemException;
+import jakarta.transaction.TransactionManager;
+import jakarta.transaction.Transactional;
 import java.io.IOException;
 
 import static org.junit.Assert.assertNotNull;

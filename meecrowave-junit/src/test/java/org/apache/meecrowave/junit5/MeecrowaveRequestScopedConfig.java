@@ -3,7 +3,7 @@ package org.apache.meecrowave.junit5;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
-import javax.enterprise.context.RequestScoped;
+import jakarta.enterprise.context.RequestScoped;
 
 import org.junit.platform.commons.annotation.Testable;
 

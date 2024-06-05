@@ -23,10 +23,10 @@ import org.apache.cxf.rs.security.oauth2.provider.OAuthJSONProvider;
 import org.apache.meecrowave.Meecrowave;
 import org.apache.meecrowave.oauth2.configuration.OAuth2Options;
 
-import javax.enterprise.context.Dependent;
-import javax.inject.Inject;
-import javax.ws.rs.ApplicationPath;
-import javax.ws.rs.core.Application;
+import jakarta.enterprise.context.Dependent;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.ApplicationPath;
+import jakarta.ws.rs.core.Application;
 import java.util.HashSet;
 import java.util.Set;
 

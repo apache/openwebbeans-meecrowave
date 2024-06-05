@@ -41,7 +41,7 @@ import java.util.function.Consumer;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-import javax.servlet.ServletContainerInitializer;
+import jakarta.servlet.ServletContainerInitializer;
 
 import org.apache.catalina.Context;
 import org.apache.catalina.Realm;

@@ -23,7 +23,7 @@ import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.Objects;
 
-import javax.enterprise.inject.spi.CDI;
+import jakarta.enterprise.inject.spi.CDI;
 
 import org.apache.cxf.endpoint.Client;
 import org.apache.cxf.endpoint.ClientLifeCycleListener;

@@ -18,18 +18,18 @@
  */
 package org.superbiz.app;
 
-import javax.servlet.DispatcherType;
-import javax.servlet.Filter;
-import javax.servlet.FilterChain;
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletContainerInitializer;
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
-import javax.servlet.annotation.HandlesTypes;
-import javax.ws.rs.Path;
-import javax.ws.rs.core.Application;
+import jakarta.servlet.DispatcherType;
+import jakarta.servlet.Filter;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.FilterConfig;
+import jakarta.servlet.ServletContainerInitializer;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
+import jakarta.servlet.annotation.HandlesTypes;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.core.Application;
 import java.io.IOException;
 import java.util.EnumSet;
 import java.util.Set;

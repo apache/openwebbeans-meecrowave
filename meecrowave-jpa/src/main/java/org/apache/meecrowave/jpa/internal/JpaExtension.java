@@ -23,23 +23,23 @@ import org.apache.meecrowave.jpa.api.Jpa;
 import org.apache.meecrowave.jpa.api.PersistenceUnitInfoBuilder;
 import org.apache.meecrowave.jpa.api.Unit;
 
-import javax.enterprise.context.spi.CreationalContext;
-import javax.enterprise.event.Observes;
-import javax.enterprise.inject.spi.AfterBeanDiscovery;
-import javax.enterprise.inject.spi.AfterDeploymentValidation;
-import javax.enterprise.inject.spi.Bean;
-import javax.enterprise.inject.spi.BeanManager;
-import javax.enterprise.inject.spi.BeforeBeanDiscovery;
-import javax.enterprise.inject.spi.Extension;
-import javax.enterprise.inject.spi.ProcessAnnotatedType;
-import javax.enterprise.inject.spi.ProcessBean;
-import javax.enterprise.inject.spi.WithAnnotations;
-import javax.persistence.Embeddable;
-import javax.persistence.Entity;
-import javax.persistence.MappedSuperclass;
-import javax.persistence.SynchronizationType;
-import javax.persistence.spi.PersistenceUnitInfo;
-import javax.servlet.ServletContext;
+import jakarta.enterprise.context.spi.CreationalContext;
+import jakarta.enterprise.event.Observes;
+import jakarta.enterprise.inject.spi.AfterBeanDiscovery;
+import jakarta.enterprise.inject.spi.AfterDeploymentValidation;
+import jakarta.enterprise.inject.spi.Bean;
+import jakarta.enterprise.inject.spi.BeanManager;
+import jakarta.enterprise.inject.spi.BeforeBeanDiscovery;
+import jakarta.enterprise.inject.spi.Extension;
+import jakarta.enterprise.inject.spi.ProcessAnnotatedType;
+import jakarta.enterprise.inject.spi.ProcessBean;
+import jakarta.enterprise.inject.spi.WithAnnotations;
+import jakarta.persistence.Embeddable;
+import jakarta.persistence.Entity;
+import jakarta.persistence.MappedSuperclass;
+import jakarta.persistence.SynchronizationType;
+import jakarta.persistence.spi.PersistenceUnitInfo;
+import jakarta.servlet.ServletContext;
 import javax.sql.DataSource;
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
@@ -68,7 +68,7 @@ public class JpaExtension implements Extension {
 
     void addInternals(@Observes final BeforeBeanDiscovery bbd, final BeanManager bm) {
         Stream.of(JpaTransactionInterceptor.class, JpaNoTransactionInterceptor.class)
-                .forEach(interceptor -> bbd.addAnnotatedType(bm.createAnnotatedType(interceptor)));
+                .forEach(interceptor -> bbd.addAnnotatedType(bm.createAnnotatedType(interceptor), "mw"));
     }
 
     <T> void addJpaToEmConsumers(@Observes @WithAnnotations(Unit.class) final ProcessAnnotatedType<T> pat) {

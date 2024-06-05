@@ -20,7 +20,7 @@ package org.apache.meecrowave.service;
 
 import static java.util.Optional.ofNullable;
 
-import javax.annotation.Priority;
+import jakarta.annotation.Priority;
 
 public final class Priotities {
     private Priotities() {

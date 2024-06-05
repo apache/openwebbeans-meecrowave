@@ -71,6 +71,7 @@ public class KnownClassesFilter implements Filter { // one easy and efficient so
         excluded.add("io.swagger.models");
         excluded.add("io.swagger.util");
         excluded.add("javax");
+        excluded.add("jakarta");
         excluded.add("jnr");
         excluded.add("junit");
         excluded.add("net.sf.ehcache");

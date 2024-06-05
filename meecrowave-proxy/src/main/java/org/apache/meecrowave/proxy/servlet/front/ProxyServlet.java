@@ -38,24 +38,24 @@ import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
-import javax.servlet.AsyncContext;
-import javax.servlet.ServletConfig;
-import javax.servlet.ServletException;
-import javax.servlet.ServletOutputStream;
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.ws.rs.HttpMethod;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.client.CompletionStageRxInvoker;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.client.Invocation;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.NewCookie;
-import javax.ws.rs.core.Response;
+import jakarta.servlet.AsyncContext;
+import jakarta.servlet.ServletConfig;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletOutputStream;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.ws.rs.HttpMethod;
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.client.CompletionStageRxInvoker;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.client.Invocation;
+import jakarta.ws.rs.client.WebTarget;
+import jakarta.ws.rs.core.HttpHeaders;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.NewCookie;
+import jakarta.ws.rs.core.Response;
 
 import org.apache.meecrowave.proxy.servlet.configuration.Routes;
 import org.apache.meecrowave.proxy.servlet.service.ConfigurationLoader;
@@ -141,7 +141,7 @@ public class ProxyServlet extends HttpServlet {
                     continue;
                 }
                 request = request.cookie(
-                        new javax.ws.rs.core.Cookie(cookie.getName(), cookie.getValue(), cookie.getPath(), cookie.getDomain(), cookie.getVersion()));
+                        new jakarta.ws.rs.core.Cookie(cookie.getName(), cookie.getValue(), cookie.getPath(), cookie.getDomain()));
             }
         }
 
@@ -205,7 +205,6 @@ public class ProxyServlet extends HttpServlet {
     protected void addCookie(final HttpServletResponse resp, final Map.Entry<String, NewCookie> cookie) {
         final NewCookie nc = cookie.getValue();
         final Cookie servletCookie = new Cookie(cookie.getKey(), nc.getValue());
-        servletCookie.setComment(nc.getComment());
         if (nc.getDomain() != null) {
             servletCookie.setDomain(nc.getDomain());
         }
@@ -213,7 +212,6 @@ public class ProxyServlet extends HttpServlet {
         servletCookie.setSecure(nc.isSecure());
         servletCookie.setMaxAge(nc.getMaxAge());
         servletCookie.setPath(nc.getPath());
-        servletCookie.setVersion(nc.getVersion());
         resp.addCookie(servletCookie);
     }
 

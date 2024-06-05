@@ -38,34 +38,34 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import javax.json.JsonArray;
-import javax.json.JsonArrayBuilder;
-import javax.json.JsonBuilderFactory;
-import javax.json.JsonMergePatch;
-import javax.json.JsonNumber;
-import javax.json.JsonObject;
-import javax.json.JsonObjectBuilder;
-import javax.json.JsonPatch;
-import javax.json.JsonPatchBuilder;
-import javax.json.JsonPointer;
-import javax.json.JsonReader;
-import javax.json.JsonReaderFactory;
-import javax.json.JsonString;
-import javax.json.JsonStructure;
-import javax.json.JsonValue;
-import javax.json.JsonWriter;
-import javax.json.JsonWriterFactory;
-import javax.json.bind.Jsonb;
-import javax.json.bind.JsonbBuilder;
-import javax.json.spi.JsonProvider;
-import javax.json.stream.JsonGenerator;
-import javax.json.stream.JsonGeneratorFactory;
-import javax.json.stream.JsonParser;
-import javax.json.stream.JsonParserFactory;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.ext.Provider;
+import jakarta.json.JsonArray;
+import jakarta.json.JsonArrayBuilder;
+import jakarta.json.JsonBuilderFactory;
+import jakarta.json.JsonMergePatch;
+import jakarta.json.JsonNumber;
+import jakarta.json.JsonObject;
+import jakarta.json.JsonObjectBuilder;
+import jakarta.json.JsonPatch;
+import jakarta.json.JsonPatchBuilder;
+import jakarta.json.JsonPointer;
+import jakarta.json.JsonReader;
+import jakarta.json.JsonReaderFactory;
+import jakarta.json.JsonString;
+import jakarta.json.JsonStructure;
+import jakarta.json.JsonValue;
+import jakarta.json.JsonWriter;
+import jakarta.json.JsonWriterFactory;
+import jakarta.json.bind.Jsonb;
+import jakarta.json.bind.JsonbBuilder;
+import jakarta.json.spi.JsonProvider;
+import jakarta.json.stream.JsonGenerator;
+import jakarta.json.stream.JsonGeneratorFactory;
+import jakarta.json.stream.JsonParser;
+import jakarta.json.stream.JsonParserFactory;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.ext.Provider;
 
 import org.apache.cxf.bus.extension.ExtensionManagerBus;
 import org.apache.cxf.bus.managers.ClientLifeCycleManagerImpl;
@@ -130,10 +130,10 @@ public class ConfigurableBus extends ExtensionManagerBus {
 
         if (builder.isJaxrsAutoActivateBeanValidation()) {
             try { // we don't need the jaxrsbeanvalidationfeature since bean validation cdi extension handles it normally
-                loader.loadClass("javax.validation.Validation");
+                loader.loadClass("jakarta.validation.Validation");
                 final Object instance = loader.loadClass("org.apache.cxf.jaxrs.validation.ValidationExceptionMapper")
                         .getConstructor().newInstance();
-                instance.getClass().getGenericInterfaces(); // validate bval can be used, check NoClassDefFoundError javax.validation.ValidationException
+                instance.getClass().getGenericInterfaces(); // validate bval can be used, check NoClassDefFoundError jakarta.validation.ValidationException
                 providers.add(instance);
             } catch (final Exception | NoClassDefFoundError e) {
                 // no-op
@@ -286,7 +286,7 @@ public class ConfigurableBus extends ExtensionManagerBus {
         }
 
         @Override
-        public JsonObjectBuilder createObjectBuilder(final Map<String, Object> map) {
+        public JsonObjectBuilder createObjectBuilder(final Map<String, ?> map) {
             return provider.createObjectBuilder(map);
         }
 

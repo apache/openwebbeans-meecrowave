@@ -18,21 +18,20 @@
  */
 package org.apache.meecrowave;
 
-import org.apache.tomcat.util.http.fileupload.util.Streams;
 import org.junit.Test;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.context.Dependent;
-import javax.enterprise.context.Initialized;
-import javax.enterprise.context.RequestScoped;
-import javax.enterprise.event.Observes;
-import javax.enterprise.inject.spi.CDI;
-import javax.servlet.ServletContext;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.UriInfo;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.context.Dependent;
+import jakarta.enterprise.context.Initialized;
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.enterprise.event.Observes;
+import jakarta.enterprise.inject.spi.CDI;
+import jakarta.servlet.ServletContext;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.UriInfo;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;

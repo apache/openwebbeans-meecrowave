@@ -18,7 +18,7 @@
  */
 package org.apache.meecrowave.tests.webservices;
 
-import javax.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.context.ApplicationScoped;
 import javax.jws.WebService;
 
 @WebService

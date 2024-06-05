@@ -2,8 +2,8 @@ package org.apache.meecrowave.jpa.internal;
 
 import org.apache.meecrowave.jpa.api.Unit;
 
-import javax.enterprise.util.AnnotationLiteral;
-import javax.persistence.SynchronizationType;
+import jakarta.enterprise.util.AnnotationLiteral;
+import jakarta.persistence.SynchronizationType;
 
 class UnitLiteral extends AnnotationLiteral<Unit> implements Unit {
     private final String name;

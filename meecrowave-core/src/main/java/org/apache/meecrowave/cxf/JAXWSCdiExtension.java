@@ -22,14 +22,14 @@ import org.apache.meecrowave.configuration.Configuration;
 import org.apache.meecrowave.logging.tomcat.LogFacade;
 import org.apache.webbeans.component.OwbBean;
 
-import javax.enterprise.context.spi.CreationalContext;
-import javax.enterprise.event.Observes;
-import javax.enterprise.inject.spi.AfterDeploymentValidation;
-import javax.enterprise.inject.spi.Bean;
-import javax.enterprise.inject.spi.BeanManager;
-import javax.enterprise.inject.spi.BeforeShutdown;
-import javax.enterprise.inject.spi.Extension;
-import javax.enterprise.inject.spi.ProcessBean;
+import jakarta.enterprise.context.spi.CreationalContext;
+import jakarta.enterprise.event.Observes;
+import jakarta.enterprise.inject.spi.AfterDeploymentValidation;
+import jakarta.enterprise.inject.spi.Bean;
+import jakarta.enterprise.inject.spi.BeanManager;
+import jakarta.enterprise.inject.spi.BeforeShutdown;
+import jakarta.enterprise.inject.spi.Extension;
+import jakarta.enterprise.inject.spi.ProcessBean;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
@@ -67,7 +67,7 @@ public class JAXWSCdiExtension implements Extension {
                 final ClassLoader loader = Thread.currentThread().getContextClassLoader();
                 loader.loadClass("org.apache.cxf.jaxws.JaxWsServerFactoryBean");
                 loader.loadClass("org.apache.cxf.service.model.SchemaInfo");
-                marker = (Class<? extends Annotation>) loader.loadClass("javax.jws.WebService");
+                marker = (Class<? extends Annotation>) loader.loadClass("jakarta.jws.WebService");
                 active = true;
             } catch (final NoClassDefFoundError | ClassNotFoundException e) {
                 active = false;

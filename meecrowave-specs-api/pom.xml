@@ -21,7 +21,7 @@
   <parent>
     <artifactId>meecrowave</artifactId>
     <groupId>org.apache.meecrowave</groupId>
-    <version>1.2.16-SNAPSHOT</version>
+    <version>2.0.0-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
@@ -34,32 +34,32 @@
 
   <dependencies>
     <dependency>
-      <groupId>org.apache.geronimo.specs</groupId>
-      <artifactId>geronimo-annotation_1.3_spec</artifactId>
+      <groupId>jakarta.annotation</groupId>
+      <artifactId>jakarta.annotation-api</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.geronimo.specs</groupId>
-      <artifactId>geronimo-jcdi_2.0_spec</artifactId>
+      <groupId>jakarta.enterprise</groupId>
+      <artifactId>jakarta.enterprise.cdi-api</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.geronimo.specs</groupId>
-      <artifactId>geronimo-atinject_1.0_spec</artifactId>
+      <groupId>jakarta.inject</groupId>
+      <artifactId>jakarta.inject-api</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.geronimo.specs</groupId>
-      <artifactId>geronimo-interceptor_1.2_spec</artifactId>
+      <groupId>jakarta.interceptor</groupId>
+      <artifactId>jakarta.interceptor-api</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.geronimo.specs</groupId>
-      <artifactId>geronimo-json_1.1_spec</artifactId>
+      <groupId>jakarta.json</groupId>
+      <artifactId>jakarta.json-api</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.geronimo.specs</groupId>
-      <artifactId>geronimo-jsonb_1.0_spec</artifactId>
+      <groupId>jakarta.json.bind</groupId>
+      <artifactId>jakarta.json.bind-api</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.geronimo.specs</groupId>
-      <artifactId>geronimo-jaxrs_2.1_spec</artifactId>
+      <groupId>jakarta.ws.rs</groupId>
+      <artifactId>jakarta.ws.rs-api</artifactId>
     </dependency>
     <dependency>
       <groupId>org.apache.tomcat</groupId>
@@ -113,7 +113,7 @@
               <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                 <manifestEntries>
                   <Export-Package>
-                    javax.xml,javax.xml.ws,javax.xml.ws.handler,javax.xml.ws.handler.soap,javax.xml.ws.spi,javax.xml.ws.http,javax.xml.ws.soap,javax.xml.soap,javax.xml.namespace,javax.xml.registry,javax.xml.registry.infomodel,javax.xml.rpc,javax.xml.rpc.encoding,javax.xml.rpc.handler,javax.xml.rpc.handler.soap,javax.xml.rpc.holders,javax.xml.rpc.server,javax.xml.rpc.soap,javax.xml.stream,javax.xml.stream.events,javax.xml.stream.util,javax.xml.bind,javax.xml.bind.annotation,javax.xml.bind.annotation.adapters,javax.xml.bind.attachment,javax.xml.bind.helpers,javax.xml.bind.util,javax.activation,javax.annotation,javax.annotation.security,javax.ejb,javax.ejb.spi,javax.interceptor,javax.resource,javax.resource.cci,javax.resource.spi,javax.resource.spi.endpoint,javax.resource.spi.security,javax.resource.spi.work,javax.enterprise,javax.enterprise.deploy,javax.enterprise.deploy.model,javax.enterprise.deploy.model.exceptions,javax.enterprise.deploy.shared,javax.enterprise.deploy.shared.factories,javax.enterprise.deploy.spi,javax.enterprise.deploy.spi.exceptions,javax.enterprise.deploy.spi.factories,javax.enterprise.deploy.spi.status,javax.management,javax.management.j2ee,javax.management.j2ee.statistics,javax.security,javax.security.jacc,javax.jms,javax.persistence,javax.persistence.spi,javax.transaction,javax.transaction.xa,javax.servlet,javax.servlet.http,javax.servlet.resources,javax.jws,javax.ws.rs,javax.jws.soap
+                    jakarta.xml,jakarta.xml.ws,jakarta.xml.ws.handler,jakarta.xml.ws.handler.soap,jakarta.xml.ws.spi,jakarta.xml.ws.http,jakarta.xml.ws.soap,jakarta.xml.soap,jakarta.xml.namespace,jakarta.xml.registry,jakarta.xml.registry.infomodel,jakarta.xml.rpc,jakarta.xml.rpc.encoding,jakarta.xml.rpc.handler,jakarta.xml.rpc.handler.soap,jakarta.xml.rpc.holders,jakarta.xml.rpc.server,jakarta.xml.rpc.soap,jakarta.xml.stream,jakarta.xml.stream.events,jakarta.xml.stream.util,jakarta.xml.bind,jakarta.xml.bind.annotation,jakarta.xml.bind.annotation.adapters,jakarta.xml.bind.attachment,jakarta.xml.bind.helpers,jakarta.xml.bind.util,jakarta.activation,jakarta.annotation,jakarta.annotation.security,jakarta.ejb,jakarta.ejb.spi,jakarta.interceptor,jakarta.resource,jakarta.resource.cci,jakarta.resource.spi,jakarta.resource.spi.endpoint,jakarta.resource.spi.security,jakarta.resource.spi.work,jakarta.enterprise,jakarta.enterprise.deploy,jakarta.enterprise.deploy.model,jakarta.enterprise.deploy.model.exceptions,jakarta.enterprise.deploy.shared,jakarta.enterprise.deploy.shared.factories,jakarta.enterprise.deploy.spi,jakarta.enterprise.deploy.spi.exceptions,jakarta.enterprise.deploy.spi.factories,jakarta.enterprise.deploy.spi.status,jakarta.management,jakarta.management.j2ee,javax.management.j2ee.statistics,jakarta.security,jakarta.security.jacc,jakarta.jms,jakarta.persistence,jakarta.persistence.spi,jakarta.transaction,jakarta.transaction.xa,jakarta.servlet,jakarta.servlet.http,jakarta.servlet.resources,jakarta.jws,jakarta.ws.rs,jakarta.jws.soap
                   </Export-Package>
                   <Import-Package>org.apache.geronimo.osgi.registry.api;resolution:=optional</Import-Package>
                   <Private-Package>org.apache.openejb.javaee.api.activator,org.apache.geronimo.osgi.locator
@@ -169,8 +169,8 @@
               <filter>
                 <artifact>*:*</artifact>
                 <excludes>
-                  <exclude>javax/servlet/resources/**</exclude>
-                  <exclude>javax/servlet/jsp/resources/**</exclude>
+                  <exclude>jakarta/servlet/resources/**</exclude>
+                  <exclude>jakarta/servlet/jsp/resources/**</exclude>
                   <exclude>META-INF/LICENSE</exclude>
                   <exclude>META-INF/NOTICE</exclude>
                   <exclude>META-INF/README.txt</exclude>
@@ -181,7 +181,7 @@
               <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                 <manifestEntries>
                   <Export-Package>
-                    javax.xml,javax.xml.ws,javax.xml.ws.handler,javax.xml.ws.handler.soap,javax.xml.ws.spi,javax.xml.ws.http,javax.xml.ws.soap,javax.xml.soap,javax.xml.namespace,javax.xml.registry,javax.xml.registry.infomodel,javax.xml.rpc,javax.xml.rpc.encoding,javax.xml.rpc.handler,javax.xml.rpc.handler.soap,javax.xml.rpc.holders,javax.xml.rpc.server,javax.xml.rpc.soap,javax.xml.stream,javax.xml.stream.events,javax.xml.stream.util,javax.xml.bind,javax.xml.bind.annotation,javax.xml.bind.annotation.adapters,javax.xml.bind.attachment,javax.xml.bind.helpers,javax.xml.bind.util,javax.activation,javax.annotation,javax.annotation.security,javax.ejb,javax.ejb.spi,javax.interceptor,javax.resource,javax.resource.cci,javax.resource.spi,javax.resource.spi.endpoint,javax.resource.spi.security,javax.resource.spi.work,javax.enterprise,javax.enterprise.deploy,javax.enterprise.deploy.model,javax.enterprise.deploy.model.exceptions,javax.enterprise.deploy.shared,javax.enterprise.deploy.shared.factories,javax.enterprise.deploy.spi,javax.enterprise.deploy.spi.exceptions,javax.enterprise.deploy.spi.factories,javax.enterprise.deploy.spi.status,javax.management,javax.management.j2ee,javax.management.j2ee.statistics,javax.security,javax.security.jacc,javax.jms,javax.persistence,javax.persistence.spi,javax.transaction,javax.transaction.xa,javax.servlet,javax.servlet.http,javax.servlet.resources,javax.jws,javax.ws.rs,javax.jws.soap
+                    jakarta.xml,jakarta.xml.ws,jakarta.xml.ws.handler,jakarta.xml.ws.handler.soap,jakarta.xml.ws.spi,jakarta.xml.ws.http,jakarta.xml.ws.soap,jakarta.xml.soap,jakarta.xml.namespace,jakarta.xml.registry,jakarta.xml.registry.infomodel,jakarta.xml.rpc,jakarta.xml.rpc.encoding,jakarta.xml.rpc.handler,jakarta.xml.rpc.handler.soap,jakarta.xml.rpc.holders,jakarta.xml.rpc.server,jakarta.xml.rpc.soap,jakarta.xml.stream,jakarta.xml.stream.events,jakarta.xml.stream.util,jakarta.xml.bind,jakarta.xml.bind.annotation,jakarta.xml.bind.annotation.adapters,jakarta.xml.bind.attachment,jakarta.xml.bind.helpers,jakarta.xml.bind.util,jakarta.activation,jakarta.annotation,jakarta.annotation.security,jakarta.ejb,jakarta.ejb.spi,jakarta.interceptor,jakarta.resource,jakarta.resource.cci,jakarta.resource.spi,jakarta.resource.spi.endpoint,jakarta.resource.spi.security,jakarta.resource.spi.work,jakarta.enterprise,jakarta.enterprise.deploy,jakarta.enterprise.deploy.model,jakarta.enterprise.deploy.model.exceptions,jakarta.enterprise.deploy.shared,jakarta.enterprise.deploy.shared.factories,jakarta.enterprise.deploy.spi,jakarta.enterprise.deploy.spi.exceptions,jakarta.enterprise.deploy.spi.factories,jakarta.enterprise.deploy.spi.status,jakarta.management,jakarta.management.j2ee,jakarta.management.j2ee.statistics,jakarta.security,jakarta.security.jacc,jakarta.jms,jakarta.persistence,jakarta.persistence.spi,jakarta.transaction,jakarta.transaction.xa,jakarta.servlet,jakarta.servlet.http,jakarta.servlet.resources,jakarta.jws,jakarta.ws.rs,jakarta.jws.soap
                   </Export-Package>
                   <Import-Package>org.apache.geronimo.osgi.registry.api;resolution:=optional</Import-Package>
                   <Private-Package>org.apache.openejb.javaee.api.activator,org.apache.geronimo.osgi.locator

@@ -18,8 +18,8 @@
  */
 package org.apache.meecrowave.junit;
 
-import javax.enterprise.context.spi.CreationalContext;
-import javax.enterprise.inject.spi.CDI;
+import jakarta.enterprise.context.spi.CreationalContext;
+import jakarta.enterprise.inject.spi.CDI;
 
 import org.apache.meecrowave.Meecrowave;
 import org.apache.meecrowave.testing.Injector;

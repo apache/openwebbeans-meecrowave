@@ -20,12 +20,12 @@ package org.apache.meecrowave;
 
 import org.junit.Test;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.context.Dependent;
-import javax.inject.Inject;
-import javax.servlet.ServletContainerInitializer;
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.context.Dependent;
+import jakarta.inject.Inject;
+import jakarta.servlet.ServletContainerInitializer;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletException;
 import java.util.Set;
 
 import static java.util.Collections.emptySet;

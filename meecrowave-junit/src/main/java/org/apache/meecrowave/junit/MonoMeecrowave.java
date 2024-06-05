@@ -20,7 +20,7 @@ package org.apache.meecrowave.junit;
 
 import java.util.List;
 
-import javax.enterprise.context.spi.CreationalContext;
+import jakarta.enterprise.context.spi.CreationalContext;
 
 import org.apache.meecrowave.Meecrowave;
 import org.apache.meecrowave.testing.Injector;

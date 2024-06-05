@@ -23,9 +23,9 @@ import org.apache.meecrowave.io.IO;
 import org.apache.meecrowave.runner.cli.CliOption;
 import org.junit.Test;
 
-import javax.servlet.ServletContainerInitializer;
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
+import jakarta.servlet.ServletContainerInitializer;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.ServerSocket;

@@ -18,8 +18,8 @@
  */
 package org.apache.meecrowave.proxy.servlet.meecrowave;
 
-import javax.servlet.MultipartConfigElement;
-import javax.servlet.ServletRegistration;
+import jakarta.servlet.MultipartConfigElement;
+import jakarta.servlet.ServletRegistration;
 
 import org.apache.catalina.Context;
 import org.apache.meecrowave.Meecrowave;

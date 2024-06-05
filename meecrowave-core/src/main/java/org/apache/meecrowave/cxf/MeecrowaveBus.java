@@ -22,11 +22,11 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.inject.Typed;
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.servlet.ServletContext;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.inject.Typed;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
+import jakarta.servlet.ServletContext;
 
 import org.apache.cxf.Bus;
 import org.apache.cxf.common.util.ClassUnwrapper;

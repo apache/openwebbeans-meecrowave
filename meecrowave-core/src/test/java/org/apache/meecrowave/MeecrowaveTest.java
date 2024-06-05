@@ -43,6 +43,8 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLStreamHandler;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Enumeration;
 import java.util.Properties;
 import java.util.stream.Stream;
@@ -54,7 +56,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import javax.enterprise.inject.spi.CDI;
+import jakarta.enterprise.inject.spi.CDI;
 
 public class MeecrowaveTest {
     @Test
@@ -143,7 +145,7 @@ public class MeecrowaveTest {
     }
 
     @Test
-    public void simpleWebapp() {
+    public void simpleWebapp() throws IOException {
         final File root = new File("target/MeecrowaveTest/simpleWebapp/app");
         FileUtils.mkDir(root);
         Stream.of(Endpoint.class, RsApp.class).forEach(type -> {
@@ -157,7 +159,9 @@ public class MeecrowaveTest {
                 fail();
             }
         });
-        Classes.dump(new File(root, "WEB-INF/classes/"));
+        copyClass(root, "org/superbiz/app/OtherEndpoint.class");
+        copyClass(root, "org/superbiz/app/OtherFilter.class");
+
         try (final Writer indexHtml = new FileWriter(new File(root, "index.html"))) {
             indexHtml.write("hello");
         } catch (final IOException e) {
@@ -174,6 +178,15 @@ public class MeecrowaveTest {
             assertEquals("filtertrue", slurp(new URL("http://localhost:" + meecrowave.getConfiguration().getHttpPort() + "/other")));
         } catch (final Exception e) {
             fail(e.getMessage());
+        }
+    }
+
+    private static void copyClass(File targetRoot, String classFile) throws IOException {
+        final File targetFile = new File(targetRoot, "WEB-INF/classes/" + classFile);
+        if (!targetFile.exists()) {
+            targetFile.getParentFile().mkdirs();
+            Files.copy(Path.of("target/testapp-out/WEB-INF/classes/" + classFile),
+                    targetFile.toPath());
         }
     }
 

@@ -2,18 +2,18 @@ package org.apache.meecrowave.jpa.internal;
 
 import org.apache.meecrowave.jpa.api.EntityManagerScoped;
 
-import javax.enterprise.context.spi.CreationalContext;
-import javax.enterprise.inject.Vetoed;
-import javax.enterprise.inject.spi.Bean;
-import javax.enterprise.inject.spi.BeanManager;
-import javax.enterprise.inject.spi.InjectionPoint;
-import javax.enterprise.inject.spi.PassivationCapable;
-import javax.persistence.EntityManager;
-import javax.persistence.EntityManagerFactory;
-import javax.persistence.SynchronizationType;
-import javax.persistence.ValidationMode;
-import javax.persistence.spi.PersistenceProvider;
-import javax.persistence.spi.PersistenceUnitInfo;
+import jakarta.enterprise.context.spi.CreationalContext;
+import jakarta.enterprise.inject.Vetoed;
+import jakarta.enterprise.inject.spi.Bean;
+import jakarta.enterprise.inject.spi.BeanManager;
+import jakarta.enterprise.inject.spi.InjectionPoint;
+import jakarta.enterprise.inject.spi.PassivationCapable;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
+import jakarta.persistence.SynchronizationType;
+import jakarta.persistence.ValidationMode;
+import jakarta.persistence.spi.PersistenceProvider;
+import jakarta.persistence.spi.PersistenceUnitInfo;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 import java.util.HashMap;
@@ -104,11 +104,6 @@ public class EntityManagerBean implements Bean<EntityManager>, PassivationCapabl
     @Override
     public Class<?> getBeanClass() {
         return EntityManager.class;
-    }
-
-    @Override
-    public boolean isNullable() {
-        return false;
     }
 
     @Override

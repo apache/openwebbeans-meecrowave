@@ -21,7 +21,7 @@
   <parent>
     <artifactId>meecrowave</artifactId>
     <groupId>org.apache.meecrowave</groupId>
-    <version>1.2.16-SNAPSHOT</version>
+    <version>2.0.0-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
@@ -94,102 +94,6 @@
              <version>${junit5.version}</version>
            </dependency>
         </dependencies>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-shade-plugin</artifactId>
-        <executions>
-          <execution>
-            <phase>package</phase>
-            <goals>
-              <goal>shade</goal>
-            </goals>
-            <configuration>
-              <shadedArtifactAttached>true</shadedArtifactAttached>
-              <shadedClassifierName>jakarta</shadedClassifierName>
-              <createDependencyReducedPom>false</createDependencyReducedPom>
-              <artifactSet>
-                <includes>
-                  <include>${project.groupId}:${project.artifactId}</include>
-                </includes>
-              </artifactSet>
-              <relocations>
-                <relocation>
-                  <pattern>javax.activation</pattern>
-                  <shadedPattern>jakarta.activation</shadedPattern>
-                </relocation>
-                <relocation>
-                  <pattern>javax.annotation</pattern>
-                  <shadedPattern>jakarta.annotation</shadedPattern>
-                </relocation>
-                <relocation>
-                  <pattern>javax.el</pattern>
-                  <shadedPattern>jakarta.el</shadedPattern>
-                </relocation>
-                <relocation>
-                  <pattern>javax.enterprise</pattern>
-                  <shadedPattern>jakarta.enterprise</shadedPattern>
-                </relocation>
-                <relocation>
-                  <pattern>javax.decorator</pattern>
-                  <shadedPattern>jakarta.decorator</shadedPattern>
-                </relocation>
-                <relocation>
-                  <pattern>javax.inject</pattern>
-                  <shadedPattern>jakarta.inject</shadedPattern>
-                </relocation>
-                <relocation>
-                  <pattern>javax.interceptor</pattern>
-                  <shadedPattern>jakarta.interceptor</shadedPattern>
-                </relocation>
-                <relocation>
-                  <pattern>javax.servlet</pattern>
-                  <shadedPattern>jakarta.servlet</shadedPattern>
-                </relocation>
-                <relocation>
-                  <pattern>javax.transaction</pattern>
-                  <shadedPattern>jakarta.transaction</shadedPattern>
-                </relocation>
-                <relocation>
-                  <pattern>javax.validation</pattern>
-                  <shadedPattern>jakarta.validation</shadedPattern>
-                </relocation>
-                <relocation>
-                  <pattern>javax.persistence</pattern>
-                  <shadedPattern>jakarta.persistence</shadedPattern>
-                </relocation>
-                <relocation>
-                  <pattern>javax.faces</pattern>
-                  <shadedPattern>jakarta.faces</shadedPattern>
-                </relocation>
-                <relocation>
-                  <pattern>javax.ejb</pattern>
-                  <shadedPattern>jakarta.ejb</shadedPattern>
-                </relocation>
-                <relocation>
-                  <pattern>javax.ws</pattern>
-                  <shadedPattern>jakarta.ws</shadedPattern>
-                </relocation>
-                <relocation>
-                  <pattern>javax.cache</pattern>
-                  <shadedPattern>jakarta.cache</shadedPattern>
-                </relocation>
-                <relocation>
-                  <pattern>javax.jms</pattern>
-                  <shadedPattern>jakarta.jms</shadedPattern>
-                </relocation>
-                <relocation>
-                  <pattern>javax.json</pattern>
-                  <shadedPattern>jakarta.json</shadedPattern>
-                </relocation>
-                <relocation>
-                  <pattern>javax.resource</pattern>
-                  <shadedPattern>jakarta.resource</shadedPattern>
-                </relocation>
-              </relocations>
-            </configuration>
-          </execution>
-        </executions>
       </plugin>
     </plugins>
   </build>

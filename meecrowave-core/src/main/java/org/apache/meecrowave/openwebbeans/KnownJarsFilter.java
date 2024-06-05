@@ -175,6 +175,7 @@ public class KnownJarsFilter implements JarScanFilter {
         add("java-support-");
         add("javaws.jar");
         add("javax.");
+        add("jakarta.");
         add("jaxb-");
         add("jaxp-");
         add("jaxws-api");

@@ -22,7 +22,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.net.MalformedURLException;
 
-import javax.enterprise.context.RequestScoped;
+import jakarta.enterprise.context.RequestScoped;
 
 import org.apache.webbeans.config.WebBeansContext;
 import org.junit.jupiter.api.Test;

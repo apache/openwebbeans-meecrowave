@@ -26,9 +26,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 
-import javax.enterprise.context.RequestScoped;
-import javax.enterprise.context.SessionScoped;
-import javax.inject.Inject;
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.enterprise.context.SessionScoped;
+import jakarta.inject.Inject;
 
 import org.apache.meecrowave.io.IO;
 import org.app.MyAppClass;
