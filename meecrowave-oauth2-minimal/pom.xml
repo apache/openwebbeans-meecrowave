@@ -181,14 +181,6 @@
       <version>${h2.version}</version>
       <scope>test</scope>
     </dependency>
-<!--X TODO check
-    <dependency>
-      <groupId>org.bouncycastle</groupId>
-      <artifactId>bcprov-jdk15</artifactId>
-      <version>1.46</version>
-      <scope>test</scope>
-    </dependency>
-  -->
     <dependency>
       <groupId>org.bouncycastle</groupId>
       <artifactId>bcpkix-jdk15on</artifactId>
