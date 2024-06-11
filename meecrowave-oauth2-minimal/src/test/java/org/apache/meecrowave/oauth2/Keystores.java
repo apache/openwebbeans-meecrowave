@@ -18,22 +18,23 @@
  */
 package org.apache.meecrowave.oauth2;
 
-import org.apache.cxf.rt.security.crypto.CryptoUtils;
-import sun.security.tools.keytool.CertAndKeyGen;
-import sun.security.x509.BasicConstraintsExtension;
-import sun.security.x509.CertificateExtensions;
-import sun.security.x509.X500Name;
-import sun.security.x509.X509CertImpl;
-import sun.security.x509.X509CertInfo;
+import org.bouncycastle.asn1.x500.X500Name;
+import org.bouncycastle.cert.X509CertificateHolder;
+import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
+import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder;
+import org.bouncycastle.operator.ContentSigner;
+import org.bouncycastle.operator.OperatorCreationException;
+import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 
-import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
-import java.security.KeyStore;
-import java.security.Principal;
-import java.security.PrivateKey;
-import java.security.PublicKey;
+import java.math.BigInteger;
+import java.security.*;
+import java.io.File;
+import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.time.Instant;
+import java.util.Date;
 
 public final class Keystores {
     private Keystores() {
@@ -41,72 +42,50 @@ public final class Keystores {
     }
 
     public static PublicKey create(final File keystore) throws Exception {
-        CryptoUtils.installBouncyCastleProvider();
+        Security.setProperty("crypto.policy", "unlimited");
 
         final KeyStore ks = KeyStore.getInstance("JKS");
         ks.load(null, "password".toCharArray());
 
-        final CertAndKeyGen keyGen = new CertAndKeyGen("RSA", "SHA256WithRSA", null);
-        keyGen.generate(2048);
-        final PrivateKey rootPrivateKey = keyGen.getPrivateKey();
+        KeyPair rootKeyPair = generateKeyPair();
+        X500Name rootIssuerName = new X500Name("OU=apache,CN=root");
+        X509Certificate rootCertificate = getCertificate(rootKeyPair, rootIssuerName, rootKeyPair.getPrivate());
 
-        X509Certificate rootCertificate = keyGen.getSelfCertificate(new X500Name("cn=root"), (long) 365 * 24 * 60 * 60);
+        KeyPair middleKeyPair = generateKeyPair();
+        X500Name middleIssuerName = new X500Name("OU=apache,CN=middle");
+        X509Certificate middleCertificate = getCertificate(middleKeyPair, middleIssuerName, rootKeyPair.getPrivate());
 
-        final CertAndKeyGen keyGen1 = new CertAndKeyGen("RSA", "SHA256WithRSA", null);
-        keyGen1.generate(2048);
-        final PrivateKey middlePrivateKey = keyGen1.getPrivateKey();
+        KeyPair topKeyPair = generateKeyPair();
+        X500Name topIssuerName = new X500Name("OU=apache,CN=top");
+        X509Certificate topCertificate = getCertificate(topKeyPair, topIssuerName, middleKeyPair.getPrivate());
 
-        X509Certificate middleCertificate = keyGen1.getSelfCertificate(new X500Name("CN=MIDDLE"), (long) 365 * 24 * 60 * 60);
-
-        //Generate leaf certificate
-        final CertAndKeyGen keyGen2 = new CertAndKeyGen("RSA", "SHA256WithRSA", null);
-        keyGen2.generate(2048);
-        final PrivateKey topPrivateKey = keyGen2.getPrivateKey();
-
-
-        X509Certificate topCertificate = keyGen2.getSelfCertificate(new X500Name("cn=root"), (long) 365 * 24 * 60 * 60);
-
-        rootCertificate = createSignedCertificate(rootCertificate, rootCertificate, rootPrivateKey);
-        middleCertificate = createSignedCertificate(middleCertificate, rootCertificate, rootPrivateKey);
-        topCertificate = createSignedCertificate(topCertificate, middleCertificate, middlePrivateKey);
 
         final X509Certificate[] chain = new X509Certificate[]{topCertificate, middleCertificate, rootCertificate};
-
-        ks.setKeyEntry("alice", topPrivateKey, "pwd".toCharArray(), chain);
-
-
+        ks.setKeyEntry("alice", topKeyPair.getPrivate(), "pwd".toCharArray(), chain);
         keystore.getParentFile().mkdirs();
         try (final OutputStream os = new FileOutputStream(keystore)) {
             ks.store(os, "password".toCharArray());
         }
 
-        return keyGen2.getPublicKey();
+        return topKeyPair.getPublic();
     }
 
-    private static X509Certificate createSignedCertificate(final X509Certificate cetrificate, final X509Certificate issuerCertificate,
-                                                           final PrivateKey issuerPrivateKey) {
-        try {
-            Principal issuer = issuerCertificate.getSubjectDN();
-            String issuerSigAlg = issuerCertificate.getSigAlgName();
-
-            byte[] inCertBytes = cetrificate.getTBSCertificate();
-            X509CertInfo info = new X509CertInfo(inCertBytes);
-            info.set(X509CertInfo.ISSUER, (X500Name) issuer);
-
-            //No need to add the BasicContraint for leaf cert
-            if (!cetrificate.getSubjectDN().getName().equals("CN=TOP")) {
-                CertificateExtensions exts = new CertificateExtensions();
-                BasicConstraintsExtension bce = new BasicConstraintsExtension(true, -1);
-                exts.set(BasicConstraintsExtension.NAME, new BasicConstraintsExtension(false, bce.getExtensionValue()));
-                info.set(X509CertInfo.EXTENSIONS, exts);
-            }
-
-            final X509CertImpl outCert = new X509CertImpl(info);
-            outCert.sign(issuerPrivateKey, issuerSigAlg);
-
-            return outCert;
-        } catch (final Exception ex) {
-            throw new IllegalStateException(ex);
-        }
+    private static KeyPair generateKeyPair() throws NoSuchAlgorithmException {
+        KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
+        keyGen.initialize(2048);
+        return keyGen.generateKeyPair();
     }
+
+    private static X509Certificate getCertificate(KeyPair certKeyPair, X500Name issuerName, PrivateKey signerKey)
+            throws OperatorCreationException, CertificateException {
+        JcaX509v3CertificateBuilder builder = new JcaX509v3CertificateBuilder(
+                issuerName,
+                BigInteger.valueOf(System.currentTimeMillis()),
+                Date.from(Instant.now()), Date.from(Instant.now().plusMillis(1096 * 24 * 60 * 60)),
+                issuerName, certKeyPair.getPublic());
+        ContentSigner signer = new JcaContentSignerBuilder("SHA256WithRSA").build(signerKey);
+        X509CertificateHolder certHolder = builder.build(signer);
+        return new JcaX509CertificateConverter().getCertificate(certHolder);
+    }
+
 }
