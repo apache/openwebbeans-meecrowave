@@ -51,17 +51,18 @@
     <meecrowave.build.name>${project.groupId}.${project.artifactId}</meecrowave.build.name>
 
     <junit.version>4.13.2</junit.version>
-    <tomcat.version>9.0.76</tomcat.version>
+    <tomcat.version>9.0.80</tomcat.version>
     <openwebbeans.version>2.0.27</openwebbeans.version>
-    <cxf.version>3.5.5</cxf.version>
-    <johnzon.version>1.2.20</johnzon.version>
+    <cxf.version>3.5.6</cxf.version>
+    <johnzon.version>1.2.21</johnzon.version>
     <log4j2.version>2.20.0</log4j2.version>
     <deltaspike.version>1.9.6</deltaspike.version>
     <jaxb.version>2.2.11</jaxb.version>
     <openjpa.version>3.2.2</openjpa.version>
     <jpa-spec.version>1.1</jpa-spec.version>
     <h2.version>2.2.220</h2.version>
-    <dbcp2.version>2.9.0</dbcp2.version>
+    <dbcp2.version>2.10.0</dbcp2.version>
+    <commons-pool2.version>2.11.1</commons-pool2.version>
     <commons-cli.version>1.5.0</commons-cli.version>
     <xbean.version>4.23</xbean.version>
     <geronimo-jcache-simple.version>1.0.5</geronimo-jcache-simple.version>
@@ -134,6 +135,11 @@
         <groupId>org.apache.tomcat</groupId>
         <artifactId>tomcat-jaspic-api</artifactId>
         <version>${tomcat.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.commons</groupId>
+        <artifactId>commons-pool2</artifactId>
+        <version>${commons-pool2.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
