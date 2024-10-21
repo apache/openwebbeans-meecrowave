@@ -32,6 +32,7 @@ import jakarta.inject.Inject;
 
 import org.apache.meecrowave.Meecrowave;
 import org.apache.meecrowave.io.IO;
+import org.apache.meecrowave.junit5.bean.SomeCommonInterface;
 import org.apache.meecrowave.testing.ConfigurationInject;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -45,6 +46,8 @@ class PerClassMeecrowaveConfigTest {
     @Inject
     private Bean bean;
 
+    private @Inject SomeCommonInterface bigOracle;
+
     private static Bean instance;
 
     @Test
@@ -55,6 +58,30 @@ class PerClassMeecrowaveConfigTest {
     @Test
     void m2() {
         doTest();
+    }
+
+    @Test
+    public void testBeanPickup() throws Exception {
+        assertEquals(42, bigOracle.meaningOfLife());
+        Thread.sleep(500L);
+    }
+
+    @Test
+    public void testBeanPickup2() throws Exception {
+        assertEquals(42, bigOracle.meaningOfLife());
+        Thread.sleep(50L);
+    }
+
+    @Test
+    public void testBeanPickup3() throws Exception {
+        assertEquals(42, bigOracle.meaningOfLife());
+        Thread.sleep(50L);
+    }
+
+    @Test
+    public void testBeanPickup4() throws Exception {
+        assertEquals(42, bigOracle.meaningOfLife());
+        Thread.sleep(50L);
     }
 
     private void doTest() {
@@ -87,6 +114,15 @@ class PerClassMeecrowaveConfigTest {
     public static class Bean {
         String get() {
             return "ok";
+        }
+    }
+
+    @ApplicationScoped
+    public static class MyCommonImpl1 implements SomeCommonInterface {
+
+        @Override
+        public int meaningOfLife() {
+            return 42;
         }
     }
 }

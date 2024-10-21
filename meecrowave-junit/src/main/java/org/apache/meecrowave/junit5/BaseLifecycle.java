@@ -22,10 +22,12 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
 import java.util.stream.Stream;
 
+import org.apache.meecrowave.internal.ClassLoaderLock;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtensionContext;
 
 abstract class BaseLifecycle {
+
     boolean isPerClass(final ExtensionContext context) {
         return context.getTestInstanceLifecycle()
                 .map(it -> it.equals(TestInstance.Lifecycle.PER_CLASS))
@@ -41,7 +43,7 @@ abstract class BaseLifecycle {
                 .orElse(state);
     }
 
-    private static LifecyleState invoke(final Object test, final Class<? extends Annotation> marker) {
+    private LifecyleState invoke(final Object test, final Class<? extends Annotation> marker) {
         Class<?> type = test.getClass();
         while (type != Object.class) {
             Stream.of(type.getDeclaredMethods())
@@ -63,7 +65,19 @@ abstract class BaseLifecycle {
         return new LifecyleState(true, test);
     }
 
-    static class LifecyleState {
+
+    protected void doUnlockContext(final boolean unlocked) {
+        if (!unlocked) {
+            ClassLoaderLock.LOCK.unlock();
+        }
+    }
+
+    protected void doLockContext() {
+        ClassLoaderLock.LOCK.lock();
+    }
+
+
+    class LifecyleState {
         private final boolean injected;
         private final Object instance;
 
@@ -76,4 +90,5 @@ abstract class BaseLifecycle {
             invoke(instance, AfterLastTest.class);
         }
     }
+
 }

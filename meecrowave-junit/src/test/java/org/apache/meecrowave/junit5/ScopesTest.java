@@ -27,7 +27,7 @@ import jakarta.enterprise.context.spi.Context;
 import org.apache.webbeans.config.WebBeansContext;
 import org.junit.jupiter.api.Test;
 
-@MeecrowaveConfig
+@MonoMeecrowaveConfig
 @Scopes(scopes = RequestScoped.class)
 class ScopesTest {
     @Test

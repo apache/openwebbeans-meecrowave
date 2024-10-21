@@ -20,6 +20,7 @@ package org.apache.meecrowave.junit5;
 
 import org.apache.meecrowave.Meecrowave;
 import org.apache.meecrowave.configuration.Configuration;
+import org.apache.meecrowave.internal.ClassLoaderLock;
 import org.apache.meecrowave.testing.Injector;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.AfterEachCallback;
@@ -42,6 +43,10 @@ public class MeecrowaveExtension extends BaseLifecycle
 
     private static final ExtensionContext.Namespace NAMESPACE = ExtensionContext.Namespace.create(MeecrowaveExtension.class.getName());
 
+    private ClassLoader meecrowaveCL;
+    private ClassLoader oldCl;
+
+
     private final ScopesExtension scopes = new ScopesExtension() {
         @Override
         protected Optional<Class<? extends Annotation>[]> getScopes(final ExtensionContext context) {
@@ -51,6 +56,13 @@ public class MeecrowaveExtension extends BaseLifecycle
                     .filter(s -> s.length > 0);
         }
     };
+
+    protected ClassLoader createMwClassLoader() {
+        if (meecrowaveCL == null) {
+            meecrowaveCL = ClassLoaderLock.getUsableContainerLoader();
+        }
+        return meecrowaveCL;
+    }
 
     @Override
     public void beforeAll(final ExtensionContext context) {
@@ -65,7 +77,20 @@ public class MeecrowaveExtension extends BaseLifecycle
         ofNullable(store.get(LifecyleState.class, LifecyleState.class))
                 .ifPresent(s -> s.afterLastTest(context));
         if (isPerClass(context)) {
-            store.get(Meecrowave.class, Meecrowave.class).close();
+            ClassLoader oldClTmp = null;
+            try {
+                if (meecrowaveCL != null) {
+                    oldClTmp = Thread.currentThread().getContextClassLoader();
+                    Thread.currentThread().setContextClassLoader(meecrowaveCL);
+                }
+
+                store.get(Meecrowave.class, Meecrowave.class).close();
+            }
+            finally {
+                if (oldClTmp != null) {
+                    Thread.currentThread().setContextClassLoader(oldClTmp);
+                }
+            }
         }
     }
 
@@ -74,63 +99,104 @@ public class MeecrowaveExtension extends BaseLifecycle
         if (!isPerClass(context)) {
             doStart(context);
         }
+
+        if (meecrowaveCL != null) {
+            oldCl = Thread.currentThread().getContextClassLoader();
+            Thread.currentThread().setContextClassLoader(meecrowaveCL);
+        }
     }
 
     @Override
     public void afterEach(final ExtensionContext context) {
-        if (!isPerClass(context)) {
-            doRelease(context);
-            context.getStore(NAMESPACE).get(Meecrowave.class, Meecrowave.class).close();
+        ClassLoader oldClTmp = null;
+        try {
+            if (!isPerClass(context)) {
+                if (meecrowaveCL != null) {
+                    oldClTmp = Thread.currentThread().getContextClassLoader();
+                    Thread.currentThread().setContextClassLoader(meecrowaveCL);
+                }
+                doRelease(context);
+                context.getStore(NAMESPACE).get(Meecrowave.class, Meecrowave.class).close();
+            }
+        }
+        finally {
+            if (oldCl != null) {
+                Thread.currentThread().setContextClassLoader(oldCl);
+            }
+            else if (oldClTmp != null) {
+                Thread.currentThread().setContextClassLoader(oldClTmp);
+            }
         }
     }
 
     private void doStart(final ExtensionContext context) {
-        final Meecrowave.Builder builder = new Meecrowave.Builder();
-        final MeecrowaveConfig config = findConfig(context);
-        final String ctx;
-        if (config != null) {
-            ctx = config.context();
+        final Thread thread = Thread.currentThread();
+        ClassLoader oldClTmp = thread.getContextClassLoader();
+        boolean unlocked = false;
+        doLockContext();
 
-            for (final Method method : MeecrowaveConfig.class.getMethods()) {
-                if (MeecrowaveConfig.class != method.getDeclaringClass()) {
-                    continue;
-                }
+        try {
+            ClassLoader newCl = createMwClassLoader();
+            if (newCl != null) {
+                thread.setContextClassLoader(newCl);
+            }
 
-                try {
-                    final Object value = method.invoke(config);
+            final Meecrowave.Builder builder = new Meecrowave.Builder();
+            final MeecrowaveConfig config = findConfig(context);
+            final String ctx;
+            if (config != null) {
+                ctx = config.context();
 
-                    final Field configField = Configuration.class.getDeclaredField(method.getName());
-                    if (!configField.isAccessible()) {
-                        configField.setAccessible(true);
+                for (final Method method : MeecrowaveConfig.class.getMethods()) {
+                    if (MeecrowaveConfig.class != method.getDeclaringClass()) {
+                        continue;
                     }
 
-                    if (value != null && (!String.class.isInstance(value) || !value.toString().isEmpty())) {
+                    try {
+                        final Object value = method.invoke(config);
+
+                        final Field configField = Configuration.class.getDeclaredField(method.getName());
                         if (!configField.isAccessible()) {
                             configField.setAccessible(true);
                         }
-                        configField.set(builder, File.class == configField.getType() ? /*we use string instead */new File(value.toString()) : value);
+
+                        if (value != null && (!String.class.isInstance(value) || !value.toString().isEmpty())) {
+                            if (!configField.isAccessible()) {
+                                configField.setAccessible(true);
+                            }
+                            configField.set(builder, File.class == configField.getType() ? /*we use string instead */new File(value.toString()) : value);
+                        }
                     }
-                } catch (final NoSuchFieldException nsfe) {
-                    // ignored
-                } catch (final Exception e) {
-                    throw new IllegalStateException(e);
+                    catch (final NoSuchFieldException nsfe) {
+                        // ignored
+                    }
+                    catch (final Exception e) {
+                        throw new IllegalStateException(e);
+                    }
+                }
+
+                if (builder.getHttpPort() < 0) {
+                    builder.randomHttpPort();
                 }
             }
-
-            if (builder.getHttpPort() < 0) {
-                builder.randomHttpPort();
+            else {
+                ctx = "";
             }
-        } else {
-            ctx = "";
-        }
-        final ExtensionContext.Store store = context.getStore(NAMESPACE);
-        final Meecrowave meecrowave = new Meecrowave(builder);
-        store.put(Meecrowave.class, meecrowave);
-        store.put(Meecrowave.Builder.class, builder);
-        meecrowave.bake(ctx);
+            final ExtensionContext.Store store = context.getStore(NAMESPACE);
+            final Meecrowave meecrowave = new Meecrowave(builder);
+            store.put(Meecrowave.class, meecrowave);
+            store.put(Meecrowave.Builder.class, builder);
+            meecrowave.bake(ctx);
 
-        doInject(context);
-        store.put(LifecyleState.class, onInjection(context, null));
+            doInject(context);
+            store.put(LifecyleState.class, onInjection(context, null));
+        }
+        finally {
+            doUnlockContext(unlocked);
+            if (oldClTmp != null) {
+                thread.setContextClassLoader(oldClTmp);
+            }
+        }
     }
 
     private MeecrowaveConfig findConfig(final ExtensionContext context) {
@@ -144,7 +210,7 @@ public class MeecrowaveExtension extends BaseLifecycle
     private void doRelease(final ExtensionContext context) {
         ofNullable(context.getStore(NAMESPACE).get(CreationalContext.class, CreationalContext.class))
                 .ifPresent(CreationalContext::release);
-        scopes.beforeEach(context);
+        scopes.afterEach(context);
     }
 
     private void doInject(final ExtensionContext context) {

@@ -81,6 +81,44 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <parallel>all</parallel>
+          <threadCount>4</threadCount>
+          <threadCountClasses>3</threadCountClasses>
+        </configuration>
+
+        <executions>
+          <execution>
+            <!-- disable default execution -->
+            <id>default-test</id>
+            <configuration>
+              <skip>true</skip>
+            </configuration>
+          </execution>
+
+          <execution>
+            <id>mwjunit4</id>
+            <phase>test</phase>
+            <goals><goal>test</goal></goals>
+            <configuration>
+              <includes>
+                <inlude>org/apache/meecrowave/junit/*Test.class</inlude>
+              </includes>
+            </configuration>
+          </execution>
+
+          <execution>
+            <id>mwjunit5</id>
+            <phase>test</phase>
+            <goals><goal>test</goal></goals>
+            <configuration>
+              <includes>
+                <inlude>org/apache/meecrowave/junit5/*Test.class</inlude>
+              </includes>
+            </configuration>
+          </execution>
+        </executions>
+
         <dependencies>
           <dependency>
             <groupId>org.junit.platform</groupId>
