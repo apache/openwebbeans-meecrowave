@@ -57,7 +57,7 @@ public class MeecrowaveSecurityService extends SimpleSecurityService {
         proxy = apiToProxy.length == 1 ? new MeecrowavePrincipal() : Principal.class.cast(
                 Proxy.newProxyInstance(loader, apiToProxy, (proxy, method, args) -> {
                     try {
-                        return method.invoke(getCurrentPrincipal(), args);
+                        return method.invoke(getUserPrincipal(), args);
                     } catch (final InvocationTargetException ite) {
                         throw ite.getTargetException();
                     }

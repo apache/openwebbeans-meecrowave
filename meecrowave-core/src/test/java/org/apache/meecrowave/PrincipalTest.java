@@ -62,6 +62,43 @@ public class PrincipalTest {
         }
     }
 
+    @Test
+    public void runWithProxy() throws IOException {
+        String proxyApis = System.getProperty("org.apache.webbeans.component.PrincipalBean.proxyApis");
+        System.setProperty("org.apache.webbeans.component.PrincipalBean.proxyApis", "org.apache.meecrowave.TestPrincipal");
+        try (final Meecrowave container = new Meecrowave(new Meecrowave.Builder()
+                .randomHttpPort()
+                .includePackages("org.superbiz.app")
+                .realm(new RealmBase() {
+                    @Override
+                    protected String getPassword(final String username) {
+                        return "foo".equals(username) ? "pwd" : null;
+                    }
+
+                    @Override
+                    protected Principal getPrincipal(final String username) {
+                        return new MyPrincipal(username);
+                    }
+                }).loginConfig(new Meecrowave.LoginConfigBuilder()
+                        .basic()
+                        .realmName("basic realm"))
+                .securityConstraints(new Meecrowave.SecurityConstaintBuilder()
+                        .authConstraint(true)
+                        .addAuthRole("**")
+                        .addCollection("secured", "/*")))
+                .bake()) {
+            assertEquals(
+                    "org.apache.meecrowave.PrincipalTest$MyPrincipal_foo  org.apache.webbeans.custom.Principal_foo",
+                    slurp(new URL("http://localhost:" + container.getConfiguration().getHttpPort() + "/api/test/principal")));
+        } finally {
+            if (proxyApis != null) {
+                System.setProperty("org.apache.webbeans.component.PrincipalBean.proxyApis", proxyApis);
+            } else {
+                System.clearProperty("org.apache.webbeans.component.PrincipalBean.proxyApis");
+            }
+        }
+    }
+
     private String slurp(final URL url) throws IOException {
         final URLConnection is = HttpURLConnection.class.cast(url.openConnection());
         is.setRequestProperty("Authorization", "Basic " + Base64.getEncoder().encodeToString("foo:pwd".getBytes(StandardCharsets.UTF_8)));
