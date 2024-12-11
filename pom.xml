@@ -51,7 +51,7 @@
     <meecrowave.build.name>${project.groupId}.${project.artifactId}</meecrowave.build.name>
 
     <!--X TODO verify if everything is really needed -->
-    <jakarta.activation-api.version>2.1.2</jakarta.activation-api.version>
+    <jakarta.activation-api.version>2.1.3</jakarta.activation-api.version>
     <jakarta.atinject-api.version>2.0.1</jakarta.atinject-api.version>
     <jakarta.cdi-api.version>4.0.1</jakarta.cdi-api.version>
     <jakarta.interceptor-api.version>2.1.0</jakarta.interceptor-api.version>

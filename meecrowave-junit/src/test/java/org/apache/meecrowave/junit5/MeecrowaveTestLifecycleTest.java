@@ -20,7 +20,6 @@ package org.apache.meecrowave.junit5;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 import static org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS;
 
 import jakarta.inject.Inject;

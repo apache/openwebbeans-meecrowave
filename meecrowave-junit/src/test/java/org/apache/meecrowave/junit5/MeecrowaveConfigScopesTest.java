@@ -20,8 +20,6 @@ package org.apache.meecrowave.junit5;
 
 import static org.junit.Assert.assertTrue;
 
-import java.net.MalformedURLException;
-
 import jakarta.enterprise.context.RequestScoped;
 
 import org.apache.webbeans.config.WebBeansContext;
