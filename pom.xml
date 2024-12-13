@@ -73,8 +73,8 @@
 
     <junit.version>4.13.2</junit.version>
     <tomcat.version>10.1.31</tomcat.version>
-    <openwebbeans.version>4.0.3-SNAPSHOT</openwebbeans.version>
-    <cxf.version>4.1.0-SNAPSHOT</cxf.version>
+    <openwebbeans.version>4.0.3</openwebbeans.version>
+    <cxf.version>4.1.0</cxf.version>
     <johnzon.version>2.0.1</johnzon.version>
     <log4j2.version>2.24.1</log4j2.version>
     <deltaspike.version>2.0.0</deltaspike.version>
