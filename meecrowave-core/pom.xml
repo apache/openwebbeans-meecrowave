@@ -434,10 +434,7 @@
               <shadedClassifierName>runner</shadedClassifierName>
               <shadedArtifactAttached>true</shadedArtifactAttached>
               <createDependencyReducedPom>false</createDependencyReducedPom>
-<!--
-              <dependencyReducedPomLocation>${project.build.directory}/reduced-pom-bundle.xml
-              </dependencyReducedPomLocation>
--->
+
               <transformers>
                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                   <mainClass>org.apache.meecrowave.runner.Cli</mainClass>
