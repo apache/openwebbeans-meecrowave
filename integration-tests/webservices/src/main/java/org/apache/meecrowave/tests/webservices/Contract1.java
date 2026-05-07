@@ -18,7 +18,7 @@
  */
 package org.apache.meecrowave.tests.webservices;
 
-import javax.jws.WebService;
+import jakarta.jws.WebService;
 
 @WebService
 public interface Contract1 {
