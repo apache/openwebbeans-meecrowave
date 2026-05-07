@@ -24,7 +24,6 @@ import static java.util.Comparator.comparing;
 import static java.util.Locale.ROOT;
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toList;
-import static java.util.stream.Collectors.toSet;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -98,6 +97,7 @@ import org.apache.coyote.http2.Http2Protocol;
 import org.apache.meecrowave.api.StartListening;
 import org.apache.meecrowave.api.StopListening;
 import org.apache.meecrowave.configuration.Configuration;
+import org.apache.meecrowave.configuration.SslHostConfiguration;
 import org.apache.meecrowave.cxf.ConfigurableBus;
 import org.apache.meecrowave.cxf.CxfCdiAutoSetup;
 import org.apache.meecrowave.cxf.Cxfs;
@@ -655,7 +655,7 @@ public class Meecrowave implements AutoCloseable {
             if (configuration.isHttp2()) {
                 httpsConnector.addUpgradeProtocol(new Http2Protocol());
             }
-            final List<SSLHostConfig> buildSslHostConfig = buildSslHostConfig();
+            final List<SSLHostConfig> buildSslHostConfig = SslHostConfiguration.buildSslHostConfig(configuration);
             if (!buildSslHostConfig.isEmpty()) {
                 createDirectory(base, "conf");
             }
@@ -796,7 +796,7 @@ public class Meecrowave implements AutoCloseable {
             final Path dstFile = Paths.get(base.getAbsolutePath() + "/conf/" + certificate);
             resourceAsStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(certificate);
             if (resourceAsStream == null) {
-                resourceAsStream = new FileInputStream(new File((this.getClass().getResource("/").toString().replaceAll("file:", "") + "/" + certificate)));
+                resourceAsStream = new FileInputStream((this.getClass().getResource("/").toString().replaceAll("file:", "") + "/" + certificate));
             }
             Files.copy(resourceAsStream, dstFile, StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {
@@ -914,44 +914,6 @@ public class Meecrowave implements AutoCloseable {
                     valves.add(Valve.class.cast(recipe.create(Thread.currentThread().getContextClassLoader())));
                 });
         return valves;
-    }
-
-    private List<SSLHostConfig> buildSslHostConfig() {
-        final List<SSLHostConfig> sslHostConfigs = new ArrayList<>();
-        // Configures default SSLHostConfig
-        final ObjectRecipe defaultSslHostConfig = newRecipe(SSLHostConfig.class.getName());
-        for (final String key : configuration.getProperties().stringPropertyNames()) {
-            if (key.startsWith("connector.sslhostconfig.") && key.split("\\.").length == 3) {
-                final String substring = key.substring("connector.sslhostconfig.".length());
-                defaultSslHostConfig.setProperty(substring, configuration.getProperties().getProperty(key));
-            }
-        }
-        if (!defaultSslHostConfig.getProperties().isEmpty()) {
-            sslHostConfigs.add(SSLHostConfig.class.cast(defaultSslHostConfig.create()));
-        }
-        // Allows to add N Multiple SSLHostConfig elements not including the default one.
-        final Collection<Integer> itemNumbers = configuration.getProperties().stringPropertyNames()
-                .stream()
-                .filter(key -> (key.startsWith("connector.sslhostconfig.") && key.split("\\.").length == 4))
-                .map(key -> Integer.parseInt(key.split("\\.")[2]))
-                .collect(toSet());
-        itemNumbers.stream().sorted().forEach(itemNumber -> {
-            final ObjectRecipe recipe = newRecipe(SSLHostConfig.class.getName());
-            final String prefix = "connector.sslhostconfig." + itemNumber + '.';
-            configuration.getProperties().stringPropertyNames().stream()
-                    .filter(k -> k.startsWith(prefix))
-                    .forEach(key -> {
-                        final String keyName = key.split("\\.")[3];
-                        recipe.setProperty(keyName, configuration.getProperties().getProperty(key));
-                    });
-            if (!recipe.getProperties().isEmpty()) {
-                final SSLHostConfig sslHostConfig = SSLHostConfig.class.cast(recipe.create());
-                sslHostConfigs.add(sslHostConfig);
-                new LogFacade(Meecrowave.class.getName())
-                        .info("Created SSLHostConfig #" + itemNumber + " (" + sslHostConfig.getHostName() + ")");
-            }
-        });
-        return sslHostConfigs;
     }
 
     protected void beforeStart() {

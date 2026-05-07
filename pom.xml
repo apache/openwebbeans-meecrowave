@@ -109,10 +109,7 @@
     <module>meecrowave-jpa</module>
     <module>meecrowave-doc</module>
     <module>meecrowave-jta</module>
-
-<!--X TODO re-enable
     <module>integration-tests</module>
--->
     <module>meecrowave-oauth2-minimal</module>
     <module>meecrowave-oauth2</module>
     <module>meecrowave-letsencrypt</module>
@@ -127,8 +124,6 @@
         <artifactId>jakarta.annotation-api</artifactId>
         <version>${jakarta.annotation-api.version}</version>
       </dependency>
-
-
       <dependency>
         <groupId>jakarta.enterprise</groupId>
         <artifactId>jakarta.enterprise.cdi-api</artifactId>
@@ -168,6 +163,11 @@
         <groupId>jakarta.ws.rs</groupId>
         <artifactId>jakarta.ws.rs-api</artifactId>
         <version>${jakarta.ws.rs-api.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>jakarta.validation</groupId>
+        <artifactId>jakarta.validation-api</artifactId>
+        <version>${jakarta.validation-api.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.tomcat</groupId>
