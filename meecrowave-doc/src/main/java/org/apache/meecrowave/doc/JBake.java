@@ -58,7 +58,6 @@ import org.jbake.app.Oven;
 import org.jbake.app.configuration.ConfigUtil;
 import org.jbake.app.configuration.DefaultJBakeConfiguration;
 
-import com.orientechnologies.orient.core.Orient;
 import org.jbake.app.configuration.JBakeConfigurationFactory;
 
 public class JBake {
@@ -114,11 +113,10 @@ public class JBake {
 
         final Runnable build = () -> {
             System.out.println("Building Meecrowave website in " + destination);
-            final Orient orient = Orient.instance();
             try {
                 final Oven oven = new Oven(new JBakeConfigurationFactory().createDefaultJbakeConfiguration(source, destination, new CompositeConfiguration() {{
                     final CompositeConfiguration config = new CompositeConfiguration();
-                    config.addConfiguration(new MapConfiguration(new HashMap<String, Object>() {{
+                    config.addConfiguration(new MapConfiguration(new HashMap<>() {{
                         put("asciidoctor.attributes", new ArrayList<String>() {{
                             add("source-highlighter=highlightjs");
                             add("highlightjs-theme=idea");
@@ -141,9 +139,7 @@ public class JBake {
 
                 System.out.println("  > done :)");
             } catch (final Exception e) {
-                e.printStackTrace();
-            } finally {
-                orient.shutdown();
+                throw new RuntimeException(e);
             }
         };
 

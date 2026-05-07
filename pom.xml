@@ -107,9 +107,7 @@
     <module>meecrowave-junit</module>
     <module>meecrowave-arquillian</module>
     <module>meecrowave-jpa</module>
-<!-- seems jbake is broken on java17 onwards. at least on macos
     <module>meecrowave-doc</module>
--->
     <module>meecrowave-jta</module>
 
 <!--X TODO re-enable

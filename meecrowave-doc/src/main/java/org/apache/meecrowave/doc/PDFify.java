@@ -17,7 +17,6 @@
 package org.apache.meecrowave.doc;
 
 import org.asciidoctor.Asciidoctor;
-import org.asciidoctor.AttributesBuilder;
 
 import java.io.File;
 import java.io.IOException;
@@ -26,12 +25,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import static org.asciidoctor.OptionsBuilder.options;
 import static org.asciidoctor.SafeMode.UNSAFE;
 
 public class PDFify {
@@ -49,24 +46,27 @@ public class PDFify {
                 final String fileName = file.getFileName().toString();
                 if (fileName.endsWith(".adoc")) {
                     pool.submit(() -> {
-                        final String path = sourceBase.relativize(file).toString();
-                        final File target = new File(targetBase, path.substring(0, path.length() - "adoc".length()) + "pdf");
-                        final File asFile = file.toFile();
-                        final Map<String, Object> attributes = asciidoctor.readDocumentHeader(asFile).getAttributes();
-                        // if we generate the PDF link we need to create the PDF excepted if it is expected to be manual
-                        if (attributes.containsKey("jbake-meecrowavepdf") && !attributes.containsKey("jbake-meecrowavepdf-manual")) {
-                            target.getParentFile().mkdirs();
-                            asciidoctor.convertFile(
-                                    asFile,
-                                    options()
-                                            //.baseDir(asFile.getParentFile())
-                                            .safe(UNSAFE)
-                                            .backend("pdf")
-                                            .attributes(AttributesBuilder.attributes()
-                                                    .attribute("source-highlighter", "coderay")
-                                                    .attribute("context_rootpath", "http://openwebbeans.apache.org/meecrowave"))
-                                            .toFile(target).get());
-                            System.out.println("Generated " + target);
+                        try {
+                            final String path = sourceBase.relativize(file).toString();
+                            final File target = new File(targetBase, path.substring(0, path.length() - "adoc".length()) + "pdf");
+                            final File asFile = file.toFile();
+                            final String content = new String(Files.readAllBytes(file));
+                            final boolean needsPdf = content.contains("jbake-meecrowavepdf") && !content.contains("jbake-meecrowavepdf-manual");
+                            // if we generate the PDF link we need to create the PDF excepted if it is expected to be manual
+                            if (needsPdf) {
+                                target.getParentFile().mkdirs();
+                                final org.asciidoctor.Options options = org.asciidoctor.Options.builder()
+                                        .safe(UNSAFE)
+                                        .backend("pdf")
+                                        .option("source-highlighter", "coderay")
+                                        .option("context_rootpath", "http://openwebbeans.apache.org/meecrowave")
+                                        .toFile(target)
+                                        .build();
+                                asciidoctor.convertFile(asFile, options);
+                                System.out.println("Generated " + target);
+                            }
+                        } catch (final Exception e) {
+                            throw new RuntimeException(e);
                         }
                     });
                 }

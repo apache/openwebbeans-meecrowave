@@ -21,6 +21,7 @@ package org.apache.meecrowave.doc.generator;
 import org.apache.meecrowave.oauth2.configuration.OAuth2Options;
 import org.apache.meecrowave.runner.cli.CliOption;
 
+import java.lang.reflect.Field;
 import java.util.Comparator;
 import java.util.stream.Stream;
 
@@ -30,7 +31,7 @@ public class OAuth2Configuration extends BaseGenerator {
     @Override
     protected String generate() {
         return super.tableConfig() + "|===\n|Name|Description\n" +
-                Stream.of(OAuth2Options.class.getDeclaredFields())
+                Stream.of((Field[]) OAuth2Options.class.getDeclaredFields())
                         .filter(f -> f.isAnnotationPresent(CliOption.class))
                         .map(f -> f.getAnnotation(CliOption.class))
                         .sorted(Comparator.comparing(CliOption::name))
