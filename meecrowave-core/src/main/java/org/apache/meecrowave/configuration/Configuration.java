@@ -55,6 +55,11 @@ import org.apache.webbeans.config.PropertyLoader;
 import org.apache.xbean.recipe.ObjectRecipe;
 import org.apache.xbean.recipe.Option;
 
+/**
+ * Configuration options for Meecrowave.
+ * Always keep this in sync with the attributes configurable via the meecrowave-maven-plugin.
+ * When you start the maven plugin, all the attributes get copied over to a fresh Configuration via reflection by their names.
+ */
 public class Configuration {
     @CliOption(name = "pid-file", description = "A file path to write the process id if the server starts")
     private File pidFile;
