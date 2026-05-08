@@ -7,7 +7,8 @@ Apache Meecrowave is a small Microprofile server (JAX-RS + CDI + JSON) fully bas
 == How to start
 If you want to start with your first *Hello World* you have to add the following dependencies to your `pom.xml`.
 
-```xml
+[source,xml]
+----
  <properties>
     <meecrowave.version>LATEST</meecrowave.version>
   </properties>
@@ -31,7 +32,7 @@ If you want to start with your first *Hello World* you have to add the following
       <scope>test</scope>
     </dependency>
   </dependencies>
-```
+----
 
 The project itself should be used with Java8 as the minimum JDK-version.
 
@@ -42,7 +43,8 @@ Let´s start with an minimal REST Endpoint.
 The only result you can get is a *Hello World*.
 Additionally there is a class called ```HelloApplication``` to make sure your path will start with **/api/**
 
-```java
+[source,java]
+----
 @Dependent
 @ApplicationPath("api")
 public class HelloApplication extends Application {
@@ -58,7 +60,7 @@ public class HelloEndpoint {
     return "Hello World";
   }
 }
-```
+----
 
 You can start writing your first test , now.
 Using junit4, the test class should annotated with ```@RunWith(MonoMeecrowave.Runner.class)```
@@ -68,7 +70,8 @@ To have access to the dynamic data, like the random used port, use the the injec
 The test-request itself is written like a normal request.
 This example is using the class ```javax.ws.rs.client.ClientBuilder```.
 
-```java
+[source,java]
+----
 @RunWith(MonoMeecrowave.Runner.class)
 public class HelloEndpointTest {
   @ConfigurationInject
@@ -87,7 +90,7 @@ public class HelloEndpointTest {
     }
   }
 }
-```
+----
 
 
 
