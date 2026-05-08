@@ -31,6 +31,14 @@
     A module building the static website in ${project.build.directory}/${project.build.finalName}
     To build use that command:
     $ mvn clean package scm-publish:publish-scm [-Djbake.updatedownloads=true]
+
+    Use the `-Djbake.updatedownloads=true` whenever a release is done.
+
+    For reviewing the site locally you can start the generated output with
+
+    $ mvn meecrowave:run
+
+    You can then look at the generated site with your browser at http://localhost:8080/meecrowave/
   </description>
 
   <properties>
@@ -41,6 +49,16 @@
     <groovy.version>4.0.32</groovy.version>
   </properties>
 
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>com.orientechnologies</groupId>
+        <artifactId>orientdb-core</artifactId>
+        <version>3.1.20</version>
+        <scope>compile</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
   <dependencies>
     <dependency>
       <groupId>org.jruby</groupId>
@@ -126,6 +144,7 @@
       <groupId>org.apache.meecrowave</groupId>
       <artifactId>meecrowave-proxy</artifactId>
       <version>${project.version}</version>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.jbake</groupId>
@@ -142,6 +161,11 @@
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-lang3</artifactId>
       <version>3.20.0</version>
+    </dependency>
+    <dependency>
+      <groupId>commons-beanutils</groupId>
+      <artifactId>commons-beanutils</artifactId>
+      <version>1.11.0</version>
     </dependency>
     <dependency>
       <groupId>org.apache.groovy</groupId>
@@ -162,6 +186,27 @@
 
   <build>
     <plugins>
+
+      <plugin>
+        <!--
+          Using our own plugin, we can locally serve the homepage for testing.
+        -->
+        <groupId>org.apache.meecrowave</groupId>
+        <artifactId>meecrowave-maven-plugin</artifactId>
+        <version>${project.version}</version>
+        <configuration>
+          <webapp>${project.build.directory}/${project.build.finalName}/</webapp>
+          <context>meecrowave</context>
+        </configuration>
+        <dependencies>
+          <dependency>
+            <groupId>org.apache.geronimo.specs</groupId>
+            <artifactId>geronimo-jcache_1.0_spec</artifactId>
+            <version>${geronimo-jcache_1.0_spec.version}</version>
+          </dependency>
+        </dependencies>
+      </plugin>
+
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>exec-maven-plugin</artifactId>
@@ -179,6 +224,7 @@
           <cleanupDaemonThreads>false</cleanupDaemonThreads>
           <stopUnresponsiveDaemonThreads>false</stopUnresponsiveDaemonThreads>
           <includeProjectDependencies>true</includeProjectDependencies>
+          <classpathScope>compile</classpathScope>
           <mainClass>org.apache.meecrowave.doc.JBake</mainClass>
           <arguments>
             <argument>${project.basedir}/src/main/jbake/</argument>
