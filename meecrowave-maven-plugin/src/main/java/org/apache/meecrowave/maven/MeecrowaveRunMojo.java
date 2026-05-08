@@ -293,6 +293,9 @@ public class MeecrowaveRunMojo extends AbstractMojo {
     @Parameter(property = "meecrowave.force-log4j2-shutdown", defaultValue = "true")
     private boolean forceLog4j2Shutdown;
 
+    /**
+     * This is the root folder which gets served in the given {@link #context}
+     */
     @Parameter(property = "meecrowave.webapp", defaultValue = "${project.basedir}/src/main/webapp")
     private File webapp;
 

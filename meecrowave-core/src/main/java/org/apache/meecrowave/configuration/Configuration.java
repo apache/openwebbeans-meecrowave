@@ -79,7 +79,7 @@ public class Configuration {
     @CliOption(name = "host", description = "Default host")
     private String host = "localhost";
 
-    @CliOption(name = "dir", description = "Root folder if provided otherwise a fake one is created in tmp-dir")
+    @CliOption(name = "dir", description = "Root folder (Tomcat base directory) if provided otherwise a fake one is created in tmp-dir")
     private String dir;
 
     @CliOption(name = "server-xml", description = "Provided server.xml")
@@ -1370,7 +1370,15 @@ public class Configuration {
 
     @Override
     public int hashCode() {
-        return Objects.hash(pidFile, watcherBouncing, httpPort, httpsPort, stopPort, host, dir, serverXml, keepServerXmlAsThis, properties, quickSession, skipHttp, ssl, keystoreFile, keystorePass, keystoreType, clientAuth, keyAlias, sslProtocol, webXml, loginConfig, securityConstraints, realm, users, roles, http2, connectors, tempDir, webResourceCached, conf, deleteBaseOnStartup, jaxrsMapping, cdiConversation, jaxrsProviderSetup, jaxrsDefaultProviders, jaxrsAutoActivateBeanValidation, jaxrsLogProviders, jsonpBufferStrategy, jsonpMaxStringLen, jsonpMaxReadBufferLen, jsonpMaxWriteBufferLen, jsonpSupportsComment, jsonpPrettify, jsonbEncoding, jsonbNulls, jsonbIJson, jsonbPrettify, jsonbBinaryStrategy, jsonbNamingStrategy, jsonbOrderStrategy, loggingGlobalSetup, cxfServletParams, tomcatScanning, tomcatAutoSetup, tomcatJspDevelopment, useShutdownHook, tomcatFilter, scanningIncludes, scanningExcludes, scanningPackageIncludes, scanningPackageExcludes, webSessionTimeout, webSessionCookieConfig, useTomcatDefaults, tomcatWrapLoader, tomcatNoJmx, sharedLibraries, useLog4j2JulLogManager, injectServletContainerInitializer, tomcatAccessLogPattern, meecrowaveProperties, jaxwsSupportIfAvailable, defaultSSLHostConfigName, initializeClientBus, extensions, instanceCustomizers, initializers, antiResourceLocking, contextConfigurers);
+        return Objects.hash(pidFile, watcherBouncing, httpPort, httpsPort, stopPort, host, dir, serverXml, keepServerXmlAsThis, properties, quickSession, skipHttp,
+                ssl, keystoreFile, keystorePass, keystoreType, clientAuth, keyAlias, sslProtocol, webXml, loginConfig, securityConstraints, realm, users,
+                roles, http2, connectors, tempDir, webResourceCached, conf, deleteBaseOnStartup, jaxrsMapping, cdiConversation, jaxrsProviderSetup, jaxrsDefaultProviders,
+                jaxrsAutoActivateBeanValidation, jaxrsLogProviders, jsonpBufferStrategy, jsonpMaxStringLen, jsonpMaxReadBufferLen, jsonpMaxWriteBufferLen,
+                jsonpSupportsComment, jsonpPrettify, jsonbEncoding, jsonbNulls, jsonbIJson, jsonbPrettify, jsonbBinaryStrategy, jsonbNamingStrategy, jsonbOrderStrategy,
+                loggingGlobalSetup, cxfServletParams, tomcatScanning, tomcatAutoSetup, tomcatJspDevelopment, useShutdownHook, tomcatFilter, scanningIncludes,
+                scanningExcludes, scanningPackageIncludes, scanningPackageExcludes, webSessionTimeout, webSessionCookieConfig, useTomcatDefaults, tomcatWrapLoader,
+                tomcatNoJmx, sharedLibraries, useLog4j2JulLogManager, injectServletContainerInitializer, tomcatAccessLogPattern, meecrowaveProperties,
+                jaxwsSupportIfAvailable, defaultSSLHostConfigName, initializeClientBus, extensions, instanceCustomizers, initializers, antiResourceLocking, contextConfigurers);
     }
 
     private static ObjectRecipe newRecipe(final String clazz) {
