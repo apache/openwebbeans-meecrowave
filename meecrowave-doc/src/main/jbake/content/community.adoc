@@ -34,8 +34,10 @@ To build the project just run maven:
 [source]
 ----
 mvn clean install
+
 ----
 
+This project requires at least Java 17 and runs fine even with Java 27.
 
 == Example Source Code
 
