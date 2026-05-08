@@ -39,6 +39,9 @@
     $ mvn meecrowave:run
 
     You can then look at the generated site with your browser at http://localhost:8080/meecrowave/
+
+    If you are just changing the asciidoc sources, then just type `reload` in the meecrowave console and hit enter.
+    After that you can reload your browser and should see your changes immediately.
   </description>
 
   <properties>

@@ -14,6 +14,10 @@ Just add in any Maven `pom.xml` - or gradle `build.gradle` the following depende
 
 [source,xml]
 ----
+<properties>
+  <meecrowave.version>2.0.0</meecrowave.version>
+</properties>
+
 <dependency>
   <groupId>org.apache.meecrowave</groupId>
   <artifactId>meecrowave-core</artifactId>
@@ -28,25 +32,7 @@ If you intend to reuse our `Cli` main you should also add:
 <dependency>
   <groupId>commons-cli</groupId>
   <artifactId>commons-cli</artifactId>
-  <version>1.4</version>
-</dependency>
-----
-
-Finally, if you want to develop against `jakarta` namespace instead of `javax` one, you can use the all in one `jakarta` bundle:
-
-[source,xml]
-----
-<dependency>
-  <groupId>org.apache.meecrowave</groupId>
-  <artifactId>meecrowave-core</artifactId>
-  <version>1.2.11</version> <!-- a least 1.2.11 is required -->
-  <classifier>jakarta</classifier>
-  <exclusions>
-    <exclusion>
-      <groupId>*</groupId>
-      <artifactId>*</artifactId>
-    </exclusion>
-  </exclusions>
+  <version>1.9.0</version>
 </dependency>
 ----
 
@@ -93,19 +79,17 @@ curl http://localhost:8080/kitchen
 
 == You're in a hurry? Use groovy!
 
-IMPORTANT: this feature is supported starting from version 0.3.0 only.
-
 Create a file called `hello.groovy`:
 
 [source,java]
 ----
-@Grab('org.apache.meecrowave:meecrowave-core:0.3.0')
+@Grab('org.apache.meecrowave:meecrowave-core:2.0.0')
 
 import org.apache.meecrowave.Meecrowave
 
-import javax.ws.rs.GET
-import javax.ws.rs.Path
-import javax.enterprise.context.ApplicationScoped
+import jakarta.ws.rs.GET
+import jakarta.ws.rs.Path
+import jakarta.enterprise.context.ApplicationScoped
 
 @Path("hello")
 @ApplicationScoped
