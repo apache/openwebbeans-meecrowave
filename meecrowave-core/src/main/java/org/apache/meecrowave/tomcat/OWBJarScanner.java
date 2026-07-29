@@ -37,6 +37,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.List;
 
 public class OWBJarScanner implements JarScanner {
     private JarScanFilter filter; // not yet used
@@ -50,37 +51,39 @@ public class OWBJarScanner implements JarScanner {
                 if (!WebScannerService.class.isInstance(scannerService)) {
                     return;
                 }
-                final OwbAnnotationFinder finder = WebScannerService.class.cast(scannerService).getFinder();
-                if (finder == null) {
+                final List<OwbAnnotationFinder> annotationFinders = WebScannerService.class.cast(scannerService).getAnnotationFinders();
+                if (annotationFinders == null || annotationFinders.isEmpty()) {
                     return;
                 }
-                CdiArchive.class.cast(finder.getArchive())
-                        .classesByUrl().keySet().stream()
-                        .filter(u -> !"jar:file://!/".equals(u)) // not a fake in memory url
-                        .forEach(u -> {
-                            try {
-                                final URL url = new URL(u);
-                                final File asFile = Files.toFile(url);
-                                if (!asFile.exists()) {
-                                    return;
-                                }
-                                if (filter != null && !filter.check(jarScanType, asFile.getName())) {
-                                    return;
-                                }
-
-                                if (asFile.getName().endsWith(Constants.JAR_EXT)) {
-                                    try (final Jar jar = JarFactory.newInstance(asFile.toURI().toURL())) {
-                                        callback.scan(jar, u, true);
+                for (OwbAnnotationFinder finder : annotationFinders) {
+                    CdiArchive.class.cast(finder.getArchive())
+                            .classesByUrl().keySet().stream()
+                            .filter(u -> !"jar:file://!/".equals(u)) // not a fake in memory url
+                            .forEach(u -> {
+                                try {
+                                    final URL url = new URL(u);
+                                    final File asFile = Files.toFile(url);
+                                    if (!asFile.exists()) {
+                                        return;
                                     }
-                                } else if (asFile.isDirectory()) {
-                                    callback.scan(asFile, asFile.getAbsolutePath(), true);
+                                    if (filter != null && !filter.check(jarScanType, asFile.getName())) {
+                                        return;
+                                    }
+
+                                    if (asFile.getName().endsWith(Constants.JAR_EXT)) {
+                                        try (final Jar jar = JarFactory.newInstance(asFile.toURI().toURL())) {
+                                            callback.scan(jar, u, true);
+                                        }
+                                    } else if (asFile.isDirectory()) {
+                                        callback.scan(asFile, asFile.getAbsolutePath(), true);
+                                    }
+                                } catch (final MalformedURLException e) {
+                                    // skip
+                                } catch (final IOException ioe) {
+                                    throw new IllegalArgumentException(ioe);
                                 }
-                            } catch (final MalformedURLException e) {
-                                // skip
-                            } catch (final IOException ioe) {
-                                throw new IllegalArgumentException(ioe);
-                            }
-                        });
+                            });
+                }
                 return;
 
             case TLD:

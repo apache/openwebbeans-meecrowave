@@ -22,41 +22,34 @@ import org.apache.meecrowave.configuration.Configuration;
 import org.apache.meecrowave.logging.tomcat.LogFacade;
 import org.apache.tomcat.JarScanFilter;
 import org.apache.webbeans.config.WebBeansContext;
-import org.apache.webbeans.corespi.scanner.xbean.CdiArchive;
+import org.apache.webbeans.corespi.scanner.AbstractMetaDataDiscovery;
 import org.apache.webbeans.corespi.scanner.xbean.OwbAnnotationFinder;
 import org.apache.webbeans.spi.BDABeansXmlScanner;
 import org.apache.webbeans.spi.BdaScannerService;
 import org.apache.webbeans.spi.BeanArchiveService;
 import org.apache.webbeans.util.WebBeansUtil;
 import org.apache.webbeans.web.scanner.WebScannerService;
-import org.apache.xbean.finder.AnnotationFinder;
 import org.apache.xbean.finder.filter.Filter;
 
 import jakarta.servlet.ServletContext;
 import java.io.File;
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.net.MalformedURLException;
-import java.net.URI;
 import java.net.URL;
-import java.util.Collection;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
-import java.util.stream.Stream;
 
 import static java.util.Optional.of;
 import static java.util.Optional.ofNullable;
-import static java.util.stream.Collectors.toSet;
 import static org.apache.tomcat.JarScanType.PLUGGABILITY;
 
 public class OWBTomcatWebScannerService extends WebScannerService {
     private final LogFacade logger = new LogFacade(OWBTomcatWebScannerService.class.getName());
     private final BdaScannerService delegate;
-    private final Supplier<OwbAnnotationFinder> finderAccessor;
 
     protected JarScanFilter filter;
     private String jreBase;
@@ -67,14 +60,17 @@ public class OWBTomcatWebScannerService extends WebScannerService {
     private String shared;
     private Consumer<File> fileVisitor;
 
+    /**
+     * Contains manually added classes, e.g. from Groovy scanning.
+     */
+    private List<Class<?>> additionalClasses = null;
+
     public OWBTomcatWebScannerService() {
-        this(null, null);
+        this(null);
     }
 
-
-    public OWBTomcatWebScannerService(final BdaScannerService delegate, final Supplier<OwbAnnotationFinder> finderAccessor) {
+    public OWBTomcatWebScannerService(final BdaScannerService delegate) {
         this.delegate = delegate;
-        this.finderAccessor = finderAccessor;
     }
 
     @Override
@@ -109,14 +105,6 @@ public class OWBTomcatWebScannerService extends WebScannerService {
     }
 
     @Override
-    public OwbAnnotationFinder getFinder() {
-        if (finderAccessor != null) {
-            return finderAccessor.get();
-        }
-        return super.getFinder();
-    }
-
-    @Override
     public Map<BeanArchiveService.BeanArchiveInformation, Set<Class<?>>> getBeanClassesPerBda() {
         if (delegate != null) {
             return delegate.getBeanClassesPerBda();
@@ -135,25 +123,33 @@ public class OWBTomcatWebScannerService extends WebScannerService {
 
     @Override
     public Set<Class<?>> getBeanClasses() {
+        Set<Class<?>> beanClasses;
         if (delegate != null) {
-            return delegate.getBeanClasses();
+            beanClasses = delegate.getBeanClasses();
         }
-        return super.getBeanClasses();
+        else {
+            beanClasses = super.getBeanClasses();
+        }
+
+        if (additionalClasses != null) {
+            beanClasses.addAll(additionalClasses);
+        }
+
+        return beanClasses;
+    }
+
+    @Override
+    public List<OwbAnnotationFinder> getAnnotationFinders() {
+        if (delegate != null && delegate instanceof AbstractMetaDataDiscovery) {
+            return ((AbstractMetaDataDiscovery) delegate).getAnnotationFinders();
+        }
+        return super.getAnnotationFinders();
     }
 
     @Override
     public void scan() {
         if (delegate != null) {
-            if (getFinder() == null) {
                 delegate.scan();
-            }
-            if (finder == null) {
-                finder = getFinder();
-            }
-        }
-
-        if (finder != null) {
-            return;
         }
 
         super.scan();
@@ -239,46 +235,7 @@ public class OWBTomcatWebScannerService extends WebScannerService {
             return;
         }
 
-        final Field linking = AnnotationFinder.class.getDeclaredField("linking");
-        final Method readClassDef = AnnotationFinder.class.getDeclaredMethod("readClassDef", Class.class);
-        if (!readClassDef.isAccessible()) {
-            readClassDef.setAccessible(true);
-        }
-        if (!linking.isAccessible()) {
-            linking.setAccessible(true);
-        }
-
-        final URI uri = URI.create("jar:file://!/"); // we'll never find it during scanning and it avoids to create a custom handler
-        final URL url = uri.toURL();
-        final String key = uri.toASCIIString();
-        CdiArchive.FoundClasses foundClasses = archive.classesByUrl().get(key);
-        if (foundClasses == null) {
-            final BeanArchiveService beanArchiveService = webBeansContext().getBeanArchiveService();
-            foundClasses = new CdiArchive.FoundClasses(url, new HashSet<>(), beanArchiveService.getBeanArchiveInformation(url));
-            archive.classesByUrl().put(key, foundClasses);
-        }
-
-        foundClasses.getClassNames().addAll(Stream.of(all).map(Class::getName).collect(toSet()));
-
-        try {
-            linking.set(finder, true);
-
-            Stream.of(all).forEach(c -> { // populate classInfos map to support annotated mode which relies on ClassInfo
-                try {
-                    readClassDef.invoke(finder, c);
-                } catch (final IllegalAccessException e) {
-                    throw new IllegalStateException(e);
-                } catch (final InvocationTargetException e) {
-                    throw new IllegalStateException(e.getCause());
-                }
-            });
-        } finally {
-            try {
-                linking.set(finder, false);
-            } catch (final IllegalAccessException e) {
-                // no-op
-            }
-        }
+        additionalClasses = new ArrayList<>(Arrays.asList(all));
     }
 
     @Override

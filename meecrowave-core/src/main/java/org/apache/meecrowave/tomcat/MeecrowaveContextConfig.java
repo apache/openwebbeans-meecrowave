@@ -30,6 +30,7 @@ import java.net.URL;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -65,7 +66,7 @@ public class MeecrowaveContextConfig extends ContextConfig {
     private final boolean fixDocBase;
     private final ServletContainerInitializer intializer;
     private final Consumer<Context> redeployCallback;
-    private OwbAnnotationFinder finder;
+    private List<OwbAnnotationFinder> annotationFinders;
     private ReloadOnChangeController watcher;
 
     public MeecrowaveContextConfig(final Configuration configuration, final boolean fixDocBase, final ServletContainerInitializer intializer, final Consumer<Context> redeployCallback) {
@@ -113,24 +114,27 @@ public class MeecrowaveContextConfig extends ContextConfig {
                     scannerService.setFileVisitor(f -> watcher.register(f));
                 }
                 scannerService.scan();
-                finder = scannerService.getFinder();
-                finder.link();
-                final CdiArchive archive = CdiArchive.class.cast(finder.getArchive());
-                Stream.of(WebServlet.class, WebFilter.class, WebListener.class)
-                        .forEach(marker -> finder.findAnnotatedClasses(marker).stream()
-                                .filter(c -> !Modifier.isAbstract(c.getModifiers()) && Modifier.isPublic(c.getModifiers()))
-                                .forEach(webComponent -> webClasses.computeIfAbsent(
-                                        archive.classesByUrl().entrySet().stream()
-                                                .filter(e -> e.getValue().getClassNames().contains(webComponent.getName()))
-                                                .findFirst().get().getKey(), k -> new HashSet<>())
-                                        .add(webComponent)));
+                annotationFinders = scannerService.getAnnotationFinders();
+
+                for (OwbAnnotationFinder finder : annotationFinders) {
+                    finder.link();
+                    final CdiArchive archive = CdiArchive.class.cast(finder.getArchive());
+                    Stream.of(WebServlet.class, WebFilter.class, WebListener.class)
+                            .forEach(marker -> finder.findAnnotatedClasses(marker).stream()
+                                    .filter(c -> !Modifier.isAbstract(c.getModifiers()) && Modifier.isPublic(c.getModifiers()))
+                                    .forEach(webComponent -> webClasses.computeIfAbsent(
+                                            archive.classesByUrl().entrySet().stream()
+                                                    .filter(e -> e.getValue().getClassNames().contains(webComponent.getName()))
+                                                    .findFirst().get().getKey(), k -> new HashSet<>())
+                                            .add(webComponent)));
+                }
             }
 
             super.webConfig();
         } finally {
             thread.setContextClassLoader(old);
             webClasses.clear();
-            finder = null;
+            annotationFinders = null;
         }
     }
 
@@ -197,16 +201,18 @@ public class MeecrowaveContextConfig extends ContextConfig {
                 if (ht == null) {
                     return;
                 }
-                Stream.of(ht.value()).forEach(t -> {
-                    if (t.isAnnotation()) {
-                        final Class<? extends Annotation> annotation = Class.class.cast(t);
-                        classes.addAll(finder.findAnnotatedClasses(annotation));
-                    } else if (t.isInterface()) {
-                        classes.addAll(finder.findImplementations(t));
-                    } else {
-                        classes.addAll(finder.findSubclasses(t));
-                    }
-                });
+                for (OwbAnnotationFinder finder : annotationFinders) {
+                    Stream.of(ht.value()).forEach(t -> {
+                        if (t.isAnnotation()) {
+                            final Class<? extends Annotation> annotation = Class.class.cast(t);
+                            classes.addAll(finder.findAnnotatedClasses(annotation));
+                        } else if (t.isInterface()) {
+                            classes.addAll(finder.findImplementations(t));
+                        } else {
+                            classes.addAll(finder.findSubclasses(t));
+                        }
+                    });
+                }
             });
         } catch (final IOException e) {
             ok = false;
