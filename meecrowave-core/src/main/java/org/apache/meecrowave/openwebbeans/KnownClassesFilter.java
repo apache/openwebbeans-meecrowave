@@ -20,6 +20,7 @@ package org.apache.meecrowave.openwebbeans;
 
 import org.apache.meecrowave.configuration.Configuration;
 import org.apache.xbean.finder.filter.Filter;
+import org.apache.webbeans.spi.annotations.ThreadSafe;
 
 import java.util.HashSet;
 import java.util.Optional;
@@ -28,6 +29,7 @@ import java.util.stream.Stream;
 
 import static java.util.Optional.ofNullable;
 
+@ThreadSafe
 public class KnownClassesFilter implements Filter { // one easy and efficient solution for fatjars
     private static final String[] EMPTY_ARRAY = new String[0];
 
