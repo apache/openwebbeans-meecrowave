@@ -76,9 +76,9 @@
 
     <tomcat.version>11.0.22</tomcat.version>
 
-    <openwebbeans.version>4.1.1-SNAPSHOT</openwebbeans.version>
+    <openwebbeans.version>4.1.1</openwebbeans.version>
     <cxf.version>4.1.5</cxf.version>
-    <johnzon.version>2.1.1-SNAPSHOT</johnzon.version>
+    <johnzon.version>2.1.1</johnzon.version>
     <log4j2.version>2.25.4</log4j2.version>
     <deltaspike.version>2.0.1</deltaspike.version>
     <jaxb.version>2.3.0</jaxb.version>
