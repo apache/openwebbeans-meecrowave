@@ -18,6 +18,7 @@
  */
 package org.apache.meecrowave.tests.sse;
 
+import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
@@ -57,8 +58,13 @@ public class NewsService {
 				eventSink.send(sse.newEventBuilder().mediaType(MediaType.APPLICATION_JSON_TYPE).data(newsEvent).build());
 			});
 			//closing only on the client is generating a chunked connection exception that can be troubleshooted at a later date.
-			eventSink.close();
-		});
+            try {
+                eventSink.close();
+            }
+            catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
 	}
 
 }
