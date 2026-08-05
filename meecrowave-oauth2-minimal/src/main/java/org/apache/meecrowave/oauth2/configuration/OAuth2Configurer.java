@@ -37,7 +37,6 @@ import org.apache.cxf.rs.security.oauth2.grants.code.AuthorizationCodeGrantHandl
 import org.apache.cxf.rs.security.oauth2.grants.code.DefaultEncryptingCodeDataProvider;
 import org.apache.cxf.rs.security.oauth2.grants.code.DigestCodeVerifier;
 import org.apache.cxf.rs.security.oauth2.grants.code.JPACodeDataProvider;
-import org.apache.cxf.rs.security.oauth2.grants.code.PlainCodeVerifier;
 import org.apache.cxf.rs.security.oauth2.grants.jwt.JwtBearerGrantHandler;
 import org.apache.cxf.rs.security.oauth2.grants.owner.JAASResourceOwnerLoginHandler;
 import org.apache.cxf.rs.security.oauth2.grants.owner.ResourceOwnerGrantHandler;
@@ -250,7 +249,6 @@ public class OAuth2Configurer {
         };
         refreshTokenGrantHandler.setDataProvider(provider);
         refreshTokenGrantHandler.setUseAllClientScopes(configuration.isUseAllClientScopes());
-        refreshTokenGrantHandler.setPartialMatchScopeValidation(configuration.isPartialMatchScopeValidation());
 
         final ResourceOwnerLoginHandler loginHandler = configuration.isJaas() ? new JAASResourceOwnerLoginHandler() {
             @Override
@@ -369,7 +367,6 @@ public class OAuth2Configurer {
                     final AbstractGrantHandler handler = AbstractGrantHandler.class.cast(h);
                     handler.setDataProvider(dataProvider);
                     handler.setCanSupportPublicClients(configuration.isCanSupportPublicClients());
-                    handler.setPartialMatchScopeValidation(configuration.isPartialMatchScopeValidation());
                 });
 
         abstractTokenServiceConsumer = s -> { // this is used @RequestScoped so ensure it is not slow for no reason
@@ -409,7 +406,6 @@ public class OAuth2Configurer {
             s.setBlockUnsecureRequests(configuration.isBlockUnsecureRequests());
             s.setWriteOptionalParameters(configuration.isWriteOptionalParameters());
             s.setUseAllClientScopes(configuration.isUseAllClientScopes());
-            s.setPartialMatchScopeValidation(configuration.isPartialMatchScopeValidation());
             s.setUseRegisteredRedirectUriIfPossible(configuration.isUseRegisteredRedirectUriIfPossible());
             s.setMaxDefaultSessionInterval(configuration.getMaxDefaultSessionInterval());
             s.setMatchRedirectUriWithApplicationUri(configuration.isMatchRedirectUriWithApplicationUri());

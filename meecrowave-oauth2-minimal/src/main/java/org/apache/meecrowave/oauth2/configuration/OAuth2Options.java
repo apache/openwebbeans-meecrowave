@@ -49,9 +49,6 @@ public class OAuth2Options implements Cli.Options {
     @CliOption(name = "oauth2-write-optional-parameters", description = "Should optional parameters be written")
     private boolean writeOptionalParameters = true;
 
-    @CliOption(name = "oauth2-partial-match-scope-validation", description = "Is partial match for scope validation activated")
-    private boolean partialMatchScopeValidation;
-
     @CliOption(name = "oauth2-use-jaas", description = "Should jaas be used - alternative (default) is to delegate to meecrowave/tomcat realms")
     private boolean jaas;
 
@@ -379,14 +376,6 @@ public class OAuth2Options implements Cli.Options {
 
     public void setForceClient(final boolean forceClient) {
         this.forceClient = forceClient;
-    }
-
-    public boolean isPartialMatchScopeValidation() {
-        return partialMatchScopeValidation;
-    }
-
-    public void setPartialMatchScopeValidation(final boolean partialMatchScopeValidation) {
-        this.partialMatchScopeValidation = partialMatchScopeValidation;
     }
 
     public boolean isJaas() {
