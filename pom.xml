@@ -76,7 +76,7 @@
     <openwebbeans.version>4.1.1</openwebbeans.version>
     <cxf.version>4.2.3</cxf.version>
     <johnzon.version>2.2.0</johnzon.version>
-    <log4j2.version>2.25.4</log4j2.version>
+    <log4j2.version>2.26.1</log4j2.version>
     <deltaspike.version>2.0.1</deltaspike.version>
     <jaxb.version>2.3.0</jaxb.version>
     <openjpa.version>4.1.1</openjpa.version>
